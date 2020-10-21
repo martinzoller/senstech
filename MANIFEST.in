@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include senstech *.css
+recursive-include senstech *.csv
+recursive-include senstech *.html
+recursive-include senstech *.ico
+recursive-include senstech *.js
+recursive-include senstech *.json
+recursive-include senstech *.md
+recursive-include senstech *.png
+recursive-include senstech *.py
+recursive-include senstech *.svg
+recursive-include senstech *.txt
+recursive-exclude senstech *.pyc
