@@ -9,9 +9,10 @@ def get_batch_info(item_code):
     sql_query = """SELECT 
           `batches`.`item_code`, 
           `batches`.`batch_no`, 
-          `batches`.`qty`
+          `batches`.`qty`,
+		   `batches`.`stock_uom`
         FROM (
-          SELECT `item_code`, `batch_no`, SUM(`actual_qty`) AS `qty`
+          SELECT `item_code`, `batch_no`, SUM(`actual_qty`) AS `qty`, `stock_uom`
           FROM `tabStock Ledger Entry`        
           WHERE `item_code` = '{item_code}'
           GROUP BY `batch_no`) AS `batches`
