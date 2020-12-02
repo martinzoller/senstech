@@ -12,6 +12,9 @@ frappe.call({
 				frappe.help.help_links['Form/' + links[i].doctype_link] = [
 					{ label: 'Senstech Wiki', url: links[i].url },
 				];
+				frappe.help.help_links['Tree/' + links[i].doctype_link] = [
+					{ label: 'Senstech Wiki', url: links[i].url },
+				];
 			}
 		} 
 	}
