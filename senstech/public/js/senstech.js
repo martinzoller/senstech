@@ -1,3 +1,9 @@
+ jQuery(document).on('click','i.octicon-arrow-right',function(event){
+	event.preventDefault();
+	event.stopPropagation();
+	window.open($(this).parent().attr('href'), '_blank');
+});
+
 // add links to senstech wiki
 frappe.provide('frappe.help.help_links');
 
