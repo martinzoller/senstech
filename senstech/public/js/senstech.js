@@ -1,12 +1,3 @@
-// add target="_blank" to link btns
-setTimeout(function(){
-	var all_link_btn_elements = document.getElementsByClassName("link-btn");
-	for (var ii = 0; ii < all_link_btn_elements.length; ii++) {
-		all_link_btn_elements[ii].getElementsByTagName("a")[0].target = "_blank";
-		console.log(all_link_btn_elements[ii].getElementsByTagName("a")[0]);
-	}
-}, 3000);
-
 // add links to senstech wiki
 frappe.provide('frappe.help.help_links');
 
