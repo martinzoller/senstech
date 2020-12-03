@@ -11,6 +11,7 @@
 import frappe
 import json
 import six
+from frappe import _
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -90,7 +91,7 @@ def get_next_purchase_item_number():
 			new_pt_number = "PT-000{pt}".format(pt=new_pt_number)
 		elif new_pt_number < 1000:
 			new_pt_number = "PT-00{pt}".format(pt=new_pt_number)
-		elif new_pt_number < 1000:
+		elif new_pt_number < 10000:
 			new_pt_number = "PT-0{pt}".format(pt=new_pt_number)
 		else:
 			new_pt_number = "PT-{pt}".format(pt=new_pt_number)
@@ -98,3 +99,22 @@ def get_next_purchase_item_number():
 		return new_pt_number
 	else:
 		return 'PT-00001'
+		
+@frappe.whitelist()
+def entnahme_blech(item):
+	item = frappe.get_doc("Item", item)
+	if item.stock_uom == 'Stk':
+		return {
+			'qty': 1.000,
+			'conversion_factor': 1,
+			'stock_uom': item.stock_uom
+		}
+	else:
+		for uom in item.uoms:
+			if uom.uom == 'Stk':
+				return {
+					'qty': 1 * uom.conversion_factor,
+					'conversion_factor': uom.conversion_factor,
+					'stock_uom': item.stock_uom
+				}
+		return {'error': _('No Conversion Factor to UOM Stk')}
