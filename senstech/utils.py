@@ -118,3 +118,27 @@ def entnahme_blech(item):
 					'stock_uom': item.stock_uom
 				}
 		return {'error': _('No Conversion Factor to UOM Stk')}
+		
+@frappe.whitelist()
+def check_for_batch_quick_stock_entry(batch_no, warehouse):
+	if batch_no and warehouse:
+		entry_qty = float(frappe.db.sql("""SELECT COUNT(`name`)
+			FROM `tabStock Ledger Entry`
+			WHERE `warehouse` = '{warehouse}' AND `batch_no` = '{batch_no}'""".format(warehouse=warehouse, batch_no=batch_no), as_list=True)[0][0] or 0)
+		return entry_qty
+		
+@frappe.whitelist()
+def batch_quick_stock_entry(batch_no, warehouse, item, qty):
+	stock_entry = frappe.get_doc({
+		'doctype': 'Stock Entry',
+		'stock_entry_type': _("Material Receipt"),
+		'to_warehouse': warehouse,
+		'items': [{
+			'item_code': item,
+			'qty': qty,
+			'batch_no': batch_no
+		}]
+	}).insert()
+	stock_entry.submit()
+	
+	return stock_entry.name
