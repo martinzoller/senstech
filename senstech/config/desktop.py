@@ -7,7 +7,7 @@ def get_data():
 		{
 			"module_name": "Senstech",
 			"color": "grey",
-			"icon": "octicon octicon-file-directory",
+			"icon": "icon cube-blue",
 			"type": "module",
 			"label": _("Senstech")
 		}
