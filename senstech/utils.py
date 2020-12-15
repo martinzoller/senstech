@@ -131,7 +131,7 @@ def check_for_batch_quick_stock_entry(batch_no, warehouse):
 def batch_quick_stock_entry(batch_no, warehouse, item, qty):
 	stock_entry = frappe.get_doc({
 		'doctype': 'Stock Entry',
-		'stock_entry_type': _("Material Receipt"),
+		'stock_entry_type': "Material Receipt",
 		'to_warehouse': warehouse,
 		'items': [{
 			'item_code': item,
