@@ -12,6 +12,7 @@ import frappe
 import json
 import six
 from frappe import _
+from frappe.utils.data import today
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -142,3 +143,19 @@ def batch_quick_stock_entry(batch_no, warehouse, item, qty):
 	stock_entry.submit()
 	
 	return stock_entry.name
+	
+@frappe.whitelist()
+def nachbestellung(item, supplier, qty, taxes):
+	purchase_order = frappe.get_doc({
+		'doctype': 'Purchase Order',
+		'supplier': supplier,
+		'schedule_date': today(),
+		'taxes_and_charges': taxes,
+		'items': [{
+			'item_code': item,
+			'qty': qty,
+			'schedule_date': today()
+		}]
+	}).insert()
+	
+	return purchase_order.name
