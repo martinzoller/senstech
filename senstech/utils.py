@@ -125,7 +125,7 @@ def check_for_batch_quick_stock_entry(batch_no, warehouse):
 	if batch_no and warehouse:
 		entry_qty = float(frappe.db.sql("""SELECT SUM(`actual_qty`)
 			FROM `tabStock Ledger Entry`
-			WHERE `warehouse` = '{warehouse}' AND `batch_no` = '{batch_no}'""".format(warehouse=warehouse, batch_no=batch_no), as_list=True)[0][0] or 0)
+			WHERE `warehouse` = '{warehouse}' AND `batch_no` = '{batch_no}' AND `actual_qty` > 0""".format(warehouse=warehouse, batch_no=batch_no), as_list=True)[0][0] or 0)
 		return entry_qty
 		
 @frappe.whitelist()
