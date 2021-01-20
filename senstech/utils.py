@@ -81,25 +81,12 @@ def check_if_attachment_exist(file_url, dn):
 
 @frappe.whitelist()
 def get_next_purchase_item_number():
-    latest_pt_number = frappe.db.sql("""SELECT `name` FROM `tabItem` WHERE `is_purchase_item` = 1 ORDER BY `creation` DESC""", as_list=True)
-    if len(latest_pt_number) > 0:
-        raw_pt_number = latest_pt_number[0][0]
-        pt_number = int(raw_pt_number.replace("PT-", ''))
-        new_pt_number = pt_number + 1
-        if new_pt_number < 10:
-            new_pt_number = "PT-0000{pt}".format(pt=new_pt_number)
-        elif new_pt_number < 100:
-            new_pt_number = "PT-000{pt}".format(pt=new_pt_number)
-        elif new_pt_number < 1000:
-            new_pt_number = "PT-00{pt}".format(pt=new_pt_number)
-        elif new_pt_number < 10000:
-            new_pt_number = "PT-0{pt}".format(pt=new_pt_number)
-        else:
-            new_pt_number = "PT-{pt}".format(pt=new_pt_number)
-        
-        return new_pt_number
-    else:
-        return 'PT-00001'
+    latest_pt_number = frappe.db.sql("""SELECT `name` FROM `tabItem` WHERE `is_purchase_item` = 1 AND `name` LIKE 'PT-%' ORDER BY `creation` DESC""", as_list=True)
+    raw_pt_number = latest_pt_number[0][0]
+    pt_number = int(raw_pt_number.replace("PT-", ''))
+    new_pt_number = pt_number + 1
+    new_pt_number = "PT-"+("0000{pt}".format(pt=new_pt_number))[-5:]
+    return new_pt_number
 
 @frappe.whitelist()
 def entnahme_blech(item):
