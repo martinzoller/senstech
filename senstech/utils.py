@@ -13,6 +13,7 @@ import json
 import six
 from frappe import _
 from frappe.utils.data import today
+from frappe.contacts.doctype.address.address import get_address_display
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -150,3 +151,42 @@ def nachbestellung(item, supplier, qty, taxes):
     }).insert()
 
     return purchase_order.name
+    
+@frappe.whitelist()
+def update_adress_display(doctype, doc_name, fields, addresses, as_list=False):
+    if as_list:
+        if isinstance(fields, six.string_types):
+            fields = json.loads(fields)
+        if isinstance(addresses, six.string_types):
+            addresses = json.loads(addresses)
+        count = 0
+        response = []
+        for field in fields:
+            address = addresses[count]
+            address_html = get_address_display(address)
+            old_display = frappe.db.sql("""SELECT `{field}` FROM `tab{doctype}` WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name), as_dict=True)
+            count += 1
+            if old_display[0]:
+                if old_display[0][field] != address_html:
+                    frappe.db.sql("""UPDATE `tab{doctype}` SET `{field}` = '{address_html}' WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name, address_html=address_html), as_list=True)
+                    frappe.db.commit()
+                    response.append('updated')
+                else:
+                    response.append('passed')
+            else:
+                response.append('no address')
+        return response
+    else:
+        field = fields
+        address = addresses
+        address_html = get_address_display(address)
+        old_display = frappe.db.sql("""SELECT `{field}` FROM `tab{doctype}` WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name), as_dict=True)
+        if old_display[0]:
+            if old_display[0][field] != address_html:
+                frappe.db.sql("""UPDATE `tab{doctype}` SET `{field}` = '{address_html}' WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name, address_html=address_html), as_list=True)
+                frappe.db.commit()
+                return 'updated'
+            else:
+                return 'passed'
+        else:
+            return 'no address'
