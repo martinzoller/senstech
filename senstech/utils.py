@@ -12,7 +12,7 @@ import frappe
 import json
 import six
 from frappe import _
-from frappe.utils.data import today
+from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 
 @frappe.whitelist()
@@ -190,3 +190,24 @@ def update_adress_display(doctype, doc_name, fields, addresses, as_list=False):
                 return 'passed'
         else:
             return 'no address'
+            
+@frappe.whitelist()
+def calculate_versanddatum(so):
+    sales_order = frappe.get_doc("Sales Order", so)
+    vorlauf = frappe.get_doc("Customer", sales_order.customer).vorlaufzeit_versand
+    if vorlauf and vorlauf > 0:
+        try:
+            new_date = add_days(sales_order.delivery_date, vorlauf * -1)
+            frappe.db.sql("""UPDATE `tabSales Order` SET `versanddatum` = '{new_date}' WHERE `name` = '{so}'""".format(new_date=new_date, so=so), as_list=True)
+            frappe.db.commit()
+            return 'updated'
+        except:
+            return 'passed'
+    else:
+        try:
+            new_date = sales_order.delivery_date
+            frappe.db.sql("""UPDATE `tabSales Order` SET `versanddatum` = '{new_date}' WHERE `name` = '{so}'""".format(new_date=new_date, so=so), as_list=True)
+            frappe.db.commit()
+            return 'updated'
+        except:
+            return 'passed'
