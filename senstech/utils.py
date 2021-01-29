@@ -166,7 +166,7 @@ def update_adress_display(doctype, doc_name, fields, addresses, as_list=False):
             address_html = get_address_display(address)
             old_display = frappe.db.sql("""SELECT `{field}` FROM `tab{doctype}` WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name), as_dict=True)
             count += 1
-            if old_display[0]:
+            if len(old_display) >= 1:
                 if old_display[0][field] != address_html:
                     frappe.db.sql("""UPDATE `tab{doctype}` SET `{field}` = '{address_html}' WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name, address_html=address_html), as_list=True)
                     frappe.db.commit()
@@ -181,7 +181,7 @@ def update_adress_display(doctype, doc_name, fields, addresses, as_list=False):
         address = addresses
         address_html = get_address_display(address)
         old_display = frappe.db.sql("""SELECT `{field}` FROM `tab{doctype}` WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name), as_dict=True)
-        if old_display[0]:
+        if len(old_display) >= 1:
             if old_display[0][field] != address_html:
                 frappe.db.sql("""UPDATE `tab{doctype}` SET `{field}` = '{address_html}' WHERE `name` = '{doc_name}'""".format(field=field, doctype=doctype, doc_name=doc_name, address_html=address_html), as_list=True)
                 frappe.db.commit()
