@@ -1,7 +1,24 @@
- jQuery(document).on('click','i.octicon-arrow-right',function(event){
+// Always open linked documents (links with arrow icon) in new tab
+jQuery(document).on('click','i.octicon-arrow-right',function(event){
 	event.preventDefault();
 	event.stopPropagation();
 	window.open($(this).parent().attr('href'), '_blank');
+});
+
+// Uncheck "attach document print" in e-mail window for some doctypes
+jQuery(document).ready(function() {
+	const observer = new MutationObserver( () => {
+		var doctype = frappe._cur_route.split('/')[1];
+		if(['Lead','Opportunity','Customer','Supplier','Contact','Address'].includes(doctype)) {
+			jQuery('input[data-fieldname="attach_document_print"]').each(function() {
+				if($(this).prop('checked')) {
+					$(this).click();
+				}
+			});
+		}
+	});
+
+	observer.observe(document.body, { childList: true });
 });
 
 // add links to senstech wiki
