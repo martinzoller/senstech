@@ -265,7 +265,7 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
             _histrogramm_data['bins'].append(bin.bezeichnung)
             
         if messdaten_nullpunkt:
-            with open('/home/frappe/frappe-bench/sites/site1.local/' + messdaten_nullpunkt, 'r') as f:
+            with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_nullpunkt, 'r') as f:
                 reader = csv.reader(f, dialect='excel', delimiter='\t')
                 first_row = True
                 data_row_found = False
@@ -285,7 +285,7 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                             _histrogramm_data['values'][num] += 1
                                             pass
         if messdaten_last:
-            with open('/home/frappe/frappe-bench/sites/site1.local/' + messdaten_last, 'r') as f:
+            with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_last, 'r') as f:
                 reader = csv.reader(f, dialect='excel', delimiter='\t')
                 first_row = True
                 data_row_found = False
