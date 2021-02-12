@@ -1,0 +1,81 @@
+{
+ "autoname": "field:title",
+ "creation": "2021-02-10 09:16:44.992008",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "histogramm_titel",
+  "x_beschriftung",
+  "y_beschriftung",
+  "daten_spalte",
+  "klassen"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "histogramm_titel",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Histogramm Titel",
+   "reqd": 1
+  },
+  {
+   "fieldname": "x_beschriftung",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "X-Beschriftung",
+   "reqd": 1
+  },
+  {
+   "fieldname": "y_beschriftung",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Y-Beschriftung",
+   "reqd": 1
+  },
+  {
+   "fieldname": "daten_spalte",
+   "fieldtype": "Data",
+   "label": "Daten Spalte (.txt)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "klassen",
+   "fieldtype": "Table",
+   "label": "Klassen",
+   "options": "Senstech Klassen",
+   "reqd": 1
+  }
+ ],
+ "modified": "2021-02-10 09:16:44.992008",
+ "modified_by": "Administrator",
+ "module": "Senstech",
+ "name": "Senstech Histogramm",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

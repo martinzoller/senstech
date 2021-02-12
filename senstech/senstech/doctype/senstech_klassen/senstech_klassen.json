@@ -1,0 +1,45 @@
+{
+ "creation": "2021-02-10 09:16:14.412089",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bezeichnung",
+  "range_von",
+  "range_bis"
+ ],
+ "fields": [
+  {
+   "fieldname": "bezeichnung",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Klassen Bezeichnung",
+   "reqd": 1
+  },
+  {
+   "fieldname": "range_von",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Range von",
+   "reqd": 1
+  },
+  {
+   "fieldname": "range_bis",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Range bis",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "modified": "2021-02-10 09:16:14.412089",
+ "modified_by": "Administrator",
+ "module": "Senstech",
+ "name": "Senstech Klassen",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

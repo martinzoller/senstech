@@ -14,6 +14,7 @@ import six
 from frappe import _
 from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
+import csv
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -242,3 +243,67 @@ def create_payment(sinv):
         return pe.name
     except Exception as err:
         return err
+        
+@frappe.whitelist()
+def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=None):
+    histrogramm_data = []
+    item = frappe.get_doc("Item", item)
+    for _histogramm in item.histogramme:
+        histogramm = frappe.get_doc("Senstech Histogramm", _histogramm.histogramm)
+        _histrogramm_data = {
+            'title': histogramm.histogramm_titel,
+            'x_title': histogramm.x_beschriftung,
+            'y_title': histogramm.y_beschriftung,
+            'bins': [],
+            'bin_range': [],
+            'values': []
+        }
+        data_row = histogramm.daten_spalte
+        for bin in histogramm.klassen:
+            _histrogramm_data['bin_range'].append([bin.range_von, bin.range_bis])
+            _histrogramm_data['values'].append(0)
+            _histrogramm_data['bins'].append(bin.bezeichnung)
+            
+        if messdaten_nullpunkt:
+            with open('/home/frappe/frappe-bench/sites/site1.local/' + messdaten_nullpunkt, 'r') as f:
+                reader = csv.reader(f, dialect='excel', delimiter='\t')
+                first_row = True
+                data_row_found = False
+                data_row_int = 0
+                for row in reader:
+                    if first_row:
+                        for num, _data_row in enumerate(row):
+                            if _data_row == data_row:
+                                data_row_found = True
+                                first_row = False
+                                data_row_int = num
+                    else:
+                        if data_row_found:
+                            for num, bin_range in enumerate(_histrogramm_data['bin_range']):
+                                    if float(row[data_row_int]) >= float(bin_range[0]):
+                                        if float(row[data_row_int]) <= float(bin_range[1]):
+                                            _histrogramm_data['values'][num] += 1
+                                            pass
+        if messdaten_last:
+            with open('/home/frappe/frappe-bench/sites/site1.local/' + messdaten_last, 'r') as f:
+                reader = csv.reader(f, dialect='excel', delimiter='\t')
+                first_row = True
+                data_row_found = False
+                data_row_int = 0
+                for row in reader:
+                    if first_row:
+                        for num, _data_row in enumerate(row):
+                            if _data_row == data_row:
+                                data_row_found = True
+                                first_row = False
+                                data_row_int = num
+                    else:
+                        if data_row_found:
+                            for num, bin_range in enumerate(_histrogramm_data['bin_range']):
+                                    if float(row[data_row_int]) >= float(bin_range[0]):
+                                        if float(row[data_row_int]) <= float(bin_range[1]):
+                                            _histrogramm_data['values'][num] += 1
+                                            pass
+        histrogramm_data.append(_histrogramm_data)
+    frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histrogramm_data}" WHERE `name` = '{batch}'""".format(histrogramm_data=histrogramm_data, batch=batch), as_list=True)
+    return histrogramm_data
