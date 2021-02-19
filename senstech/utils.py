@@ -11,10 +11,12 @@
 import frappe
 import json
 import six
+import pdfkit, os
 from frappe import _
 from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 import csv
+from frappe.utils import get_site_name
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -307,3 +309,131 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
         histrogramm_data.append(_histrogramm_data)
     frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histrogramm_data}" WHERE `name` = '{batch}'""".format(histrogramm_data=histrogramm_data, batch=batch), as_list=True)
     return histrogramm_data
+
+@frappe.whitelist()
+def create_multiple_label_pdf(label_reference, contents):
+    label = frappe.get_doc("Label Printer", label_reference)
+    pdf_fnames = []
+    if isinstance(contents, six.string_types):
+            contents = json.loads(contents)
+    
+    #create single lbel pdf for each item batch based on verpackungseinheit
+    for content in contents:
+        item = frappe.get_doc("Item", content[0])
+        if item.verpackungseinheit > 0:
+            loops = int(content[1] / item.verpackungseinheit)
+            loop_qty = item.verpackungseinheit
+            item_code = content[0]
+            if item.artikelcode_kunde:
+                item_code = item.artikelcode_kunde
+            for i in range(loops):
+                _content = """
+                    <div>
+                        Artikel: {item_code}<br>
+                        Produktionscharge: {batch}<br>
+                        Menge: {qty} {stock_uom}
+                    </div>
+                """.format(item_code=item_code, batch=content[2], qty=loop_qty, stock_uom=item.stock_uom)
+                pdf_fnames.append(create_single_label_pdf(label, _content))
+            if (loops * loop_qty) < content[1]:
+                _content = """
+                    <div>
+                        Artikel: {item_code}<br>
+                        Produktionscharge: {batch}<br>
+                        Menge: {qty} {stock_uom}
+                    </div>
+                """.format(item_code=item_code, batch=content[2], qty=(content[1] - (loops * loop_qty)), stock_uom=item.stock_uom)
+                pdf_fnames.append(create_single_label_pdf(label, _content))
+    
+    # merge all single label pdf to one pdf
+    merged_pdf = merge_pdfs(pdf_fnames)
+    
+    # remove all single label pdfs
+    cleanup(pdf_fnames)
+    
+    return merged_pdf
+    
+def create_single_label_pdf(label_printer, content):
+    # create temporary file
+    fname = os.path.join("/tmp", "frappe-pdf-{0}.pdf".format(frappe.generate_hash()))
+
+    options = { 
+        'page-width': '{0}mm'.format(label_printer.width), 
+        'page-height': '{0}mm'.format(label_printer.height), 
+        'margin-top': '0mm',
+        'margin-bottom': '0mm',
+        'margin-left': '0mm',
+        'margin-right': '0mm' }
+
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+    </head>
+    <body>
+        {content}
+    <body>
+    </html>
+    """.format(content=content)
+
+    pdfkit.from_string(html_content, fname, options=options or {})
+
+    return fname
+    
+def merge_pdfs(pdf_fnames):
+    from PyPDF2 import PdfFileMerger
+
+    # develop VM compatibility
+    site_name = get_site_name(frappe.local.request.host)
+    if site_name == 'localhost':
+        site_name = 'site1.local'
+    else:
+        site_name = 'senstech.libracore.ch'
+    
+    pdfs = pdf_fnames
+    merger = PdfFileMerger()
+
+    for pdf in pdfs:
+        merger.append(pdf)
+        
+    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
+    fname = "merge-{0}.pdf".format(frappe.generate_hash())
+    fpath = os.path.join(_fpath, fname)
+    
+    merger.write(fpath)
+    merger.close()
+    
+    return fname
+    
+def cleanup(pdf_fnames):
+    for fname in pdf_fnames:
+        if os.path.exists(fname):
+            os.remove(fname)
+    return
+    
+@frappe.whitelist()
+def download_and_cleanup(file):
+    # develop VM compatibility
+    site_name = get_site_name(frappe.local.request.host)
+    if site_name == 'localhost':
+        site_name = 'site1.local'
+    else:
+        site_name = 'senstech.libracore.ch'
+    
+    # read filedata from merged pdf and make it downloadable
+    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
+    fpath = os.path.join(_fpath, file)
+    
+    with open(fpath, "rb") as fileobj:
+        filedata = fileobj.read()
+    
+    frappe.local.response.filename = "/private/files/{name}".format(name=file.replace(" ", "-").replace("/", "-"))
+    frappe.local.response.filecontent = filedata
+    frappe.local.response.type = "download"
+    
+    # remove merged pdf from filesystem
+    if os.path.exists(fpath):
+        os.remove(fpath)
+        
+    return
