@@ -437,3 +437,8 @@ def download_and_cleanup(file):
         os.remove(fpath)
         
     return
+    
+@frappe.whitelist()
+def unlinke_email_queue(communication):
+    frappe.db.sql("""UPDATE `tabEmail Queue` SET `communication` = '' WHERE `communication` = '{communication}'""".format(communication=communication), as_list=True)
+    frappe.db.commit()
