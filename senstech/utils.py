@@ -142,15 +142,18 @@ def batch_quick_stock_entry(batch_no, warehouse, item, qty):
 
 @frappe.whitelist()
 def nachbestellung(item, supplier, qty, taxes):
+    lieferzeit = frappe.get_doc("Item", item).lead_time_days or 0
+    schedule_date = add_days(today(), lieferzeit)
+    
     purchase_order = frappe.get_doc({
         'doctype': 'Purchase Order',
         'supplier': supplier,
-        'schedule_date': today(),
+        'schedule_date': schedule_date,
         'taxes_and_charges': taxes,
         'items': [{
             'item_code': item,
             'qty': qty,
-            'schedule_date': today()
+            'schedule_date': schedule_date
         }]
     }).insert()
 
