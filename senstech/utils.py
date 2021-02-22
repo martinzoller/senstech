@@ -259,7 +259,8 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
             'y_title': histogramm.y_beschriftung,
             'bins': [],
             'bin_range': [],
-            'values': []
+            'values': [],
+            'qty': 0
         }
         data_row = histogramm.daten_spalte
         for bin in histogramm.klassen:
@@ -283,9 +284,10 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                     else:
                         if data_row_found:
                             for num, bin_range in enumerate(_histrogramm_data['bin_range']):
-                                    if float(row[data_row_int]) >= float(bin_range[0]):
+                                    if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
                                             _histrogramm_data['values'][num] += 1
+                                            _histrogramm_data['values']['qty'] += 1
                                             pass
         if messdaten_last:
             with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_last, 'r') as f:
@@ -303,9 +305,10 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                     else:
                         if data_row_found:
                             for num, bin_range in enumerate(_histrogramm_data['bin_range']):
-                                    if float(row[data_row_int]) >= float(bin_range[0]):
+                                    if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
                                             _histrogramm_data['values'][num] += 1
+                                            _histrogramm_data['values']['qty'] += 1
                                             pass
         histrogramm_data.append(_histrogramm_data)
     frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histrogramm_data}" WHERE `name` = '{batch}'""".format(histrogramm_data=histrogramm_data, batch=batch), as_list=True)

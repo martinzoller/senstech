@@ -21,6 +21,7 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Range von",
+   "precision": "9",
    "reqd": 1
   },
   {
@@ -28,12 +29,13 @@
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Range bis",
+   "precision": "9",
    "reqd": 1
   }
  ],
  "istable": 1,
- "modified": "2021-02-10 09:16:14.412089",
- "modified_by": "Administrator",
+ "modified": "2021-02-22 11:04:04.502508",
+ "modified_by": "joel.mesmer@libracore.com",
  "module": "Senstech",
  "name": "Senstech Klassen",
  "owner": "Administrator",
