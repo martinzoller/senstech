@@ -12,11 +12,12 @@ import frappe
 import json
 import six
 import pdfkit, os
-from frappe import _
+from frappe import _, get_print
 from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 import csv
 from frappe.utils import get_site_name
+from PyPDF2 import PdfFileWriter, PdfFileReader
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -442,3 +443,85 @@ def download_and_cleanup(file):
 def unlinke_email_queue(communication):
     frappe.db.sql("""UPDATE `tabEmail Queue` SET `communication` = '' WHERE `communication` = '{communication}'""".format(communication=communication), as_list=True)
     frappe.db.commit()
+    
+@frappe.whitelist()
+def add_freeze_pdf_to_dt(dt, dn, printformat):
+    # develop VM compatibility
+    site_name = get_site_name(frappe.local.request.host)
+    if site_name == 'localhost':
+        site_name = 'site1.local'
+    else:
+        site_name = 'senstech.libracore.ch'
+
+    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
+    fname = "{0}.pdf".format(dn)
+    fpath = str(os.path.join(_fpath, fname))
+    
+    pdf = PdfFileWriter()
+    pdf = get_print(doctype=dt, name=dn, print_format=printformat, as_pdf=True, output=pdf, ignore_zugferd=False)
+
+    with open(fpath, "wb") as w:
+        pdf.write(w)
+        
+    f = frappe.get_doc({
+        "doctype": "File",
+        "file_url": '/private/files/{0}'.format(fname),
+        "file_name": fname,
+        "attached_to_doctype": dt,
+        "attached_to_name": dn,
+        "folder": 'Home/Attachments',
+        "file_size": 0,
+        "is_private": 1
+    })
+    f.flags.ignore_permissions = True
+    f.insert()
+    frappe.db.commit()
+
+    return
+    
+@frappe.whitelist()
+def add_cancelled_watermark(dt, dn):
+    # develop VM compatibility
+    site_name = get_site_name(frappe.local.request.host)
+    if site_name == 'localhost':
+        site_name = 'site1.local'
+    else:
+        site_name = 'senstech.libracore.ch'
+
+    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
+    fname = "{0}.pdf".format(dn)
+    _fname = "{0}_cancelled.pdf".format(dn)
+    input_file_fpath = str(os.path.join(_fpath, fname))
+    output_file_fpath = str(os.path.join(_fpath, fname))
+    
+    input_file = input_file_fpath
+    output_file = output_file_fpath
+    watermark_file = "/home/frappe/frappe-bench/apps/senstech/senstech/public/pdf/abgebrochen.pdf"
+
+    with open(input_file, "rb") as filehandle_input:
+        # read content of the original file
+        pdf = PdfFileReader(filehandle_input)
+        
+        with open(watermark_file, "rb") as filehandle_watermark:
+            # read content of the watermark
+            watermark = PdfFileReader(filehandle_watermark)
+            
+            # get first page of the original PDF
+            first_page = pdf.getPage(0)
+            
+            # get first page of the watermark PDF
+            first_page_watermark = watermark.getPage(0)
+            
+            # merge the two pages
+            first_page.mergePage(first_page_watermark)
+            
+            # create a pdf writer object for the output file
+            pdf_writer = PdfFileWriter()
+            
+            # add page
+            pdf_writer.addPage(first_page)
+            
+            with open(output_file, "wb") as filehandle_output:
+                # write the watermarked file to the new file
+                pdf_writer.write(filehandle_output)
+    return
