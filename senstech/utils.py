@@ -498,36 +498,39 @@ def add_cancelled_watermark(dt, dn):
     fname = "{0}.pdf".format(dn)
     _fname = "{0}_cancelled.pdf".format(dn)
     input_file_fpath = str(os.path.join(_fpath, fname))
-    output_file_fpath = str(os.path.join(_fpath, fname))
+    output_file_fpath = str(os.path.join(_fpath, _fname))
     
-    input_file = input_file_fpath
-    output_file = output_file_fpath
-    watermark_file = "/home/frappe/frappe-bench/apps/senstech/senstech/public/pdf/abgebrochen.pdf"
+    pdf_file = input_file_fpath
+    merged = output_file_fpath
+    watermark = "/home/frappe/frappe-bench/apps/senstech/senstech/public/pdf/abgebrochen.pdf"
 
-    with open(input_file, "rb") as filehandle_input:
-        # read content of the original file
-        pdf = PdfFileReader(filehandle_input)
-        
-        with open(watermark_file, "rb") as filehandle_watermark:
-            # read content of the watermark
-            watermark = PdfFileReader(filehandle_watermark)
-            
-            # get first page of the original PDF
-            first_page = pdf.getPage(0)
-            
-            # get first page of the watermark PDF
-            first_page_watermark = watermark.getPage(0)
-            
-            # merge the two pages
-            first_page.mergePage(first_page_watermark)
-            
-            # create a pdf writer object for the output file
-            pdf_writer = PdfFileWriter()
-            
-            # add page
-            pdf_writer.addPage(first_page)
-            
-            with open(output_file, "wb") as filehandle_output:
-                # write the watermarked file to the new file
-                pdf_writer.write(filehandle_output)
+    with open(pdf_file, "rb") as input_file, open(watermark, "rb") as watermark_file:
+        input_pdf = PdfFileReader(input_file)
+        watermark_pdf = PdfFileReader(watermark_file)
+        watermark_page = watermark_pdf.getPage(0)
+
+        output = PdfFileWriter()
+
+        for i in range(input_pdf.getNumPages()):
+            pdf_page = input_pdf.getPage(i)
+            pdf_page.mergePage(watermark_page)
+            output.addPage(pdf_page)
+
+        with open(merged, "wb") as merged_file:
+            output.write(merged_file)
+    
+    f = frappe.get_doc({
+        "doctype": "File",
+        "file_url": '/private/files/{0}'.format(_fname),
+        "file_name": _fname,
+        "attached_to_doctype": dt,
+        "attached_to_name": dn,
+        "folder": 'Home/Attachments',
+        "file_size": 0,
+        "is_private": 1
+    })
+    f.flags.ignore_permissions = True
+    f.insert()
+    frappe.db.commit()
+    
     return
