@@ -290,7 +290,7 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                     if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
                                             _histrogramm_data['values'][num] += 1
-                                            _histrogramm_data['values']['qty'] += 1
+                                            _histrogramm_data['qty'] += 1
                                             pass
         if messdaten_last:
             with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_last, 'r') as f:
@@ -311,7 +311,7 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                     if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
                                             _histrogramm_data['values'][num] += 1
-                                            _histrogramm_data['values']['qty'] += 1
+                                            _histrogramm_data['qty'] += 1
                                             pass
         histrogramm_data.append(_histrogramm_data)
     frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histrogramm_data}" WHERE `name` = '{batch}'""".format(histrogramm_data=histrogramm_data, batch=batch), as_list=True)
