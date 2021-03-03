@@ -533,4 +533,14 @@ def add_cancelled_watermark(dt, dn):
     f.insert()
     frappe.db.commit()
     
+    
+    files = frappe.get_all('File', filters={'attached_to_doctype': dt, 'attached_to_name': dn}, fields=['name', 'file_url'])
+    for file in files:
+        if file.file_url == '/private/files/{0}'.format(fname):
+            f_to_remove = frappe.get_doc('File', file.name)
+            f_to_remove.delete()
+    
+    if os.path.exists(input_file_fpath):
+        os.remove(input_file_fpath)
+    
     return
