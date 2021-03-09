@@ -248,14 +248,14 @@ def create_payment(sinv):
         return pe.name
     except Exception as err:
         return err
-        
+
 @frappe.whitelist()
-def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=None):
-    histrogramm_data = []
+def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=None):
+    histogramm_data = []
     item = frappe.get_doc("Item", item)
     for _histogramm in item.histogramme:
         histogramm = frappe.get_doc("Senstech Histogramm", _histogramm.histogramm)
-        _histrogramm_data = {
+        _histogramm_data = {
             'title': histogramm.histogramm_titel,
             'x_title': histogramm.x_beschriftung,
             'y_title': histogramm.y_beschriftung,
@@ -266,9 +266,9 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
         }
         data_row = histogramm.daten_spalte
         for bin in histogramm.klassen:
-            _histrogramm_data['bin_range'].append([bin.range_von, bin.range_bis])
-            _histrogramm_data['values'].append(0)
-            _histrogramm_data['bins'].append(bin.bezeichnung)
+            _histogramm_data['bin_range'].append([bin.range_von, bin.range_bis])
+            _histogramm_data['values'].append(0)
+            _histogramm_data['bins'].append(bin.bezeichnung)
 
         if messdaten_nullpunkt:
             with open(frappe.get_site_path(messdaten_nullpunkt.strip('/')), 'r') as f:
@@ -285,11 +285,11 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                 data_row_int = num
                     else:
                         if data_row_found:
-                            for num, bin_range in enumerate(_histrogramm_data['bin_range']):
+                            for num, bin_range in enumerate(_histogramm_data['bin_range']):
                                     if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
-                                            _histrogramm_data['values'][num] += 1
-                                            _histrogramm_data['qty'] += 1
+                                            _histogramm_data['values'][num] += 1
+                                            _histogramm_data['qty'] += 1
                                             pass
         if messdaten_last:
             with open(frappe.get_site_path(messdaten_last.strip('/')), 'r') as f:
@@ -306,15 +306,15 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                 data_row_int = num
                     else:
                         if data_row_found:
-                            for num, bin_range in enumerate(_histrogramm_data['bin_range']):
+                            for num, bin_range in enumerate(_histogramm_data['bin_range']):
                                     if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
-                                            _histrogramm_data['values'][num] += 1
-                                            _histrogramm_data['qty'] += 1
+                                            _histogramm_data['values'][num] += 1
+                                            _histogramm_data['qty'] += 1
                                             pass
-        histrogramm_data.append(_histrogramm_data)
-    frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histrogramm_data}" WHERE `name` = '{batch}'""".format(histrogramm_data=histrogramm_data, batch=batch), as_list=True)
-    return histrogramm_data
+        histogramm_data.append(_histogramm_data)
+    frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histogramm_data}" WHERE `name` = '{batch}'""".format(histogramm_data=histogramm_data, batch=batch), as_list=True)
+    return histogramm_data
 
 @frappe.whitelist()
 def create_multiple_label_pdf(label_reference, contents):
