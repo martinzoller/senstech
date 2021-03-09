@@ -16,7 +16,6 @@ from frappe import _, get_print
 from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 import csv
-from frappe.utils import get_site_name
 from PyPDF2 import PdfFileWriter, PdfFileReader
 
 @frappe.whitelist()
@@ -270,9 +269,9 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
             _histrogramm_data['bin_range'].append([bin.range_von, bin.range_bis])
             _histrogramm_data['values'].append(0)
             _histrogramm_data['bins'].append(bin.bezeichnung)
-            
+
         if messdaten_nullpunkt:
-            with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_nullpunkt, 'r') as f:
+            with open(frappe.get_site_path(messdaten_nullpunkt.strip('/')), 'r') as f:
                 reader = csv.reader(f, dialect='excel', delimiter='\t')
                 first_row = True
                 data_row_found = False
@@ -293,7 +292,7 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                             _histrogramm_data['qty'] += 1
                                             pass
         if messdaten_last:
-            with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_last, 'r') as f:
+            with open(frappe.get_site_path(messdaten_last.strip('/')), 'r') as f:
                 reader = csv.reader(f, dialect='excel', delimiter='\t')
                 first_row = True
                 data_row_found = False
@@ -387,88 +386,66 @@ def create_single_label_pdf(label_printer, content):
     pdfkit.from_string(html_content, fname, options=options or {})
 
     return fname
-    
+
 def merge_pdfs(pdf_fnames):
     from PyPDF2 import PdfFileMerger
 
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
-    
     pdfs = pdf_fnames
     merger = PdfFileMerger()
 
     for pdf in pdfs:
         merger.append(pdf)
-        
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
+
     fname = "merge-{0}.pdf".format(frappe.generate_hash())
-    fpath = os.path.join(_fpath, fname)
-    
+    fpath = frappe.get_site_path('private', 'files', fname)
+
     merger.write(fpath)
     merger.close()
-    
+
     return fname
-    
+
 def cleanup(pdf_fnames):
     for fname in pdf_fnames:
         if os.path.exists(fname):
             os.remove(fname)
     return
-    
+
 @frappe.whitelist()
 def download_and_cleanup(file):
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
-    
+
     # read filedata from merged pdf and make it downloadable
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
-    fpath = os.path.join(_fpath, file)
-    
+    fpath = frappe.get_site_path('private', 'files', file)
+
     with open(fpath, "rb") as fileobj:
         filedata = fileobj.read()
-    
+
     frappe.local.response.filename = "/private/files/{name}".format(name=file.replace(" ", "-").replace("/", "-"))
     frappe.local.response.filecontent = filedata
     frappe.local.response.type = "download"
-    
+
     # remove merged pdf from filesystem
     if os.path.exists(fpath):
         os.remove(fpath)
-        
+
     return
-    
+
 @frappe.whitelist()
 def unlinke_email_queue(communication):
     frappe.db.sql("""UPDATE `tabEmail Queue` SET `communication` = '' WHERE `communication` = '{communication}'""".format(communication=communication), as_list=True)
     frappe.db.commit()
-    
+
 @frappe.whitelist()
 def add_freeze_pdf_to_dt(dt, dn, printformat):
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
 
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
     fname = "{0}.pdf".format(dn)
-    fpath = str(os.path.join(_fpath, fname))
-    
+    fpath = frappe.get_site_path('private', 'files', fname)
+
     pdf = PdfFileWriter()
     pdf = get_print(doctype=dt, name=dn, print_format=printformat, as_pdf=True, output=pdf, ignore_zugferd=False)
 
     with open(fpath, "wb") as w:
         pdf.write(w)
-        
+
     f = frappe.get_doc({
         "doctype": "File",
         "file_url": '/private/files/{0}'.format(fname),
@@ -484,41 +461,38 @@ def add_freeze_pdf_to_dt(dt, dn, printformat):
     frappe.db.commit()
 
     return
-    
+
 @frappe.whitelist()
 def add_cancelled_watermark(dt, dn):
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
 
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
     fname = "{0}.pdf".format(dn)
     _fname = "{0}_cancelled.pdf".format(dn)
-    input_file_fpath = str(os.path.join(_fpath, fname))
-    output_file_fpath = str(os.path.join(_fpath, _fname))
-    
+    input_file_fpath = str(frappe.get_site_path('private', 'files', fname))
+    output_file_fpath = str(frappe.get_site_path('private', 'files', _fname))
+
     pdf_file = input_file_fpath
     merged = output_file_fpath
-    watermark = "/home/frappe/frappe-bench/apps/senstech/senstech/public/pdf/abgebrochen.pdf"
+    watermark = frappe.get_site_path('public', 'pdf', 'abgebrochen.pdf')
 
-    with open(pdf_file, "rb") as input_file, open(watermark, "rb") as watermark_file:
-        input_pdf = PdfFileReader(input_file)
-        watermark_pdf = PdfFileReader(watermark_file)
-        watermark_page = watermark_pdf.getPage(0)
+    try:
+        with open(pdf_file, "rb") as input_file, open(watermark, "rb") as watermark_file:
+            input_pdf = PdfFileReader(input_file)
+            watermark_pdf = PdfFileReader(watermark_file)
+            watermark_page = watermark_pdf.getPage(0)
 
-        output = PdfFileWriter()
+            output = PdfFileWriter()
 
-        for i in range(input_pdf.getNumPages()):
-            pdf_page = input_pdf.getPage(i)
-            pdf_page.mergePage(watermark_page)
-            output.addPage(pdf_page)
+            for i in range(input_pdf.getNumPages()):
+                pdf_page = input_pdf.getPage(i)
+                pdf_page.mergePage(watermark_page)
+                output.addPage(pdf_page)
 
-        with open(merged, "wb") as merged_file:
-            output.write(merged_file)
-    
+            with open(merged, "wb") as merged_file:
+                output.write(merged_file)
+
+    except FileNotFoundError as e:
+        pass
+
     f = frappe.get_doc({
         "doctype": "File",
         "file_url": '/private/files/{0}'.format(_fname),
