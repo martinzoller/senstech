@@ -17,6 +17,9 @@ from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 import csv
 from PyPDF2 import PdfFileWriter, PdfFileReader
+import socket
+
+PRINTER_IP_ADDRESS = '192.168.0.46'
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -317,13 +320,13 @@ def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=No
     return histogramm_data
 
 @frappe.whitelist()
-def create_multiple_label_pdf(label_reference, contents):
+def print_multiple_label_pdf(label_reference, contents):
     label = frappe.get_doc("Label Printer", label_reference)
     pdf_fnames = []
     if isinstance(contents, six.string_types):
             contents = json.loads(contents)
     
-    #create single lbel pdf for each item batch based on verpackungseinheit
+    #create single label pdf for each item batch based on verpackungseinheit
     for content in contents:
         item = frappe.get_doc("Item", content[0])
         if item.verpackungseinheit > 0:
@@ -357,8 +360,15 @@ def create_multiple_label_pdf(label_reference, contents):
     # remove all single label pdfs
     cleanup(pdf_fnames)
     
-    return merged_pdf
+    direct_print_pdf(merged_pdf)
     
+    # and clean up the merged pdf as well
+    if os.path.exists(merged_pdf):
+        os.remove(merged_pdf)
+    
+    return
+
+
 def create_single_label_pdf(label_printer, content):
     # create temporary file
     fname = os.path.join("/tmp", "frappe-pdf-{0}.pdf".format(frappe.generate_hash()))
@@ -402,31 +412,12 @@ def merge_pdfs(pdf_fnames):
     merger.write(fpath)
     merger.close()
 
-    return fname
+    return fpath
 
 def cleanup(pdf_fnames):
     for fname in pdf_fnames:
         if os.path.exists(fname):
             os.remove(fname)
-    return
-
-@frappe.whitelist()
-def download_and_cleanup(file):
-
-    # read filedata from merged pdf and make it downloadable
-    fpath = frappe.get_site_path('private', 'files', file)
-
-    with open(fpath, "rb") as fileobj:
-        filedata = fileobj.read()
-
-    frappe.local.response.filename = "/private/files/{name}".format(name=file.replace(" ", "-").replace("/", "-"))
-    frappe.local.response.filecontent = filedata
-    frappe.local.response.type = "download"
-
-    # remove merged pdf from filesystem
-    if os.path.exists(fpath):
-        os.remove(fpath)
-
     return
 
 @frappe.whitelist()
@@ -516,5 +507,23 @@ def add_cancelled_watermark(dt, dn):
     
     if os.path.exists(input_file_fpath):
         os.remove(input_file_fpath)
+    
+    return
+
+
+@frappe.whitelist()
+def direct_print_pdf(file):
+
+    if not os.path.abspath(file).startswith(os.path.abspath(frappe.get_site_path())+os.sep):
+        raise Exception('Only files within the site can be printed')
+        return
+    
+    pdf = open(file, 'rb')
+    pdfcontent = pdf.read()
+    pdf.close()
+    soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    soc.connect((PRINTER_IP_ADDRESS, 9100))
+    soc.sendall(pdfcontent)
+    soc.close()
     
     return
