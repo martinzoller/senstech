@@ -19,8 +19,6 @@ import csv
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import socket
 
-PRINTER_IP_ADDRESS = '192.168.0.46'
-
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
     data = {}
@@ -514,6 +512,8 @@ def add_cancelled_watermark(dt, dn):
 @frappe.whitelist()
 def direct_print_pdf(file):
 
+    label_printer_hostname = frappe.db.get_single_value('Senstech Einstellungen', 'label_printer_hostname');
+
     if not os.path.abspath(file).startswith(os.path.abspath(frappe.get_site_path())+os.sep):
         raise Exception('Only files within the site can be printed')
         return
@@ -522,7 +522,7 @@ def direct_print_pdf(file):
     pdfcontent = pdf.read()
     pdf.close()
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    soc.connect((PRINTER_IP_ADDRESS, 9100))
+    soc.connect((label_printer_hostname, 9100))
     soc.sendall(pdfcontent)
     soc.close()
     
