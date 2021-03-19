@@ -45,11 +45,13 @@ $(document).ready(function() {
 			}
 			
 			// Check "Send me a copy" by default
+			/*
 			$('input[data-fieldname="send_me_a_copy"]').each(function() {
 					if(!$(this).prop('checked')) {
 						$(this).click();
 					}
 			});
+			*/
 		}
 	});
 
