@@ -19,13 +19,16 @@ $(document).ready(function() {
 			// Check for attachment with name matching document
 			var att_id = null;
 			var doc_name = cur_frm.doc.name+".pdf";
-			cur_frm.get_docinfo().attachments.every( att => {
-				if(att.file_name == doc_name) {
-					att_id = att.name;
-					return false;
-				}
-				return true;
-			});
+			var doc_info = cur_frm.get_docinfo();
+			if(doc_info.attachments) {
+				doc_info.attachments.every( att => {
+					if(att.file_name == doc_name) {
+						att_id = att.name;
+						return false;
+					}
+					return true;
+				});
+			}
 			if (att_id) {
 				// Attach matching file by default
 				var selector = 'input[data-file-name="'+att_id+'"]';
@@ -112,13 +115,16 @@ function print_pdf_directly(e) {
     // Submitted document: Find attached PDF
 		if (cur_frm.doc.docstatus == 1) {
 			var doc_name = cur_frm.doc.name+".pdf";
-			cur_frm.get_docinfo().attachments.every( att => {
-				if(att.file_name == doc_name) {
-					att_url = att.file_url;
-					return false;
-				}
-				return true;
-			});
+			var doc_info = cur_frm.get_docinfo();
+			if(doc_info.attachments) {
+				cur_frm.get_docinfo().attachments.every( att => {
+					if(att.file_name == doc_name) {
+						att_url = att.file_url;
+						return false;
+					}
+					return true;
+				});
+			}
 		}
 
 		// Not submitted or no attachment found: Link to PDF generator
