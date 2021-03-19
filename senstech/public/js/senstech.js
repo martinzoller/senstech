@@ -123,7 +123,8 @@ function print_pdf_directly(e) {
 				+ "&name=" + encodeURIComponent(cur_frm.doc.name)
 				+ "&format=" + encodeURIComponent(cur_frm.meta.default_print_format)
 				+ "&no_letterhead=" + "0"
-				/* + (me.lang_code ? ("&_lang=" + me.lang_code) : "")) */
+				+ (cur_frm.doc.language ? "&_lang=" + cur_frm.doc.language : "")
+				/* + (me.lang_code ? "&_lang=" + me.lang_code : "") */
 			);
 		}
 			
