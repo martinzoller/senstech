@@ -44,6 +44,9 @@ $(document).ready(function() {
 				});
 			}
 			
+			// BCC Outlook on all sent email
+			$('input[data-fieldname="bcc"]').prop('value','senstech+erp_archiv@senstech.ch');
+			
 			// Check "Send me a copy" by default
 			/*
 			$('input[data-fieldname="send_me_a_copy"]').each(function() {
