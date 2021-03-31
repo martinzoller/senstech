@@ -10,6 +10,7 @@
 
 import frappe
 import json
+import urllib.parse
 import six
 import pdfkit, os
 from frappe import _, get_print
@@ -253,6 +254,7 @@ def create_payment(sinv):
 @frappe.whitelist()
 def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=None):
     histogramm_data = []
+    max_anzahl = 0
     item = frappe.get_doc("Item", item)
     for _histogramm in item.histogramme:
         histogramm = frappe.get_doc("Senstech Histogramm", _histogramm.histogramm)
@@ -313,9 +315,37 @@ def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=No
                                             _histogramm_data['values'][num] += 1
                                             _histogramm_data['qty'] += 1
                                             pass
+        if _histogramm_data['qty'] > max_anzahl:
+            max_anzahl = _histogramm_data['qty']
         histogramm_data.append(_histogramm_data)
-    frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histogramm_data}" WHERE `name` = '{batch}'""".format(histogramm_data=histogramm_data, batch=batch), as_list=True)
-    return histogramm_data
+
+    histogramm_uri = []        
+    for data in histogramm_data:
+        params = {
+                   'x[0]': ','.join(map(str, data['bins'])),
+                   'y[0]': ','.join(map(str, data['values'])),
+                   'title': data['title'],
+                   'xlabel': data['x_title'],
+                   'ylabel': data['y_title']
+        }
+        histogramm_uri.append(urllib.parse.urlencode(params))
+
+    frappe.db.sql("UPDATE tabBatch SET histogramm_daten = %(histogramm_daten)s, histogramm_anz_gemessene = %(histogramm_anz_gemessene)s WHERE name = %(name)s",
+      {"histogramm_daten": json.dumps(histogramm_uri), "histogramm_anz_gemessene": max_anzahl, "name": batch}, as_list=True)
+    return histogramm_uri
+
+# für Parsen von Histogrammdaten in Jinja
+@frappe.whitelist()
+def json_loads(data):
+    return json.loads(data)
+
+# Prüfen auf Existenz eines Templates in Jinja
+@frappe.whitelist()
+def template_exists(path):
+    if not path.startswith('templates/'):
+        return False
+    full_path = os.path.join(frappe.get_app_path('senstech'), path)
+    return os.path.exists(full_path)
 
 @frappe.whitelist()
 def print_multiple_label_pdf(label_reference, contents):

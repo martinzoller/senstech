@@ -31,6 +31,18 @@ app_include_js = "/assets/senstech/js/senstech.js"
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
+
+# adding Jinja environments
+
+jenv = {
+	"methods": [
+		"get_stock_qty:senstech.utils.check_for_batch_quick_stock_entry",
+        "json_loads:senstech.utils.json_loads",
+        "template_exists:senstech.utils.template_exists"
+	]
+}
+
+
 # Home Pages
 # ----------
 
