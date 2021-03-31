@@ -1,0 +1,84 @@
+<!-- Paketlabel Philips -->
+
+<!-- CSS -->
+<style type="text/css">
+	table.tab {
+		width: 70%;
+		border-spacing: 0 !important;
+		border-collapse: collapse !important;
+	}
+	.tab td {
+		border: 1px solid black;
+	}
+	.tab-left {
+		width: 25%;
+	}
+	.tab-right {
+		font-size: 250%;
+	}
+</style>
+<!-- /CSS -->
+
+<!-- load data -->
+{% set ref_item = doc.items[0] %}
+{% set chargennummern = [] %}
+{% set qty_info = {'total_qty': 0} %}
+{% for item in doc.items %}
+  {% if item.item_code == ref_item.item_code %}
+    {% if not item.chargennummer in chargennummern %}
+      {% if chargennummern.append(item.chargennummer) %}{% endif %}
+    {% endif %}
+    {% if qty_info.update({'total_qty': qty_info.total_qty + item.qty}) %}{% endif %}
+  {% endif %}
+{% endfor %}
+{% set item_stamm = frappe.get_doc("Item", ref_item.item_code) %}
+{% set artikelcode_kunde = item_stamm.artikelcode_kunde or '-' %}
+{% set barcode = item_stamm.artikelcode_kunde_als_barcode_raw or '<div style="color:red">Fehler: Barcode im Artikel nicht gesetzt</div>' %}
+{% set artikelname = item_stamm.item_name or '-' %}
+{% set artikel_revision_kunde = item_stamm.produktrevision_kunde or '-' %}
+{% set description = item_stamm.description.split("</div><div>") %}
+{% set short_description = description[0]|replace("<div>", "") or '-' %}
+{% set adresse = doc_data.adresse_lieferung %}
+{% set lb_in_one_g = 0.002204623 %}
+<!-- /load data -->
+<!-- content -->
+<table class="tab">
+	<tr>
+		<td class="tab-left"><p>SHIP FROM:</p><p>Senstech AG<br>Allmendstrasse 9<br>8320 Fehraltorf<br>Switzerland</p></td>
+		<td class="tab-right" style="font-size:100%;"><p>SHIP TO:</p><p>{{ adresse.firma }}<br>{{ adresse.adresse }}
+		{% if adresse.land != 'Schweiz' %}<br>{{ _(adresse.land) }}{% endif %}
+		</p></td>
+	</tr>
+	<tr>
+		<td class="tab-left">PKG ID:<br>(1P)</td>
+		<td class="tab-right">{{ artikelname }}</td>
+	</tr>
+	<tr>
+		<td class="tab-left">P.O.#:<br>(K)</td>
+		<td class="tab-right">{{ doc.po_no }}</td>
+	</tr>
+	<tr>
+		<td class="tab-left">PART #:<br>(P)</td>
+		<td class="tab-right">{{ artikelcode_kunde }}</td>
+	</tr>
+	<tr>
+		<td class="tab-left">REVISION:</td>
+		<td class="tab-right">{{ artikel_revision_kunde }}</td>
+	</tr>
+	<tr>
+		<td class="tab-left">QUANTITY:<br>(Q)</td>
+		<td class="tab-right">{{ qty_info.total_qty|int }}</td>
+	</tr>
+	<tr>
+		<td class="tab-left">SPECIAL:<br>(S)</td>
+		<td class="tab-right">{{ chargennummern|join(", ") }}</td>
+	</tr>
+	<tr>
+		<td class="tab-left">DESCRIPTION:</td>
+		<td class="tab-right" style="font-size:100%;">{{ short_description }}<br>Country of Origin: Switzerland</td>
+	</tr>
+	<tr>
+		<td class="tab-left"><p>PACKAGE COUNT</p><p style="text-align:center">1/1</p></td>
+		<td class="tab-right" style="font-size:100%;"><p>PACKAGE WEIGHT</p><p style="text-align:center">{{ "{:,.2f}".format(qty_info.total_qty*item_stamm.weight_per_unit*lb_in_one_g) }} LB</p></span></td>
+	</tr>
+</table>

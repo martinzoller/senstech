@@ -1,0 +1,204 @@
+<!-- briefkopf -->
+{% if _("language_code") in ['en','de'] %}
+		{% set bk = 'senstech_' + _("language_code") %}
+{% else %}
+		{% set bk = 'senstech_en' %}
+{% endif %}
+{% if doc_data.update({ 'briefkopf': bk }) %}{% endif %}
+
+<!-- user_id -->
+{% if doc.docstatus == 0 %}
+    {% set user_id = doc.owner %}
+{% else %}
+    {% if doc.submitted_by %}
+        {% set user_id = doc.submitted_by %}
+    {% else %}
+        {% set user_id = doc.modified_by %}
+    {% endif %}
+{% endif %}
+{% if doc_data.update({ 'user_id': user_id }) %}{% endif %}
+
+<!-- ansprechpartner -->
+{% if doc_data.update({ 'ansprechpartner': frappe.get_doc("User", doc_data.user_id).full_name }) %}{% endif %}
+
+<!-- rahmenauftrag -->
+{% if doc.doctype == 'Sales Order' %}
+    {% set bo_doc = doc %}
+{% elif doc.items[0].sales_order %}
+    {% set bo_doc = frappe.get_doc("Sales Order", doc.items[0].sales_order) %}
+{% elif doc.items[0].against_sales_order %}
+    {% set bo_doc = frappe.get_doc("Sales Order", doc.items[0].against_sales_order) %}
+{% endif %}
+{% if bo_doc %}
+    {% if bo_doc.items[0].blanket_order %}
+	      {% if doc_data.update({ 'rahmenauftrag': frappe.get_doc("Blanket Order", bo_doc.items[0].blanket_order).rahmenauftragsnummer_kunde }) %}{% endif %}
+    {% endif %}
+{% endif %}
+
+<!-- unsere_lieferantennummer (QN, SO, DN, SI) -->
+{% if doc.customer %}
+  {% if doc_data.update({ 'unsere_lieferantennummer': frappe.get_doc("Customer", doc.customer).unsere_lieferantennummer }) %}{% endif %}
+{% endif %}
+
+<!-- unsere_kundennummer (PO) -->
+{% if doc.supplier %}
+  {% if doc_data.update({ 'unsere_kundennummer': frappe.get_doc("Supplier", doc.supplier).unsere_kundennummer }) %}{% endif %}
+{% endif %}
+
+<!-- unterschrift -->
+{% set unterschriften_liste = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": doc_data.user_id }) %}
+{% if unterschriften_liste|length > 0 %}
+		{% if doc_data.update({ 'unterschrift': unterschriften_liste[0].unterschrift }) %}{% endif %}
+{% endif %}
+
+<!-- adresse_kunde (QN, SO, DN, SI) -->
+{% if doc.customer_address %}
+		{% set cust_addr = frappe.get_doc("Address", doc.customer_address) %}
+		{% if cust_addr.abweichender_firmennamen %}
+			{% set cust_firma = customer_address.abweichender_firmennamen %}
+		{% else %}
+			{% set cust_firma = doc.customer_name %}
+		{% endif %}
+		{% set cust = { 
+										'firma': cust_firma,
+										'adresse': doc.address_display,
+										'land': cust_addr.country
+									} %}
+{% else %}
+		{% set cust = { 
+										'firma': doc.customer_name,
+										'adresse': '<span style="color:red"><b>Keine Adresse hinterlegt</b></span>',
+										'land': 'Kein Land hinterlegt'
+									} %}
+{% endif %}
+{% if doc_data.update({ 'adresse_kunde': cust }) %}{% endif %}
+
+<!-- adresse_lieferung (QN, SO, DN, SI) -->
+{% if doc.shipping_address_name %}
+		{% set ship_addr = frappe.get_doc("Address", doc.shipping_address_name) %}
+		{% if ship_addr.abweichender_firmennamen %}
+				{% set ship_firma = shipping_address.abweichender_firmennamen %}
+		{% else %}
+				{% set ship_firma = doc.customer_name %}
+		{% endif %}
+		{% set shipping = { 
+												'firma': ship_firma,
+												'adresse': doc.shipping_address,
+												'land': ship_addr.country
+											} %}
+{% else %}
+		{% set shipping = doc_data.adresse_kunde %}
+{% endif %}
+{% if doc_data.update({ 'adresse_lieferung': shipping }) %}{% endif %}
+
+<!-- adresse_lieferant (PO) -->
+{% if doc.supplier_address %}
+    {% set supp_addr = frappe.get_doc("Address", doc.supplier_address) %}
+    {% if supp_addr.abweichender_firmennamen %}
+	    {% set supp_firma = supp_addr.abweichender_firmennamen %}
+    {% else %}
+	    {% set supp_firma = doc.supplier_name %}
+    {% endif %}
+		{% set supp = { 
+										'firma': supp_firma,
+										'adresse': doc.address_display,
+										'land': supp_addr.country
+									} %}
+{% else %}
+		{% set supp = { 
+										'firma': doc.supplier_name,
+										'adresse': '<span style="color:red"><b>Keine Adresse hinterlegt</b></span>',
+										'land': 'Kein Land hinterlegt'
+									} %}
+{% endif %}
+{% if doc_data.update({ 'adresse_lieferant': cust }) %}{% endif %}
+
+<!-- kontakt -->
+{% if doc.contact_person %}
+		{% set contact_doc = frappe.get_doc("Contact", doc.contact_person) %}
+		{% set contact = _(contact_doc.salutation or '') + ' ' + (contact_doc.first_name or '-') + ' ' + (contact_doc.last_name or '') %}
+{% else %}
+		{% set contact = '-' %}
+{% endif %}
+{% if doc_data.update({ 'kontakt': contact }) %}{% endif %}
+
+<!-- lieferkonditionen -->
+{% set lieferkond = {'found': 0, 'txt': '', 'amount': 0} %}
+{% for item in doc.items %}
+		{% if item.item_group == 'Versandkosten' %}
+				{% if lieferkond.update({'found': 1, 'txt': item.item_name, 'amount': lieferkond.amount + item.amount}) %}{% endif %}
+		{% endif %}
+{% endfor %}
+{% if doc_data.update({ 'lieferkonditionen': lieferkond }) %}{% endif %}
+
+<!-- senstech_iban -->
+{% if frappe.get_doc("Account", "1020 - KK ZKB 1042-0171.171 - ST").iban %}
+    {% set iban = frappe.get_doc("Account", "1020 - KK ZKB 1042-0171.171 - ST").iban %}
+		{% if doc_data.update({ 'senstech_iban': iban }) %}{% endif %}
+{% else %}
+    <div class="errorpopup">Fehler beim Laden der IBAN-Nummer</div>
+{% endif %}
+
+
+
+<!-- CSS -->
+<style type="text/css">
+@font-face {
+   font-family: MyriadPro;
+   src: url('/files/MyriadPro-Regular.otf');
+}
+
+.print-format {
+    font-family: MyriadPro;
+    font-size: 10pt;
+    line-height: 1.5;
+    position: relative;
+    margin-left: 12.5mm;
+}
+
+.print-format td, .print-format th {
+    padding: 0px !important;
+}
+
+.errorpopup {
+    position: absolute;
+    width: 150mm;
+    left: 30mm;
+    top: 30mm;
+    padding: 10mm;
+    border: 2px solid red;
+    background-color: #fdd;
+    font-size: 14pt;
+    color: red;
+}
+
+#itemtable {
+  border-collapse: collapse !important;
+}
+
+#itemtable th, #itemtable td {
+    border: 0.5px solid gray !important;
+    padding: 6px !important;
+}
+
+#itemtable td.noborder {
+    border: none !important;
+}
+
+#itemtable td.borderright {
+    border: none !important;
+    border-right: 0.5px solid black !important;
+}
+
+#itemtable td.borderleft {
+    border-left: 0.5px solid black !important;
+}
+
+#itemtable td.borderbottom {
+    border-bottom: 0.5px solid black !important;
+}
+
+#itemtable td.bordertop {
+    border-top: 0.5px solid black !important;
+}
+</style>

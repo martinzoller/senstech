@@ -1,3 +1,8 @@
+/* Drucken nur via PDF zulassen */
 .btn-print-print {
 	visibility: hidden;
+}
+/* Texteditor kleiner machen, wenn kein Inhalt (Default-Mindesthöhe ist 400px) */
+.ql-editor {
+	min-height: 150px !important;
 }

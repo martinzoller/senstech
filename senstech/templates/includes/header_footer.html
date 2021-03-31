@@ -1,0 +1,23 @@
+{% if not doc_data.header_loaded %}
+
+  {% if doc_data.update({ 'header_loaded': 1 }) %}{% endif %}
+
+	<div id="header-html" class="hidden-pdf">
+		{% set letter_head = frappe.get_doc("Letter Head", doc_data.briefkopf) %}
+		{% if letter_head %}
+			{{ letter_head.content }}
+		{% else %}
+			<p>Letter head not found!</p>
+		{% endif %}
+	</div>
+
+	<div id="footer-html" class="visible-pdf">
+		{% set letter_head = frappe.get_doc("Letter Head", doc_data.briefkopf) %}
+		{% if letter_head %}
+			{{ letter_head.footer }}
+		{% else %}
+			<p>No letter head found. Please define a letter head under print settings and mark it as default</p>
+		{% endif %}
+	</div>
+
+{% endif %}

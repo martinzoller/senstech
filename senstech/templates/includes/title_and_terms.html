@@ -1,0 +1,7 @@
+<div>
+		<b><br><br>{{ _(doc_data.titel) }} {{ doc.name }}</b>
+		{% if doc.terms and doc.terms != '<div><br></div>' %}
+		<div style="height:2mm"></div>{{ _(doc.terms) }}
+		{% endif %}
+		<div><br></div>
+</div>

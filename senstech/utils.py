@@ -10,14 +10,15 @@
 
 import frappe
 import json
+import urllib.parse
 import six
 import pdfkit, os
 from frappe import _, get_print
 from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 import csv
-from frappe.utils import get_site_name
 from PyPDF2 import PdfFileWriter, PdfFileReader
+import socket
 
 @frappe.whitelist()
 def check_batch_release(delivery_note=None):
@@ -249,14 +250,15 @@ def create_payment(sinv):
         return pe.name
     except Exception as err:
         return err
-        
+
 @frappe.whitelist()
-def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=None):
-    histrogramm_data = []
+def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=None):
+    histogramm_data = []
+    max_anzahl = 0
     item = frappe.get_doc("Item", item)
     for _histogramm in item.histogramme:
         histogramm = frappe.get_doc("Senstech Histogramm", _histogramm.histogramm)
-        _histrogramm_data = {
+        _histogramm_data = {
             'title': histogramm.histogramm_titel,
             'x_title': histogramm.x_beschriftung,
             'y_title': histogramm.y_beschriftung,
@@ -267,12 +269,12 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
         }
         data_row = histogramm.daten_spalte
         for bin in histogramm.klassen:
-            _histrogramm_data['bin_range'].append([bin.range_von, bin.range_bis])
-            _histrogramm_data['values'].append(0)
-            _histrogramm_data['bins'].append(bin.bezeichnung)
-            
+            _histogramm_data['bin_range'].append([bin.range_von, bin.range_bis])
+            _histogramm_data['values'].append(0)
+            _histogramm_data['bins'].append(bin.bezeichnung)
+
         if messdaten_nullpunkt:
-            with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_nullpunkt, 'r') as f:
+            with open(frappe.get_site_path(messdaten_nullpunkt.strip('/')), 'r') as f:
                 reader = csv.reader(f, dialect='excel', delimiter='\t')
                 first_row = True
                 data_row_found = False
@@ -286,14 +288,14 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                 data_row_int = num
                     else:
                         if data_row_found:
-                            for num, bin_range in enumerate(_histrogramm_data['bin_range']):
+                            for num, bin_range in enumerate(_histogramm_data['bin_range']):
                                     if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
-                                            _histrogramm_data['values'][num] += 1
-                                            _histrogramm_data['qty'] += 1
+                                            _histogramm_data['values'][num] += 1
+                                            _histogramm_data['qty'] += 1
                                             pass
         if messdaten_last:
-            with open('/home/frappe/frappe-bench/sites/senstech.libracore.ch/' + messdaten_last, 'r') as f:
+            with open(frappe.get_site_path(messdaten_last.strip('/')), 'r') as f:
                 reader = csv.reader(f, dialect='excel', delimiter='\t')
                 first_row = True
                 data_row_found = False
@@ -307,24 +309,52 @@ def get_histrogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=N
                                 data_row_int = num
                     else:
                         if data_row_found:
-                            for num, bin_range in enumerate(_histrogramm_data['bin_range']):
+                            for num, bin_range in enumerate(_histogramm_data['bin_range']):
                                     if float(row[data_row_int]) > float(bin_range[0]):
                                         if float(row[data_row_int]) <= float(bin_range[1]):
-                                            _histrogramm_data['values'][num] += 1
-                                            _histrogramm_data['qty'] += 1
+                                            _histogramm_data['values'][num] += 1
+                                            _histogramm_data['qty'] += 1
                                             pass
-        histrogramm_data.append(_histrogramm_data)
-    frappe.db.sql("""UPDATE `tabBatch` SET `histogramm_daten` = "{histrogramm_data}" WHERE `name` = '{batch}'""".format(histrogramm_data=histrogramm_data, batch=batch), as_list=True)
-    return histrogramm_data
+        if _histogramm_data['qty'] > max_anzahl:
+            max_anzahl = _histogramm_data['qty']
+        histogramm_data.append(_histogramm_data)
+
+    histogramm_uri = []        
+    for data in histogramm_data:
+        params = {
+                   'x[0]': ','.join(map(str, data['bins'])),
+                   'y[0]': ','.join(map(str, data['values'])),
+                   'title': data['title'],
+                   'xlabel': data['x_title'],
+                   'ylabel': data['y_title']
+        }
+        histogramm_uri.append(urllib.parse.urlencode(params))
+
+    frappe.db.sql("UPDATE tabBatch SET histogramm_daten = %(histogramm_daten)s, histogramm_anz_gemessene = %(histogramm_anz_gemessene)s WHERE name = %(name)s",
+      {"histogramm_daten": json.dumps(histogramm_uri), "histogramm_anz_gemessene": max_anzahl, "name": batch}, as_list=True)
+    return histogramm_uri
+
+# für Parsen von Histogrammdaten in Jinja
+@frappe.whitelist()
+def json_loads(data):
+    return json.loads(data)
+
+# Prüfen auf Existenz eines Templates in Jinja
+@frappe.whitelist()
+def template_exists(path):
+    if not path.startswith('templates/'):
+        return False
+    full_path = os.path.join(frappe.get_app_path('senstech'), path)
+    return os.path.exists(full_path)
 
 @frappe.whitelist()
-def create_multiple_label_pdf(label_reference, contents):
+def print_multiple_label_pdf(label_reference, contents):
     label = frappe.get_doc("Label Printer", label_reference)
     pdf_fnames = []
     if isinstance(contents, six.string_types):
             contents = json.loads(contents)
     
-    #create single lbel pdf for each item batch based on verpackungseinheit
+    #create single label pdf for each item batch based on verpackungseinheit
     for content in contents:
         item = frappe.get_doc("Item", content[0])
         if item.verpackungseinheit > 0:
@@ -358,8 +388,15 @@ def create_multiple_label_pdf(label_reference, contents):
     # remove all single label pdfs
     cleanup(pdf_fnames)
     
-    return merged_pdf
+    direct_print_pdf(merged_pdf)
     
+    # and clean up the merged pdf as well
+    if os.path.exists(merged_pdf):
+        os.remove(merged_pdf)
+    
+    return
+
+
 def create_single_label_pdf(label_printer, content):
     # create temporary file
     fname = os.path.join("/tmp", "frappe-pdf-{0}.pdf".format(frappe.generate_hash()))
@@ -387,88 +424,47 @@ def create_single_label_pdf(label_printer, content):
     pdfkit.from_string(html_content, fname, options=options or {})
 
     return fname
-    
+
 def merge_pdfs(pdf_fnames):
     from PyPDF2 import PdfFileMerger
 
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
-    
     pdfs = pdf_fnames
     merger = PdfFileMerger()
 
     for pdf in pdfs:
         merger.append(pdf)
-        
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
+
     fname = "merge-{0}.pdf".format(frappe.generate_hash())
-    fpath = os.path.join(_fpath, fname)
-    
+    fpath = frappe.get_site_path('private', 'files', fname)
+
     merger.write(fpath)
     merger.close()
-    
-    return fname
-    
+
+    return fpath
+
 def cleanup(pdf_fnames):
     for fname in pdf_fnames:
         if os.path.exists(fname):
             os.remove(fname)
     return
-    
-@frappe.whitelist()
-def download_and_cleanup(file):
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
-    
-    # read filedata from merged pdf and make it downloadable
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
-    fpath = os.path.join(_fpath, file)
-    
-    with open(fpath, "rb") as fileobj:
-        filedata = fileobj.read()
-    
-    frappe.local.response.filename = "/private/files/{name}".format(name=file.replace(" ", "-").replace("/", "-"))
-    frappe.local.response.filecontent = filedata
-    frappe.local.response.type = "download"
-    
-    # remove merged pdf from filesystem
-    if os.path.exists(fpath):
-        os.remove(fpath)
-        
-    return
-    
+
 @frappe.whitelist()
 def unlinke_email_queue(communication):
     frappe.db.sql("""UPDATE `tabEmail Queue` SET `communication` = '' WHERE `communication` = '{communication}'""".format(communication=communication), as_list=True)
     frappe.db.commit()
-    
+
 @frappe.whitelist()
 def add_freeze_pdf_to_dt(dt, dn, printformat):
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
 
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
     fname = "{0}.pdf".format(dn)
-    fpath = str(os.path.join(_fpath, fname))
-    
+    fpath = frappe.get_site_path('private', 'files', fname)
+
     pdf = PdfFileWriter()
     pdf = get_print(doctype=dt, name=dn, print_format=printformat, as_pdf=True, output=pdf, ignore_zugferd=False)
 
     with open(fpath, "wb") as w:
         pdf.write(w)
-        
+
     f = frappe.get_doc({
         "doctype": "File",
         "file_url": '/private/files/{0}'.format(fname),
@@ -484,41 +480,38 @@ def add_freeze_pdf_to_dt(dt, dn, printformat):
     frappe.db.commit()
 
     return
-    
+
 @frappe.whitelist()
 def add_cancelled_watermark(dt, dn):
-    # develop VM compatibility
-    site_name = get_site_name(frappe.local.request.host)
-    if site_name == 'localhost':
-        site_name = 'site1.local'
-    else:
-        site_name = 'senstech.libracore.ch'
 
-    _fpath = "/home/frappe/frappe-bench/sites/{site_name}/private/files".format(site_name=site_name)
     fname = "{0}.pdf".format(dn)
     _fname = "{0}_cancelled.pdf".format(dn)
-    input_file_fpath = str(os.path.join(_fpath, fname))
-    output_file_fpath = str(os.path.join(_fpath, _fname))
-    
+    input_file_fpath = str(frappe.get_site_path('private', 'files', fname))
+    output_file_fpath = str(frappe.get_site_path('private', 'files', _fname))
+
     pdf_file = input_file_fpath
     merged = output_file_fpath
-    watermark = "/home/frappe/frappe-bench/apps/senstech/senstech/public/pdf/abgebrochen.pdf"
+    watermark = frappe.get_site_path('public', 'pdf', 'abgebrochen.pdf')
 
-    with open(pdf_file, "rb") as input_file, open(watermark, "rb") as watermark_file:
-        input_pdf = PdfFileReader(input_file)
-        watermark_pdf = PdfFileReader(watermark_file)
-        watermark_page = watermark_pdf.getPage(0)
+    try:
+        with open(pdf_file, "rb") as input_file, open(watermark, "rb") as watermark_file:
+            input_pdf = PdfFileReader(input_file)
+            watermark_pdf = PdfFileReader(watermark_file)
+            watermark_page = watermark_pdf.getPage(0)
 
-        output = PdfFileWriter()
+            output = PdfFileWriter()
 
-        for i in range(input_pdf.getNumPages()):
-            pdf_page = input_pdf.getPage(i)
-            pdf_page.mergePage(watermark_page)
-            output.addPage(pdf_page)
+            for i in range(input_pdf.getNumPages()):
+                pdf_page = input_pdf.getPage(i)
+                pdf_page.mergePage(watermark_page)
+                output.addPage(pdf_page)
 
-        with open(merged, "wb") as merged_file:
-            output.write(merged_file)
-    
+            with open(merged, "wb") as merged_file:
+                output.write(merged_file)
+
+    except FileNotFoundError as e:
+        pass
+
     f = frappe.get_doc({
         "doctype": "File",
         "file_url": '/private/files/{0}'.format(_fname),
@@ -542,5 +535,25 @@ def add_cancelled_watermark(dt, dn):
     
     if os.path.exists(input_file_fpath):
         os.remove(input_file_fpath)
+    
+    return
+
+
+@frappe.whitelist()
+def direct_print_pdf(file):
+
+    label_printer_hostname = frappe.db.get_single_value('Senstech Einstellungen', 'label_printer_hostname');
+
+    if not os.path.abspath(file).startswith(os.path.abspath(frappe.get_site_path())+os.sep):
+        raise Exception('Only files within the site can be printed')
+        return
+    
+    pdf = open(file, 'rb')
+    pdfcontent = pdf.read()
+    pdf.close()
+    soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    soc.connect((label_printer_hostname, 9100))
+    soc.sendall(pdfcontent)
+    soc.close()
     
     return

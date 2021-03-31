@@ -1,0 +1,13 @@
+{{ _(doc.terms_below) }}
+<!-- Gruss -->
+<div style="padding-left: 363px; page-break-inside: avoid;">
+<div><br></div>
+{{ _("Mit freundlichen Grüssen") }}
+{% if doc_data.unterschrift %}
+	<img src="{{ doc_data.unterschrift }}" width="100%" style="margin-left: -30px; margin-top: -20px; padding-right: 60px">
+	<div style="margin-top: -30px;">{{ doc_data.ansprechpartner }}<br>Senstech AG</div>
+{% else %}
+	<div><br></div>{{ doc_data.ansprechpartner }}<br>Senstech AG
+{% endif %}
+</div>
+<!-- /Gruss -->

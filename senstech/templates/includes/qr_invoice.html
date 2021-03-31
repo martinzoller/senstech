@@ -1,0 +1,132 @@
+<br><br><br>
+<!-- QR code section -->
+<!-- get receiver details -->
+{% if doc.company_address %}
+  {% set cmp_addr = frappe.get_doc("Address", doc.company_address) %}
+{% endif %}
+{% set company = frappe.get_doc("Company", doc.company) %}
+{% if cmp_addr %}
+  {% set address_array = cmp_addr.address_line1.split(" ") %}
+  {% set address_line_item_count = address_array | count %}
+  {% set cmp_country = frappe.get_doc("Country", cmp_addr.country) %}
+  {% set cmp_country_code = cmp_country.code | upper %}
+  {% set cmp_address_line_detail = {'name': doc.company, 'street': '', 'number': '', 'pin': cmp_addr.pincode, 'city': cmp_addr.city, 'country': cmp_country_code } %}
+  {% for i in range(0, (address_line_item_count - 1)) %}
+    {% if cmp_address_line_detail.update({'street': cmp_address_line_detail.street + " " + address_array[i] }) %}{% endif %}
+  {% endfor %}
+  {% if cmp_address_line_detail.update({'number': address_array[address_line_item_count - 1]}) %}{% endif %}
+
+
+	<!-- get payer details -->
+	{% if doc.customer_address %}
+		{% set pay_addr = frappe.get_doc("Address", doc.customer_address) %}
+	{% endif %}
+	{% if pay_addr %}
+		{% set pay_address_array = pay_addr.address_line1.split(" ") %}
+		{% set pay_address_line_item_count = pay_address_array | count %}
+		{% set pay_country = frappe.get_doc("Country", pay_addr.country) %}
+		{% set pay_country_code = pay_country.code | upper %}
+		{% set pay_address_line_detail = {'name': doc.customer, 'street': '', 'number': '', 'pin': pay_addr.pincode, 'city': pay_addr.city, 'country': pay_country_code } %}
+		{% for i in range(0, (pay_address_line_item_count - 1)) %}
+			{% if pay_address_line_detail.update({'street': pay_address_line_detail.street + " " + pay_address_array[i] }) %}{% endif %}
+		{% endfor %}
+		{% if pay_address_line_detail.update({'number': pay_address_array[pay_address_line_item_count - 1]}) %}{% endif %}
+
+
+		<table style="width: 100%; page-break-inside: avoid !important;border-top:2px solid white; border-collapse: separate; border-spacing: 0px;">
+		 <tr><!-- three columns -->
+		 
+			<td style="width: 220px; padding: 20px !important; border: 1px solid silver;"><!-- blank 1. column -->
+					<table style="width: 100%; height: 397px; font-size: 11pt;">
+					 <tr><td><b>{{ _("Empfangsschein") }}</b></td></tr>
+					 <tr><td style="font-size:8pt; border-top: 1px solid silver;"><b><span style="font-size: 6pt">{{ _("Konto / Zahlbar an") }}</span></b><br />
+							{{ doc_data.senstech_iban or _("Company default bank IBAN not found") }}<br />
+							{{ cmp_address_line_detail.name }}<br />
+							{{ cmp_address_line_detail.street }} {{ cmp_address_line_detail.number }}<br />
+							{{ cmp_address_line_detail.country }}-{{ cmp_address_line_detail.pin }} {{ cmp_address_line_detail.city }}<br />
+					 </td></tr>
+					 <tr><td style="font-size:8pt;"><b><span style="font-size: 6pt">{{ _("Referenz") }}</span></b><br />
+							{{ doc.name }}
+					 </td></tr>
+					 <tr><td style="font-size:8pt;"><b><span style="font-size: 6pt">{{ _("Zahlbar durch") }}</span></b><br />
+							{{ doc.customer_name }}<br />
+							{{ pay_address_line_detail.street }} {{ pay_address_line_detail.number }}<br />
+							{{ pay_address_line_detail.country }}-{{ pay_address_line_detail.pin }} {{ pay_address_line_detail.city }}<br />
+					 </td></tr>
+				 <tr><td style="padding: 0px !important";>
+						<table style="width: 100%; font-size:8pt;">
+					<tr>
+							 <td style="width:20%;">{{ _("Währung") }}</td>
+							 <td style="width:20%">{{ _("Betrag") }}</td>
+							</tr>
+					<tr>
+							 <td style="width:20%;">{{ doc.currency }}</td><!-- must be with space as thousand separator and point for decimal, 2 decimals -->
+							 <td style="width:20%;">{{ "{:,.2f}".format(doc.outstanding_amount).replace(",", " ") }}</td>
+							</tr>
+						</table>
+				 </td></tr>
+						<tr>
+							<td style="text-align: right; padding: 0px !important; font-size:6pt; border-top: 1px solid silver;">
+								<b>{{ _("Annahmestelle") }}</b>
+					</td>
+				</tr>
+				 </table>
+			 </td>
+				 
+			<!-- blank 2. column -->
+			<td style="width: 280px; height: 397px; padding-top: 20px !important; padding-left: 20px !important; padding-bottom: 20px !important; border: solid silver; border-width: 1px 0;">
+					 <table style="width: 100%; ">
+						<tr><td><b><span style="font-size: 11pt ;">{{ _("Zahlteil") }}</span></b></td></tr>
+						<tr><td>{{ _("Unterstützt") }}<br />{{ _("Überweisung") }}</td></tr>
+						<tr><td><!-- QR code -->
+					 <img src="https://data.libracore.ch/phpqrcode/api/iso20022.php?iban={{ doc_data.senstech_iban or ''}}&receiver_name={{ cmp_address_line_detail.name }}&receiver_street={{ cmp_address_line_detail.street | trim }}&receiver_number={{ cmp_address_line_detail.number }}&receiver_pincode={{ cmp_address_line_detail.pin }}&receiver_town={{ cmp_address_line_detail.city }}&receiver_country={{ cmp_address_line_detail.country }}&amount={{ doc.outstanding_amount }}&currency={{ doc.currency }}&payer_name={{ pay_address_line_detail.name }}&payer_street={{ pay_address_line_detail.street | trim }}&payer_number={{ pay_address_line_detail.number }}&payer_pincode={{ pay_address_line_detail.pin }}&payer_town={{ pay_address_line_detail.city }}&payer_country={{ pay_address_line_detail.country }}&reference_type=NON&message={{ doc.name }}" style="width: 46mm !important; height: 46mm !important;" />
+						 </td></tr>
+						<tr><td>
+						 <table style="width: 100%;">
+							<tr>
+							 <td>{{ _("Währung") }}</td>
+							 <td>{{ _("Betrag") }}</td>
+							</tr>
+							<tr>
+							 <td>{{ doc.currency }}</td><!-- must be with space as thousand separator and point for decimal -->
+							 <td>{{ "{:,.2f}".format(doc.outstanding_amount).replace(",", " ") }}</td>
+							</tr>
+						 </table>
+						</td></tr>
+					 </table>
+			 </td>
+					
+		<!-- 3. column -->
+			<td style="width: 280px; height: 397px; padding-top: 20px !important; padding-right: 20px !important; padding-bottom: 20px !important;border: 1px solid silver; border-left: 0 none;">
+			 <table>
+				<tr><td>{{ _("Konto") }}<br />{{ doc_data.senstech_iban or _("Company default bank IBAN not found") }}</td></tr>
+				<tr><td>{{ _("Zahlungsempfänger") }}<br />
+					{{ cmp_address_line_detail.name }}<br />
+					{{ cmp_address_line_detail.street }} {{ cmp_address_line_detail.number }}<br />
+					{{ cmp_address_line_detail.country }}-{{ cmp_address_line_detail.pin }} {{ cmp_address_line_detail.city }}<br />
+				</td></tr>
+				<tr><td>{{ _("Referenznummer") }}<br />
+					{{ doc.name }}</td></tr>
+				<tr><td>{{ _("Zusätzliche Informationen") }}<br />
+					{{ doc.title }}</td></tr>
+				<tr><td>{{ _("Zahlungspflichtiger") }}<br />
+					{{ doc.customer_name }}<br />
+					{{ pay_address_line_detail.street }} {{ pay_address_line_detail.number }}<br />
+					{{ pay_address_line_detail.country }}-{{ pay_address_line_detail.pin }} {{ pay_address_line_detail.city }}<br />
+				</td></tr>
+				<tr><td>{{ _("Zahlbar bis") }}<br />
+					{{ doc.get_formatted('due_date') }}</td></tr>
+			 </table>
+			</td>
+		</tr>
+		</table>
+
+	<!-- control: customer address missing -->
+	{% else %}
+		<p>{{ _("Customer address missing, please add to sales invoice") }}</p>
+	{% endif %}
+
+<!-- control: company address missing -->
+{% else %}
+	<p>{{ _("Company address missing, please add to sales invoice") }}</p>
+{% endif %}
