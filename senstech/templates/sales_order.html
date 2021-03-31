@@ -48,13 +48,6 @@
 		<td>{% if doc_data.lieferkonditionen.found == 1 %}{{ _(doc_data.lieferkonditionen.txt) }}{% else %}-{% endif %}</td>
 	</tr>
 	<tr>
-		<td></td>
-		<td></td>
-		<td></td>
-		<td>{{ _("Geschäftsbedingungen") }}</td>
-		<td>{{ _("Siehe senstech.ch/agb") }}</td>
-	</tr>
-	<tr>
 		<td>{{ _("Lieferadresse") }}</td>
 		<td>{% if doc_data.adresse_lieferung.firma != doc_data.adresse_kunde.firma -%}
 		        {{ doc_data.adresse_lieferung.firma }}, 
@@ -64,8 +57,8 @@
 				{%- endif %}
 		</td>
 		<td></td>
-		<td>{{ _("Ihr Ansprechpartner") }}</td>
-		<td>{{ doc_data.ansprechpartner }}</td>
+		<td>{{ _("Geschäftsbedingungen") }}<br>{{ _("Ihr Ansprechpartner") }}</td>
+		<td>{{ _("Siehe senstech.ch/agb") }}<br>{{ doc_data.ansprechpartner }}</td>
 	</tr>
 </table>
 <!-- /Detailtabelle -->
