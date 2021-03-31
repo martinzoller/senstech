@@ -1,0 +1,131 @@
+<!--
+
+Histogram
+
+Params:
+
+doc				  The document to base the histogram on (usually a Delivery Note or a Customer)
+doc_data    Prepared data of the base document
+batch			  The production batch whose histogram should be shown
+
+-->
+
+<!-- Daten laden -->
+{% set item = frappe.get_doc("Item", batch.item) %}
+{% set stock_data = get_stock_qty(batch.name, 'Fertigerzeugnisse - ST', batch.item) %}
+<!-- /Daten laden -->
+
+<!-- Header und Footer -->
+{{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Header und Footer -->
+
+<div>
+		<b><br><br>Histogramme der Endkontrollergebnisse</b>
+		<div style="height:2mm"></div>
+</div>
+
+
+<!-- Detailtabelle -->
+<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+	<tr>
+		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
+		<td style="width: 24%;">{% if doc.po_no %}{{ doc.po_no }}{% else %}-{% endif %}</td>
+		<td style="width: 3%;"></td>
+		<td style="width: 24%;">{{ _("Artikel") }}</td>
+		<td style="width: 24%;">{{ batch.item }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Ihre Kundennummer") }}</td>
+		<td>{{ doc.customer or '-' }}</td>
+		<td></td>
+		<td></td>
+		<td>{{ batch.item_name }}</td>			
+	</tr>
+	<tr>
+		<td>{{ _("Unsere Lieferantennr.") }}</td>
+		<td>{% if doc_data.unsere_lieferantennummer %}{{ doc_data.unsere_lieferantennummer }}{% else %}-{% endif %}</td>
+		<td></td>
+		<td>{{ _("Produktionscharge") }}</td>
+		<td>{{ batch.chargennummer }}</td>	
+	</tr>
+	<tr>
+		<td>{{ _("Lieferscheinnummer") }}</td>
+		<td>{{ doc.name or '-' }}</td>
+		<td></td>
+		<td>{{ _("Herstelldatum") }}</td>
+		<td>{{ frappe.utils.get_datetime(batch.manufacturing_date).strftime('%d.%m.%Y') }}</td>
+	</tr>
+</table>
+<!-- /Detailtabelle -->
+
+<div><br></div>
+
+<!-- Histogramme -->
+{% if batch.histogramm_daten %}
+		{% set histo_data = json_loads(batch.histogramm_daten) %}
+		<div style="width: 100%">
+		{% for uri in histo_data %}
+				<img src="https://data.libracore.ch/server-side-charts/api/histogram.php?{{ uri }}" style="width: 49%; margin-bottom: 5px">
+		{% endfor %}
+		</div>
+{% else %}
+		<div class="errorpopup">Fehler: Keine Histogramm-Daten gefunden</div>
+{% endif %}
+<!-- /Histogramme -->
+
+<!-- Stückzahlen -->
+<div><br></div>
+{% if stock_data.entry_qty > batch.histogramm_anz_gemessene or stock_data.entry_qty == 0 or batch.histogramm_anz_gemessene == 0 %}
+		<div class="errorpopup">Fehler im Histogramm: Stückzahlen nicht plausibel</div>
+{% endif %}
+<div style="font-size: 8.5pt !important;">
+<p>Anzahl gemessene Sensoren: {{ batch.histogramm_anz_gemessene |int }}</p>
+<p>Anzahl gute Sensoren: {{ stock_data.entry_qty |int }}</p>
+</div>
+<!-- /Stückzahlen -->
+
+
+<!-- Qualitätstext -->
+<div style="height:2mm"></div>
+<div style="font-size: 8.5pt !important;">{{ item.text_histogramm }}</div>
+<div><br></div>
+<!-- /Qualitätstext -->
+
+
+<!-- Datum und Unterschriften -->
+<table style="width: 99%; font-size: 8.5pt !important;">
+	<tr>
+		<td style="text-align: left;"><br><br></td>
+		<td style="text-align: center;">{{ _("Datum") }}<br></td>
+		<td style="text-align: center;">{{ _("Unterschrift") }}<br></td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Produktverantwortlicher Senstech AG:") }}</td>
+		<td style="text-align: center;">{{ frappe.utils.get_datetime(batch.manufacturing_date).strftime('%d.%m.%Y') }}</td>
+		<td style="text-align: center;">
+			{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": batch.owner }) %}
+			{% if employee_list_ersteller %}
+				{% set unterschrift_ersteller = employee_list_ersteller[0].unterschrift %}
+			{% else %}
+					{% set unterschrift_ersteller = "" %}
+					<div class="errorpopup">Fehler: Unterschrift von Histogramm-Ersteller "{{ batch.owner }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Produktbetreuer Senstech AG:")}}</td>
+		<td style="text-align: center;">{{ frappe.utils.get_datetime(batch.freigabedatum).strftime('%d.%m.%Y') }}</td>
+		<td style="text-align: center;">
+			{% set employee_list_freigabe_durch = frappe.get_list("Employee", fields=("unterschrift"), filters={"employee_name": batch.freigegeben_durch }) %}
+			{% if employee_list_freigabe_durch %}
+				{% set unterschrift_freigabe_durch = employee_list_freigabe_durch[0].unterschrift %}
+			{% else %}
+					{% set unterschrift_freigabe_durch = "" %}
+					<div class="errorpopup">Fehler: Unterschrift von Histogramm-Freigeber "{{ batch.freigegeben_durch }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ unterschrift_freigabe_durch }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+</table>
+<!-- /Datum und Unterschriften -->

@@ -1,0 +1,104 @@
+<!-- Delivery Note -->
+
+<!-- Load Data -->
+{% set doc_data = {'titel': 'Lieferschein'} %}
+{{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Load Data -->
+
+<!-- Header und Footer -->
+{{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Header und Footer -->
+
+<!-- Adresse -->
+{{ frappe.render_template('templates/includes/address.html', {'adresse': doc_data.adresse_lieferung}) }}
+<!-- /Adresse -->
+
+<!-- Titel und oberer Fliesstext -->
+{{ frappe.render_template('templates/includes/title_and_terms.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Titel und oberer Fliesstext -->
+
+<!-- Detailtabelle -->
+<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+	<tr>
+		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
+		<td style="width: 24%;">{% if doc.po_no %}{{ doc.po_no }}{% else %}-{% endif %}</td>
+		<td style="width: 3%;"></td>
+		<td style="width: 24%;">{{ _("Datum") }}</td>
+		<td style="width: 24%;">{{ doc.get_formatted('posting_date') }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Kontakt") }}</td>
+		<td>{{ doc_data.kontakt }}</td>
+		<td></td>
+		<td>{{ _("Rahmenauftrag") }}</td>
+		<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>		
+	</tr>
+	<tr>
+		<td>{{ _("Ihre Kundennummer") }}</td>
+		<td>{{ doc.customer }}</td>
+		<td></td>
+		<td>{{ _("Lieferkonditionen") }}</td>
+		<td>{% if doc_data.lieferkonditionen.found == 1 %}{{ _(doc_data.lieferkonditionen.txt) }}{% else %}-{% endif %}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Unsere Lieferantennr.") }}</td>
+		<td>{% if doc_data.unsere_lieferantennummer %}{{ doc_data.unsere_lieferantennummer }}{% else %}-{% endif %}</td>
+		<td></td>
+		<td>{{ _("Ihr Ansprechpartner") }}</td>
+		<td>{{ doc_data.ansprechpartner }}</td>
+	</tr>
+</table>
+<!-- /Detailtabelle -->
+
+<div><br></div>
+
+<!-- Artikeltabelle -->
+{{ frappe.render_template('templates/includes/item_table.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Artikeltabelle -->
+
+<div><br></div>
+
+<!-- Abschlussblock -->
+<div>
+{{ frappe.render_template('templates/includes/closing.html', {'doc': doc, 'doc_data': doc_data}) }}
+</div>
+<!-- /Abschlussblock -->
+
+
+<!-- COC-Daten laden -->
+{% set chargen_master = {} %}
+{% for item in doc.items %}
+		{% if item.batch_no %}
+				{% set item_doc = frappe.get_doc("Item", item.item_code) %}
+				{% if item_doc.qualitaetsspezifikation and item_doc.qualitaetsspezifikation != '<div><br></div>' %}
+						{% if chargen_master[item.batch_no] %}
+								{% if chargen_master[item.batch_no].update({'qty': chargen_master[item.batch_no].qty + item.qty}) %}{% endif %}
+						{% else %}
+								{% if chargen_master.update({ item.batch_no: {'item': item.item_code, 'qty': item.qty, 'has_histo': 1 if item_doc.text_histogramm else 0 } }) %}{% endif %}
+						{% endif %}
+				{% endif %}
+		{% endif %}
+{% endfor %}
+<!-- /COC-Daten laden -->
+
+<!-- COCs und Histogramme rendern -->
+{% set coc_data = {} %}
+{% for batch_id, batch in chargen_master.items() %}
+		{% if coc_data.update({ 'item': batch.item, 'batch': batch_id, 'qty': batch.qty }) %}{% endif %}
+		<div class="page-break"></div>
+		{{ frappe.render_template('templates/coc.html', {'doc': doc, 'doc_data': doc_data, 'coc_data': coc_data }) }}
+		{% if batch.has_histo %}
+			<div class="page-break"></div>
+			{% set batch_doc = frappe.get_doc("Batch", batch_id) %}
+		  {{ frappe.render_template('templates/histogram.html', {'doc': doc, 'doc_data': doc_data, 'batch': batch_doc }) }}
+		{% endif %}
+{% endfor %}
+<!-- /COCs und Histogramme rendern -->
+
+<!-- Kundenspez. Adresslabel -->
+{% set customer_label = 'templates/delivery_label_'+doc.customer+'.html' %}
+{% if template_exists(customer_label) %}
+	<div class="page-break"></div>
+	{{ frappe.render_template(customer_label, {'doc': doc, 'doc_data': doc_data }) }}
+{% endif %}
+<!-- /Kundenspez. Adresslabel -->

@@ -1,0 +1,146 @@
+<!-- WEZ-Behälter Jabil -->
+
+<!-- CSS -->
+<style type="text/css">
+
+#jabil {
+		font-family: sans-serif !important;
+}
+
+#jabil th, #jabil td {
+		padding: 6px !important;
+}
+</style>
+
+<!-- set barcode vars -->
+{% set bc = {
+    'lieferantennummer': frappe.get_doc("Customer", doc.customer).unsere_lieferantennummer,
+    'Lieferplannummer': 'keine',
+    'materialnummer': frappe.get_doc("Item", doc.items[0].item_code).artikelcode_kunde,
+    'material': doc.items[0].description.split("</div><div>")[0]|replace("<div>", "")|replace("</div>", ""),
+    'seriencode': doc.items[0].chargennummer,
+    'herstelldatum': frappe.utils.get_datetime(frappe.get_doc("Batch", doc.items[0].batch_no).manufacturing_date).strftime('%d.%m.%Y'),
+    'verfalldatum': frappe.utils.get_datetime(frappe.utils.add_years(frappe.get_doc("Batch", doc.items[0].batch_no).manufacturing_date, 3)).strftime('%d.%m.%Y'),
+    'stuckzahl': doc.items[0].qty|int
+} %}
+{% if doc.items[0].against_sales_order %}
+	{% set sales_oder = frappe.get_doc("Sales Order", doc.items[0].against_sales_order) %}
+{% endif %}
+{% if doc.items[0].blanket_order %}
+	{% if bc.update({'Lieferplannummer': frappe.get_doc("Blanket Order", doc.items[0].blanket_order).rahmenauftragsnummer_kunde}) %}{% endif %}
+{% else %}
+	{% if sales_oder %}
+		{% if sales_oder.items[0].blanket_order %}
+			{% if bc.update({'Lieferplannummer': frappe.get_doc("Blanket Order", sales_oder.items[0].blanket_order).rahmenauftragsnummer_kunde}) %}{% endif %}
+		{% endif %}
+	{% endif %}
+{% endif %}
+
+<table id="jabil" style="width: 100%;">
+    <tr style="border: 1px solid black;">
+        <td>
+            Senstech AG<br>
+            Allmendstr. 9<br>
+            CH-8320 Fehraltorf<br>
+            Schweiz
+        </td>
+        <td colspan="2" style="text-align: center;">
+            Lieferantennummer<br>
+            {% if bc.lieferantennummer %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.lieferantennummer }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+        <td colspan="2" style="text-align: rigth;">
+            <img src="https://senstech.libracore.ch/files/Senstech_Logo_rgb.png" width="200" style="float: right;">
+        </td>
+    </tr>
+    <tr>
+        <td style="background-color: black; border: 1px solid black;"></td>
+        {% if frappe.get_doc("Item", doc.items[0].item_code).esd_empfindlich %}
+            <td>&#x2612;</td>
+        {% else %}
+            <td>&#x2610;</td>
+        {% endif %}
+        <td style="border-right: 1px solid black;">
+            ESD empfindliches Material<br>
+            ESD sensitive Material
+        </td>
+        <td>&#x2610;</td>
+        <td style="border-right: 1px solid black;">
+            Gefahrengut<br>
+            Hazardous Material
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; vertical-align: middle !important; padding: 1px 6px 1px 6px !important;">Lieferplannummer</td>
+        <td colspan="4" style="border: 1px solid black; padding: 1px 6px 1px 6px !important;">
+            {% if bc.Lieferplannummer != 'keine' %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.Lieferplannummer }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; vertical-align: middle !important; padding: 1px 6px 1px 6px !important;">Materialnummer</td>
+        <td colspan="4" style="border: 1px solid black; padding: 1px 6px 1px 6px !important;">
+            {% if bc.materialnummer != 'keine' %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.materialnummer }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; vertical-align: middle !important; padding: 1px 6px 1px 6px !important;">Material</td>
+        <td colspan="4" style="border: 1px solid black; padding: 1px 6px 1px 6px !important;">
+            {% if bc.material %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.material }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; vertical-align: middle !important; padding: 1px 6px 1px 6px !important;">Serien-Code</td>
+        <td colspan="4" style="border: 1px solid black; padding: 1px 6px 1px 6px !important;">
+            {% if bc.seriencode %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.seriencode }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; vertical-align: middle !important; padding: 1px 6px 1px 6px !important;">Herstelldatum</td>
+        <td colspan="4" style="border: 1px solid black; padding: 1px 6px 1px 6px !important;">
+            {% if bc.herstelldatum %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.herstelldatum }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; vertical-align: middle !important; padding: 1px 6px 1px 6px !important;">Verfalldatum</td>
+        <td colspan="4" style="border: 1px solid black; padding: 1px 6px 1px 6px !important;">
+            {% if bc.verfalldatum %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.verfalldatum }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid black; vertical-align: middle !important; padding: 1px 6px 1px 6px !important;">Stückzahl</td>
+        <td colspan="4" style="border: 1px solid black; padding: 1px 6px 1px 6px !important;">
+            {% if bc.stuckzahl %}
+                <img style="height: 50px !important;" src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ bc.stuckzahl }}&h=50">
+            {% else %}
+                -
+            {% endif %}
+        </td>
+    </tr>
+</table>
