@@ -11,8 +11,15 @@ batch			  The production batch whose histogram should be shown
 -->
 
 <!-- Daten laden -->
+{% if not batch %}
+  {% set batch = doc %}
+{% endif %}
 {% set item = frappe.get_doc("Item", batch.item) %}
 {% set stock_data = get_stock_qty(batch.name, 'Fertigerzeugnisse - ST', batch.item) %}
+{% if not doc_data %}
+  {% set doc_data = {} %}
+  {{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+{% endif %}
 <!-- /Daten laden -->
 
 <!-- Header und Footer -->
@@ -29,7 +36,7 @@ batch			  The production batch whose histogram should be shown
 <table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
 	<tr>
 		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
-		<td style="width: 24%;">{% if doc.po_no %}{{ doc.po_no }}{% else %}-{% endif %}</td>
+		<td style="width: 24%;">{{ doc.po_no or '-' }}</td>
 		<td style="width: 3%;"></td>
 		<td style="width: 24%;">{{ _("Artikel") }}</td>
 		<td style="width: 24%;">{{ batch.item }}</td>
@@ -43,14 +50,14 @@ batch			  The production batch whose histogram should be shown
 	</tr>
 	<tr>
 		<td>{{ _("Unsere Lieferantennr.") }}</td>
-		<td>{% if doc_data.unsere_lieferantennummer %}{{ doc_data.unsere_lieferantennummer }}{% else %}-{% endif %}</td>
+		<td>{{ doc_data.unsere_lieferantennummer or '-' }}</td>
 		<td></td>
 		<td>{{ _("Produktionscharge") }}</td>
 		<td>{{ batch.chargennummer }}</td>	
 	</tr>
 	<tr>
 		<td>{{ _("Lieferscheinnummer") }}</td>
-		<td>{{ doc.name or '-' }}</td>
+		<td>{{ doc.name if doc.name and doc.doctype != 'Batch' else '-' }}</td>
 		<td></td>
 		<td>{{ _("Herstelldatum") }}</td>
 		<td>{{ frappe.utils.get_datetime(batch.manufacturing_date).strftime('%d.%m.%Y') }}</td>

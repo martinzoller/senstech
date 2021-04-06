@@ -24,9 +24,9 @@
 <!-- rahmenauftrag -->
 {% if doc.doctype == 'Sales Order' %}
     {% set bo_doc = doc %}
-{% elif doc.items[0].sales_order %}
+{% elif doc.items and doc.items[0].sales_order %}
     {% set bo_doc = frappe.get_doc("Sales Order", doc.items[0].sales_order) %}
-{% elif doc.items[0].against_sales_order %}
+{% elif doc.items and doc.items[0].against_sales_order %}
     {% set bo_doc = frappe.get_doc("Sales Order", doc.items[0].against_sales_order) %}
 {% endif %}
 {% if bo_doc %}
