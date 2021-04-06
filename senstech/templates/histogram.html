@@ -20,7 +20,7 @@ batch			  The production batch whose histogram should be shown
 <!-- /Header und Footer -->
 
 <div>
-		<b><br><br>Histogramme der Endkontrollergebnisse</b>
+		<b><br><br>{{ _("Histogramme der Endkontrollergebnisse") }}</b>
 		<div style="height:2mm"></div>
 </div>
 
@@ -79,8 +79,8 @@ batch			  The production batch whose histogram should be shown
 		<div class="errorpopup">Fehler im Histogramm: Stückzahlen nicht plausibel</div>
 {% endif %}
 <div style="font-size: 8.5pt !important;">
-<p>Anzahl gemessene Sensoren: {{ batch.histogramm_anz_gemessene |int }}</p>
-<p>Anzahl gute Sensoren: {{ stock_data.entry_qty |int }}</p>
+<p>{{ _("Anzahl gemessene Sensoren:") }} {{ batch.histogramm_anz_gemessene |int }}</p>
+<p>{{ _("Anzahl gute Sensoren:") }} {{ stock_data.entry_qty |int }}</p>
 </div>
 <!-- /Stückzahlen -->
 
