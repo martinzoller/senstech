@@ -289,8 +289,8 @@ def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=No
                     else:
                         if data_row_found:
                             for num, bin_range in enumerate(_histogramm_data['bin_range']):
-                                    if float(row[data_row_int]) > float(bin_range[0]):
-                                        if float(row[data_row_int]) <= float(bin_range[1]):
+                                    if float(row[data_row_int]) >= float(bin_range[0]):
+                                        if float(row[data_row_int]) < float(bin_range[1]):
                                             _histogramm_data['values'][num] += 1
                                             _histogramm_data['qty'] += 1
                                             pass
@@ -310,8 +310,8 @@ def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=No
                     else:
                         if data_row_found:
                             for num, bin_range in enumerate(_histogramm_data['bin_range']):
-                                    if float(row[data_row_int]) > float(bin_range[0]):
-                                        if float(row[data_row_int]) <= float(bin_range[1]):
+                                    if float(row[data_row_int]) >= float(bin_range[0]):
+                                        if float(row[data_row_int]) < float(bin_range[1]):
                                             _histogramm_data['values'][num] += 1
                                             _histogramm_data['qty'] += 1
                                             pass
