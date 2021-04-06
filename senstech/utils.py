@@ -459,11 +459,10 @@ def add_freeze_pdf_to_dt(dt, dn, printformat):
     fname = "{0}.pdf".format(dn)
     fpath = frappe.get_site_path('private', 'files', fname)
 
-    pdf = PdfFileWriter()
-    pdf = get_print(doctype=dt, name=dn, print_format=printformat, as_pdf=True, output=pdf, ignore_zugferd=False)
+    filedata = get_print(doctype=dt, name=dn, print_format=printformat, as_pdf=True, ignore_zugferd=False)
 
     with open(fpath, "wb") as w:
-        pdf.write(w)
+        w.write(filedata)
 
     f = frappe.get_doc({
         "doctype": "File",
