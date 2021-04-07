@@ -64,8 +64,8 @@
 		<td>{{ _("Unsere Lieferantennr.") }}</td>
 		<td>{% if doc_data.unsere_lieferantennummer %}{{ doc_data.unsere_lieferantennummer }}{% else %}-{% endif %}</td>
 		<td></td>
-		<td>{{ _("Ihr Ansprechpartner") }}</td>
-		<td>{{ doc_data.ansprechpartner }}</td>
+		<td>{{ _("Geschäftsbedingungen") }}
+		<td>{{ _("Siehe senstech.ch/agb") }}
 	</tr>
 	<tr>
 		<td>{{ _("Lieferadresse") }}</td>
@@ -77,8 +77,8 @@
 				{%- endif %}
 		</td>
 		<td></td>
-		<td></td>
-		<td></td>
+		<td>{{ _("Ihr Ansprechpartner") }}</td>
+		<td>{{ doc_data.ansprechpartner }}</td>
 	</tr>
 </table>
 <!-- /Detailtabelle -->

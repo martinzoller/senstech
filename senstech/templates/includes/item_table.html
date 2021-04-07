@@ -22,6 +22,7 @@
 						{% set item_stamm = frappe.get_doc("Item", item.item_code) %}
 						{% set zolltarif = frappe.get_doc("Item Group", item.item_group).zolltarifnummer %}
 						{% if doc.doctype == "Purchase Order" %}
+								{% set supplier_details = {'lieferanten_artikelnummer': '', 'lieferanten_artikelbezeichnung': ''} %}
 								{% for lieferant in item_stamm.supplier_items %}
 										{% if lieferant.supplier == doc.supplier %}
 												{% if supplier_details.update({'lieferanten_artikelnummer': lieferant.supplier_part_no, 'lieferanten_artikelbezeichnung': lieferant.lieferanten_artikelbezeichnung}) %}{% endif %}
@@ -37,8 +38,8 @@
 								<td>
 										{{ item.item_code }}<br>
 										{% if doc.doctype == "Purchase Order" %}
-												{% if supplier_details.lieferanten_artikelnummer %}<br>{{ supplier_details.lieferanten_artikelnummer }}{% endif %}
-												{% if supplier_details.lieferanten_artikelbezeichnung %}<br>{{ supplier_details.lieferanten_artikelbezeichnung }}{% endif %}
+												{% if supplier_details.lieferanten_artikelnummer %}{{ supplier_details.lieferanten_artikelnummer }}<br>{% endif %}
+												{% if supplier_details.lieferanten_artikelbezeichnung %}{{ supplier_details.lieferanten_artikelbezeichnung }}<br>{% endif %}
 										{% else %}
 												{% if item_stamm.artikelcode_kunde %}{{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
 										{% endif %}										
@@ -105,7 +106,7 @@
 						{% else %}
 								{{ _("Total") }}
 						{% endif %}
-						{% if has_vat == 0 %}
+						{% if has_vat.value == 0 %}
 								{{ _("exkl. MWST") }}
 						{% endif %}		
 					</b></td>
