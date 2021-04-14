@@ -72,15 +72,18 @@ $(document).ready(function() {
 		var on_print_menuitem = event.target.children.length > 0
 												 && event.target.children[0].classList.contains('menu-item-label')
 												 && event.target.children[0].innerText == 'Drucken';
+
 		if(on_printer_icon || on_print_menutext || on_print_menuitem) {
 			print_pdf_directly(event);
 			$('.fa-print').parent().off('click');
 			$('.menu-item-label[data-label="Drucken"]').parent().off('click');
 		}
+		
+		fix_email_draft();
+		
 	}, true);
 	
 });
-
 
 // add links to senstech wiki
 frappe.provide('frappe.help.help_links');
@@ -141,5 +144,28 @@ function print_pdf_directly(e) {
 		if (!w) {
 			frappe.msgprint(__("Please enable pop-ups")); return;
 		}
+	}
+}
+
+function fix_email_draft() {
+	
+	if(cur_frm && cur_frm.doc.name) {
+		// Remove any draft document
+		localStorage.removeItem(cur_frm.doc.doctype + cur_frm.doc.name);
+		
+		// Create sensible email draft
+		var splitDisplay = cur_frm.doc.contact_display.split(" ");
+		if(splitDisplay[0] == 'Herr') {
+			cur_frm.doc.real_name = "Sehr geehrter Herr " + splitDisplay.splice(2).join(" ");
+			
+		} else if(splitDisplay[0] == 'Frau') {
+			cur_frm.doc.real_name = "Sehr geehrte Frau " + splitDisplay.splice(2).join(" ");
+		} else {
+			cur_frm.doc.real_name = "Guten Tag"
+		}
+		
+		var betterDraft = "Im Anhang finden Sie unser Dokument Nr. "+cur_frm.doc.name+".<br><br>";
+		localStorage.setItem(cur_frm.doc.doctype + cur_frm.doc.name, betterDraft);
+
 	}
 }
