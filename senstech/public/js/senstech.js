@@ -48,16 +48,14 @@ $(document).ready(function() {
 			}
 			
 			// BCC Outlook on all sent email
-			$('input[data-fieldname="bcc"]').prop('value','senstech+erp_archiv@senstech.ch');
+			$('input[data-fieldname="bcc"]').prop('value','erp_archiv@senstech.ch');
 			
-			// Check "Send me a copy" by default
-			/*
-			$('input[data-fieldname="send_me_a_copy"]').each(function() {
-					if(!$(this).prop('checked')) {
-						$(this).click();
-					}
-			});
-			*/
+			// Warn when emailing a draft document
+			$('.email-draft-warning').remove();
+			if(cur_frm.doc.docstatus == 0) {
+				$('h4.modal-title').after('<div class="email-draft-warning">Dies ist ein Entwurf - Bitte vor dem Versenden buchen!</div>');
+			}
+			
 		}
 	});
 

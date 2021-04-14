@@ -6,3 +6,10 @@
 .ql-editor {
 	min-height: 150px !important;
 }
+/* Warnmeldung beim Versenden eines Entwurfes per E-Mail */
+.email-draft-warning {
+	background-color: #ffc6c6;
+	padding: 4px 9px;
+	margin: 10px 0 5px 0;
+	display: inline-block;
+}
