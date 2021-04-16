@@ -165,7 +165,7 @@ function print_pdf_directly(e) {
 
 function fix_email_draft() {
 	
-	if(cur_frm && cur_frm.doc.name) {
+	if(cur_frm && cur_frm.doc.name && cur_frm.doc.contact_display) {
 		// Remove any draft document
 		localStorage.removeItem(cur_frm.doc.doctype + cur_frm.doc.name);
 		
