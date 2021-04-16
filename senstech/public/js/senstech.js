@@ -126,6 +126,21 @@ function print_pdf_directly(e) {
 					return true;
 				});
 			}
+			
+			// No attached PDF exists: Create one in background!
+			if(!att_url) {
+				frappe.call({
+					"method": "senstech.utils.add_freeze_pdf_to_dt",
+					"args": {
+							"dt": cur_frm.doctype,
+							"dn": cur_frm.docname,
+							"printformat": cur_frm.doctype + ' ST'
+					},
+					"callback": function(response) {
+							cur_frm.reload_doc();
+					}
+				});
+			}
 		}
 
 		// Not submitted or no attachment found: Link to PDF generator
