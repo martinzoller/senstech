@@ -13,3 +13,10 @@
 {% endif %}
 </div>
 <!-- /Gruss -->
+
+
+<!-- Wasserzeichen "Entwurf" -->
+{% if doc.docstatus == 0 %}
+<div class="wz-draft"><p>{{ _("Entwurf") }}</p></div>
+{% endif %}
+<!-- /Wasserzeichen "Entwurf" -->
