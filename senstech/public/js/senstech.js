@@ -52,7 +52,8 @@ $(document).ready(function() {
 			
 			// Warn when emailing a draft document
 			$('.email-draft-warning').remove();
-			if(cur_frm.doc.docstatus == 0) {
+			var email_form_visible = $('input[data-fieldname="send_me_a_copy"]').is(':visible');
+			if(email_form_visible && cur_frm.doc.docstatus == 0) {
 				$('h4.modal-title').after('<div class="email-draft-warning">Dies ist ein Entwurf - Bitte vor dem Versenden buchen!</div>');
 			}
 			
