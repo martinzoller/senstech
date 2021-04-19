@@ -100,7 +100,7 @@
 			{% if selbstverzollung %}
 				<br><b>{{ _("Selbstverzollung durch Empfänger") }}</b>
 			{% endif %}
-			{% if doc.grand_total > 10000 %}
+			{% if doc.preferential_origin and doc.grand_total > 10000 %}
 				<br><b>{{ _("Beilage: EUR.1") }}</b>
 			{% endif %}
 			<div><br></div>

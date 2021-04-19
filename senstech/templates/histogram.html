@@ -82,12 +82,18 @@ batch			  The production batch whose histogram should be shown
 
 <!-- Stückzahlen -->
 <div><br></div>
-{% if stock_data.entry_qty > batch.histogramm_anz_gemessene or stock_data.entry_qty == 0 or batch.histogramm_anz_gemessene == 0 %}
+{% if stock_data.entry_qty > batch.histogramm_anz_gemessene or (stock_data.entry_qty == 0 and doc.doctype != 'Batch') or batch.histogramm_anz_gemessene == 0 %}
 		<div class="errorpopup">Fehler im Histogramm: Stückzahlen nicht plausibel</div>
 {% endif %}
 <div style="font-size: 8.5pt !important;">
 <p>{{ _("Anzahl gemessene Sensoren:") }} {{ batch.histogramm_anz_gemessene |int }}</p>
-<p>{{ _("Anzahl gute Sensoren:") }} {{ stock_data.entry_qty |int }}</p>
+<p>{{ _("Anzahl gute Sensoren:") }} 
+	{% if stock_data.entry_qty == 0 %}
+		{{ _("Unbekannt, Lagerbuchung noch nicht erfolgt") }}
+	{% else %}
+		{{ stock_data.entry_qty |int }}
+	{% endif %}
+</p>
 </div>
 <!-- /Stückzahlen -->
 
@@ -120,6 +126,7 @@ batch			  The production batch whose histogram should be shown
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
 	</tr>
+{% if batch.freigabedatum %}
 	<tr>
 		<td style="text-align: left;">{{ _("Produktbetreuer Senstech AG:")}}</td>
 		<td style="text-align: center;">{{ frappe.utils.get_datetime(batch.freigabedatum).strftime('%d.%m.%Y') }}</td>
@@ -134,5 +141,10 @@ batch			  The production batch whose histogram should be shown
 			<img src="{{ unterschrift_freigabe_durch }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
 	</tr>
+{% elif doc.doctype != 'Batch' %}
+	<div class="errorpopup">Fehler: Produktionscharge nicht freigegeben</div>
+{% else %}
+<tr><td colspan="3"><b>Produktionscharge ist noch nicht vom Produktbetreuer freigegeben</b></td></tr>
+{% endif %}
 </table>
 <!-- /Datum und Unterschriften -->

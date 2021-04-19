@@ -48,16 +48,15 @@ $(document).ready(function() {
 			}
 			
 			// BCC Outlook on all sent email
-			$('input[data-fieldname="bcc"]').prop('value','senstech+erp_archiv@senstech.ch');
+			$('input[data-fieldname="bcc"]').prop('value','erp_archiv@senstech.ch');
 			
-			// Check "Send me a copy" by default
-			/*
-			$('input[data-fieldname="send_me_a_copy"]').each(function() {
-					if(!$(this).prop('checked')) {
-						$(this).click();
-					}
-			});
-			*/
+			// Warn when emailing a draft document
+			$('.email-draft-warning').remove();
+			var email_form_visible = $('input[data-fieldname="send_me_a_copy"]').is(':visible');
+			if(email_form_visible && cur_frm.doc.docstatus == 0) {
+				$('h4.modal-title').after('<div class="email-draft-warning">Dies ist ein Entwurf - Bitte vor dem Versenden buchen!</div>');
+			}
+			
 		}
 	});
 
@@ -74,15 +73,18 @@ $(document).ready(function() {
 		var on_print_menuitem = event.target.children.length > 0
 												 && event.target.children[0].classList.contains('menu-item-label')
 												 && event.target.children[0].innerText == 'Drucken';
+
 		if(on_printer_icon || on_print_menutext || on_print_menuitem) {
 			print_pdf_directly(event);
 			$('.fa-print').parent().off('click');
 			$('.menu-item-label[data-label="Drucken"]').parent().off('click');
 		}
+		
+		fix_email_draft();
+		
 	}, true);
 	
 });
-
 
 // add links to senstech wiki
 frappe.provide('frappe.help.help_links');
@@ -125,6 +127,21 @@ function print_pdf_directly(e) {
 					return true;
 				});
 			}
+			
+			// No attached PDF exists: Create one in background!
+			if(!att_url) {
+				frappe.call({
+					"method": "senstech.utils.add_freeze_pdf_to_dt",
+					"args": {
+							"dt": cur_frm.doctype,
+							"dn": cur_frm.docname,
+							"printformat": cur_frm.doctype + ' ST'
+					},
+					"callback": function(response) {
+							cur_frm.reload_doc();
+					}
+				});
+			}
 		}
 
 		// Not submitted or no attachment found: Link to PDF generator
@@ -143,5 +160,28 @@ function print_pdf_directly(e) {
 		if (!w) {
 			frappe.msgprint(__("Please enable pop-ups")); return;
 		}
+	}
+}
+
+function fix_email_draft() {
+	
+	if(cur_frm && cur_frm.doc.name && cur_frm.doc.contact_display) {
+		// Remove any draft document
+		localStorage.removeItem(cur_frm.doc.doctype + cur_frm.doc.name);
+		
+		// Create sensible email draft
+		var splitDisplay = cur_frm.doc.contact_display.split(" ");
+		if(splitDisplay[0] == 'Herr') {
+			cur_frm.doc.real_name = "Sehr geehrter Herr " + splitDisplay.splice(2).join(" ");
+			
+		} else if(splitDisplay[0] == 'Frau') {
+			cur_frm.doc.real_name = "Sehr geehrte Frau " + splitDisplay.splice(2).join(" ");
+		} else {
+			cur_frm.doc.real_name = "Guten Tag"
+		}
+		
+		var betterDraft = "Im Anhang finden Sie unser Dokument Nr. "+cur_frm.doc.name+".<br><br>";
+		localStorage.setItem(cur_frm.doc.doctype + cur_frm.doc.name, betterDraft);
+
 	}
 }
