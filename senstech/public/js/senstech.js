@@ -32,9 +32,7 @@ $(document).ready(function() {
 			if (att_id) {
 				// Attach matching file by default
 				var selector = 'input[data-file-name="'+att_id+'"]';
-				if(! $(selector).prop('checked')) {
-					$(selector).click();
-				}
+				$(selector).prop('checked', true); // Check all matching checkboxes
 			}
 
 			// Unattach document print for documents without sensible print formats,
@@ -182,6 +180,7 @@ function fix_email_draft() {
 		
 		var betterDraft = "Im Anhang finden Sie unser Dokument Nr. "+cur_frm.doc.name+".<br><br>";
 		localStorage.setItem(cur_frm.doc.doctype + cur_frm.doc.name, betterDraft);
+		frappe.last_edited_communication = {};
 
 	}
 }
