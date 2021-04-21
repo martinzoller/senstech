@@ -464,7 +464,7 @@ def add_freeze_pdf_to_dt(dt, dn, printformat):
     with open(fpath, "wb") as w:
         w.write(filedata)
 
-    f = frappe.get_doc({
+    file_record = {
         "doctype": "File",
         "file_url": '/private/files/{0}'.format(fname),
         "file_name": fname,
@@ -473,10 +473,12 @@ def add_freeze_pdf_to_dt(dt, dn, printformat):
         "folder": 'Home/Attachments',
         "file_size": 0,
         "is_private": 1
-    })
-    f.flags.ignore_permissions = True
-    f.insert()
-    frappe.db.commit()
+    }
+    if not frappe.db.exists(file_record):
+        f = frappe.get_doc(file_record)
+        f.flags.ignore_permissions = True
+        f.insert()
+        frappe.db.commit()
 
     return
 
