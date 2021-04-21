@@ -55,7 +55,7 @@
 {% if doc.customer_address %}
 		{% set cust_addr = frappe.get_doc("Address", doc.customer_address) %}
 		{% if cust_addr.abweichender_firmennamen %}
-			{% set cust_firma = customer_address.abweichender_firmennamen %}
+			{% set cust_firma = cust_addr.abweichender_firmennamen %}
 		{% else %}
 			{% set cust_firma = doc.customer_name %}
 		{% endif %}
