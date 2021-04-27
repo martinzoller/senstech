@@ -133,7 +133,8 @@ function print_pdf_directly(e) {
 					"args": {
 							"dt": cur_frm.doctype,
 							"dn": cur_frm.docname,
-							"printformat": cur_frm.doctype + ' ST'
+							"printformat": cur_frm.meta.default_print_format,
+							"language": (cur_frm.doc.language || "de")
 					},
 					"callback": function(response) {
 							cur_frm.reload_doc();
