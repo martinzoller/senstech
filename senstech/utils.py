@@ -13,7 +13,7 @@ import json
 import urllib.parse
 import six
 import pdfkit, os
-from frappe import _, get_print
+from frappe import _, attach_print
 from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 import csv
@@ -454,29 +454,32 @@ def unlinke_email_queue(communication):
     frappe.db.commit()
 
 @frappe.whitelist()
-def add_freeze_pdf_to_dt(dt, dn, printformat):
+def add_freeze_pdf_to_dt(dt, dn, printformat, language=''):
+   
+    if not language:
+        language = frappe.get_doc(dt, dn).language or 'de'
 
-    fname = "{0}.pdf".format(dn)
-    fpath = frappe.get_site_path('private', 'files', fname)
-
-    filedata = get_print(doctype=dt, name=dn, print_format=printformat, as_pdf=True, ignore_zugferd=False)
+    filedata = attach_print(doctype=dt, name=dn, print_format=printformat, lang=language)
+    fpath = frappe.get_site_path('private', 'files', filedata['fname'])
 
     with open(fpath, "wb") as w:
-        w.write(filedata)
+        w.write(filedata['fcontent'])
 
-    f = frappe.get_doc({
+    file_record = {
         "doctype": "File",
-        "file_url": '/private/files/{0}'.format(fname),
-        "file_name": fname,
+        "file_url": '/private/files/{0}'.format(filedata['fname']),
+        "file_name": filedata['fname'],
         "attached_to_doctype": dt,
         "attached_to_name": dn,
         "folder": 'Home/Attachments',
         "file_size": 0,
         "is_private": 1
-    })
-    f.flags.ignore_permissions = True
-    f.insert()
-    frappe.db.commit()
+    }
+    if not frappe.db.exists(file_record):
+        f = frappe.get_doc(file_record)
+        f.flags.ignore_permissions = True
+        f.insert()
+        frappe.db.commit()
 
     return
 

@@ -32,9 +32,7 @@ $(document).ready(function() {
 			if (att_id) {
 				// Attach matching file by default
 				var selector = 'input[data-file-name="'+att_id+'"]';
-				if(! $(selector).prop('checked')) {
-					$(selector).click();
-				}
+				$(selector).prop('checked', true); // Check all matching checkboxes
 			}
 
 			// Unattach document print for documents without sensible print formats,
@@ -53,7 +51,7 @@ $(document).ready(function() {
 			// Warn when emailing a draft document
 			$('.email-draft-warning').remove();
 			var email_form_visible = $('input[data-fieldname="send_me_a_copy"]').is(':visible');
-			if(email_form_visible && cur_frm.doc.docstatus == 0) {
+			if(email_form_visible && cur_frm.doc.docstatus == 0 && frappe.model.is_submittable(cur_frm.doc.doctype)) {
 				$('h4.modal-title').after('<div class="email-draft-warning">Dies ist ein Entwurf - Bitte vor dem Versenden buchen!</div>');
 			}
 			
@@ -135,7 +133,8 @@ function print_pdf_directly(e) {
 					"args": {
 							"dt": cur_frm.doctype,
 							"dn": cur_frm.docname,
-							"printformat": cur_frm.doctype + ' ST'
+							"printformat": cur_frm.meta.default_print_format,
+							"language": (cur_frm.doc.language || "de")
 					},
 					"callback": function(response) {
 							cur_frm.reload_doc();
@@ -182,6 +181,7 @@ function fix_email_draft() {
 		
 		var betterDraft = "Im Anhang finden Sie unser Dokument Nr. "+cur_frm.doc.name+".<br><br>";
 		localStorage.setItem(cur_frm.doc.doctype + cur_frm.doc.name, betterDraft);
+		frappe.last_edited_communication = {};
 
 	}
 }
