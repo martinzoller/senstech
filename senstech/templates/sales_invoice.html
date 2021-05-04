@@ -50,15 +50,15 @@
 		<td>{{ _("Kontakt") }}</td>
 		<td>{{ doc_data.kontakt }}</td>
 		<td></td>
-		<td>{{ _("Zahlungskonditionen") }}</td>
-		<td>{% if doc.payment_terms_template %}{{ _(doc.payment_terms_template) }}{% else %}-{% endif %}</td>
+		<td>{{ _("Lieferkonditionen") }}</td>
+		<td>{% if doc_data.lieferkonditionen.found == 1 %}{{ _(doc_data.lieferkonditionen.txt) }}{% else %}-{% endif %}</td>
 	</tr>
 	<tr>
 		<td>{{ _("Ihre Kundennummer") }}</td>
 		<td>{{ doc.customer }}</td>
 		<td></td>
-		<td>{{ _("Lieferkonditionen") }}</td>
-		<td>{% if doc_data.lieferkonditionen.found == 1 %}{{ _(doc_data.lieferkonditionen.txt) }}{% else %}-{% endif %}</td>
+		<td>{{ _("Zahlungskonditionen") }}</td>
+		<td>{% if doc.payment_terms_template %}{{ _(doc.payment_terms_template) }}{% else %}-{% endif %}</td>
 	</tr>
 	<tr>
 		<td>{{ _("Unsere Lieferantennr.") }}</td>
