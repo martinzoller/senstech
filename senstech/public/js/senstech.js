@@ -5,7 +5,39 @@ $(document).on('click','i.octicon-arrow-right',function(event){
 	window.open($(this).parent().attr('href'), '_blank');
 });
 
+// use Senstech Desktop instead of Frappe Desktop
+$(document).on('click','#navbar-breadcrumbs a, a.navbar-home',function(event){
+	var navURL = event.currentTarget.href;
+	
+	// Make the breadcrumb link point to Senstech Settings page if that was visited recently
+	if(navURL.includes("modules") && !navURL.endsWith('modules/Senstech')) {
+		event.currentTarget.href = '#modules/Senstech';
+		var i;
+		for(i=frappe.route_history.length-1; i>=0; i--) {
+			if(frappe.route_history[i][0]=='modules'){
+				if(frappe.route_history[i][1]=='Senstech'){
+					break;
+				} else if(frappe.route_history[i][1]=='Senstech Settings'){
+					event.currentTarget.href = '#modules/Senstech Settings';
+					break;
+				}
+			}
+		}
+	}
+	
+	// Make the home link always point to Senstech main page
+	else if(navURL.endsWith("#")) {
+		event.currentTarget.href = '#modules/Senstech';
+	}
+});
+
+
 $(document).ready(function() {
+	
+	// Redirect to Senstech Desktop after login
+	if(frappe._cur_route=="") {
+		window.location.href = "#modules/Senstech";
+	}
 	
 	// Fix e-mail attachment behavior:
 	// - Uncheck "attach document print" in e-mail window for all doctypes
