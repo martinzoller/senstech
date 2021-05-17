@@ -6,9 +6,18 @@ def get_data():
 	return [
 		{
 			"module_name": "Senstech",
+			"category": "Modules",
+            "label": _("Senstech"),
 			"color": "grey",
 			"icon": "icon cube-blue",
-			"type": "module",
-			"label": _("Senstech")
+			"type": "module"
+		},
+		{
+			"module_name": "Senstech Settings",
+			"category": "Modules",
+            "label": _("Senstech Einstellungen"),
+			"color": "grey",
+			"icon": "icon settings-blue",
+			"type": "module"
 		}
 	]
