@@ -129,11 +129,6 @@ def get_data():
         },
         {
           'type': 'doctype',
-          'name': 'Pincode',
-          'label': _('Postleitzahl (PLZ)')
-        },
-        {
-          'type': 'doctype',
           'name': 'Senstech Berg',
           'label': _('Senstech Berg')
         }
