@@ -149,7 +149,7 @@ def get_data():
         },
         {
           'type': 'doctype',
-          'name': 'Senstech Settings',
+          'name': 'Senstech Einstellungen',
           'label': _('Etikettendrucker: Hostname')
         },
         {
@@ -281,7 +281,7 @@ def get_data():
         },
         {
           'type': 'doctype',
-          'name': 'Senstech Settings',
+          'name': 'Senstech Einstellungen',
           'label': _('Senstech Einstellungen')
         },
         {

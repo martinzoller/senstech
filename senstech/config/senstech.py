@@ -94,7 +94,7 @@ def get_data():
         },
         {
           'type': 'doctype',
-          'name': 'To Do',
+          'name': 'ToDo',
           'label': _('Meine Pendenzen')
         },
         {
