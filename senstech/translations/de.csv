@@ -4,3 +4,5 @@ Module: Stock,Batch,Produktionscharge
 apps/frappe/frappe/public/js/frappe/ui/filters/filter_list.js,Clear Filters,Filter entfernen
 apps/frappe/frappe/public/js/frappe/form/grid_row.js,Move To,Verschieben nach
 apps/frappe/frappe/public/js/frappe/form/grid_row.js,Move,Verschieben
+apps/erpnext/erpnext/stock/doctype/batch/batch.js,Split,Aufteilen
+apps/erpnext/erpnext/stock/doctype/batch/batch.js,Move,Verschieben
