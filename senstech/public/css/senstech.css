@@ -29,6 +29,9 @@
 .page-container[id^="page-List"][id$="/List"] .frappe-list .result,
 .page-container[id^="page-List"][id$="/List"] .frappe-list .no-result,
 .page-container[id^="page-List"][id$="/List"] .frappe-list .freeze,
+.page-container[id^="page-List"][id$="/Report"] .frappe-list .result,
+.page-container[id^="page-List"][id$="/Report"] .frappe-list .no-result,
+.page-container[id^="page-List"][id$="/Report"] .frappe-list .freeze,
 .page-container[id^="page-List"][id*="/Report/"] .frappe-list .result,
 .page-container[id^="page-List"][id*="/Report/"] .frappe-list .no-result,
 .page-container[id^="page-List"][id*="/Report/"] .frappe-list .freeze {
