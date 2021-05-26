@@ -5,7 +5,7 @@ def get_data():
 
   return[
     {
-      'label': _('Datenstruktur und -austausch'),
+      'label': _('🔃 Datenstruktur und -austausch'),
       'items': [
         {
           'type': 'doctype',
@@ -45,7 +45,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Gruppen und Kategorien'),
+      'label': _('📂 Gruppen und Kategorien'),
       'items': [
         {
           'type': 'doctype',
@@ -90,7 +90,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Grunddefinitionen und -vorlagen'),
+      'label': _('🧱 Grunddefinitionen und -vorlagen'),
       'items': [
         {
           'type': 'doctype',
@@ -135,7 +135,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Druck und Darstellung'),
+      'label': _('🧾 Druck und Darstellung'),
       'items': [
         {
           'type': 'doctype',
@@ -165,7 +165,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Entwicklung'),
+      'label': _('👩‍💻 Entwicklung'),
       'items': [
         {
           'type': 'doctype',
@@ -200,7 +200,7 @@ def get_data():
       ]
     },
     {
-      'label': _('E-Mail'),
+      'label': _('📧 E-Mail'),
       'items': [
         {
           'type': 'doctype',
@@ -220,7 +220,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Finanzeinstellungen'),
+      'label': _('📋 Finanzeinstellungen'),
       'items': [
         {
           'type': 'doctype',
@@ -252,7 +252,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Modulkonfiguration'),
+      'label': _('🧩 Modulkonfiguration'),
       'items': [
         {
           'type': 'doctype',
@@ -302,7 +302,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Systemkonfiguration'),
+      'label': _('⚙️ Systemkonfiguration'),
       'items': [
         {
           'type': 'doctype',

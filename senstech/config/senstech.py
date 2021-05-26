@@ -5,7 +5,7 @@ def get_data():
 
   return[
     {
-      'label': _('Einkauf'),
+      'label': _('🛍️ Einkauf'),
       'items': [
         {
           'type': 'doctype',
@@ -30,7 +30,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Verkauf'),
+      'label': _('🤝 Verkauf'),
       'items': [
         {
           'type': 'doctype',
@@ -72,7 +72,7 @@ def get_data():
       ]
     },
     {
-      'label': _('CRM'),
+      'label': _('💬 CRM'),
       'items': [
         {
           'type': 'doctype',
@@ -123,7 +123,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Artikel und Produktion'),
+      'label': _('🏭 Artikel und Produktion'),
       'items': [
         {
           'type': 'doctype',
@@ -181,7 +181,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Zahlungs- und Mahnwesen'),
+      'label': _('💰 Zahlungs- und Mahnwesen'),
       'items': [
         {
           'type': 'report',
@@ -237,7 +237,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Buchhaltung'),
+      'label': _('🗃️ Buchhaltung'),
       'items': [
         {
           'type': 'report',
@@ -285,7 +285,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Jahresabschluss'),
+      'label': _('📆 Jahresabschluss'),
       'items': [
         {
           'type': 'doctype',
@@ -316,7 +316,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Statistiken'),
+      'label': _('📊 Statistiken'),
       'items': [
         {
           'type': 'report',
@@ -368,7 +368,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Personalwesen'),
+      'label': _('👩‍💼 Personalwesen'),
       'items': [
         {
           'type': 'doctype',
@@ -388,7 +388,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Benutzer und Berechtigungen'),
+      'label': _('👮 Benutzer und Berechtigungen'),
       'items': [
         {
           'type': 'doctype',
@@ -418,7 +418,7 @@ def get_data():
       ]
     },
     {
-      'label': _('Werkzeuge'),
+      'label': _('🛠️ Werkzeuge'),
       'items': [
         {
           'type': 'doctype',
