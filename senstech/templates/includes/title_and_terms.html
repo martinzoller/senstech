@@ -1,7 +1,7 @@
 <div>
 		<b><br><br>{{ _(doc_data.titel) }} {{ doc.name }}</b>
-		{% if doc.terms and doc.terms != '<div><br></div>' %}
-		<div style="height:2mm"></div>{{ _(doc.terms) }}
+		{% if doc.terms_above and doc.terms_above != '<div><br></div>' %}
+		<div style="height:2mm"></div>{{ _(doc.terms_above) }}
 		{% endif %}
 		<div><br></div>
 </div>

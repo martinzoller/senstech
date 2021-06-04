@@ -34,8 +34,8 @@
 		<td>{{ doc.get_formatted('valid_till') }}</td>
 	</tr>
 	<tr>
-		<td>{{ _("Unsere Lieferantennr.") }}</td>
-		<td>{% if doc_data.unsere_lieferantennummer %}{{ doc_data.unsere_lieferantennummer }}{% else %}-{% endif %}</td>
+		<td>{{ _("Ihr Ansprechpartner") }}</td>
+		<td>{{ doc_data.ansprechpartner }}</td>
 		<td></td>
 		<td>{{ _("Lieferkonditionen") }}</td>
 		<td>{% if doc_data.lieferkonditionen.found == 1 %}{{ _(doc_data.lieferkonditionen.txt) }}{% else %}-{% endif %}</td>
@@ -50,8 +50,8 @@
 				{%- endif %}
 		</td>
 		<td></td>
-		<td>{{ _("Geschäftsbedingungen") }}<br>{{ _("Ihr Ansprechpartner") }}</td>
-		<td>{{ _("Siehe senstech.ch/agb") }}<br>{{ doc_data.ansprechpartner }}</td>
+		<td>{{ _("Zahlungskonditionen") }}<br>{{ _("Geschäftsbedingungen") }}</td>
+		<td>{% if doc.payment_terms_template %}{{ _(doc.payment_terms_template) }}{% else %}-{% endif %}<br>{{ _("Siehe senstech.ch/agb") }}</td>
 	</tr>
 </table>
 <!-- /Detailtabelle -->
