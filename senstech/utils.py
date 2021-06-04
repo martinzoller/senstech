@@ -559,3 +559,8 @@ def direct_print_pdf(file):
     soc.close()
     
     return
+    
+@frappe.whitelist()
+def change_blanket_order_to_date(bo, date):
+    frappe.db.sql("""UPDATE `tabBlanket Order` SET `to_date` = '{date}' WHERE `name` = '{bo}'""".format(date=date, bo=bo), as_list=True)
+    return
