@@ -1,0 +1,31 @@
+{
+ "custom_fields": [],
+ "custom_perms": [],
+ "doctype": "ToDo",
+ "property_setters": [
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2021-05-21 13:36:16.174954",
+   "default_value": null,
+   "doc_type": "ToDo",
+   "docstatus": 0,
+   "doctype_or_field": "DocField",
+   "field_name": "role",
+   "idx": 0,
+   "modified": "2021-05-21 13:36:16.174954",
+   "modified_by": "martin.zoller@senstech.ch",
+   "name": "ToDo-role-hidden",
+   "owner": "martin.zoller@senstech.ch",
+   "parent": null,
+   "parentfield": null,
+   "parenttype": null,
+   "property": "hidden",
+   "property_type": "Check",
+   "value": "1"
+  }
+ ],
+ "sync_on_migrate": 1
+}
