@@ -99,14 +99,15 @@ $(document).ready(function() {
 	//   (Note: cancelled docs, docstatus=2, do not have the printer icon at all)
 	document.addEventListener('click',function(event) {
 		var on_printer_icon = event.target.classList.contains('fa-print');
-		var on_print_menutext = event.target.classList.contains('menu-item-label') && event.target.innerText == 'Drucken';
+		var on_print_menutext = event.target.classList.contains('menu-item-label') && ['Drucken','Print'].includes(event.target.innerText);
 		var on_print_menuitem = event.target.children.length > 0
 												 && event.target.children[0].classList.contains('menu-item-label')
-												 && event.target.children[0].innerText == 'Drucken';
+												 && ['Drucken','Print'].includes(event.target.children[0].innerText);
 
 		if(on_printer_icon || on_print_menutext || on_print_menuitem) {
 			print_pdf_directly(event);
 			$('.fa-print').parent().off('click');
+			$('.menu-item-label[data-label="Print"]').parent().off('click');
 			$('.menu-item-label[data-label="Drucken"]').parent().off('click');
 		}
 		
