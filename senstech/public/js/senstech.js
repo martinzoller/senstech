@@ -77,9 +77,6 @@ $(document).ready(function() {
 				});
 			}
 			
-			// BCC Outlook on all sent email
-			$('input[data-fieldname="bcc"]').prop('value','erp_archiv@senstech.ch');
-			
 			// Warn when emailing a draft document
 			$('.email-draft-warning').remove();
 			var email_form_visible = $('input[data-fieldname="send_me_a_copy"]').is(':visible');
@@ -94,10 +91,11 @@ $(document).ready(function() {
 	modalObserver.observe(document.body, { childList: true });
 
 
-	// Fix printing behavior:
-	// - If the document is submitted (docstatus=1), skip print preview and open attached PDF directly
-	//   (Note: cancelled docs, docstatus=2, do not have the printer icon at all)
 	document.addEventListener('click',function(event) {
+		
+		// Fix printing behavior:
+		// - If the document is submitted (docstatus=1), skip print preview and open attached PDF directly
+		//   (Note: cancelled docs, docstatus=2, do not have the printer icon at all)
 		var on_printer_icon = event.target.classList.contains('fa-print');
 		var on_print_menutext = event.target.classList.contains('menu-item-label') && ['Drucken','Print'].includes(event.target.innerText);
 		var on_print_menuitem = event.target.children.length > 0
@@ -111,10 +109,28 @@ $(document).ready(function() {
 			$('.menu-item-label[data-label="Drucken"]').parent().off('click');
 		}
 		
-		fix_email_draft();
-		
+		// Replace email dialog to get a more sensible draft message
+		var on_email_menutext = event.target.classList.contains('menu-item-label') && ['E-Mail','Email'].includes(event.target.innerText);
+		var on_email_menuitem = event.target.children.length > 0
+												 && event.target.children[0].classList.contains('menu-item-label')
+												 && ['E-Mail','Email'].includes(event.target.children[0].innerText);
+												 
+	  if(on_email_menutext || on_email_menuitem) {
+		  custom_email_dialog(event);
+			$('.menu-item-label[data-label="Email"]').parent().off('click');
+			$('.menu-item-label[data-label="E-Mail"]').parent().off('click');
+		}
+	 
 	}, true);
 	
+	// Catch Ctrl+E
+	document.addEventListener('keydown',function(event) {
+		if (event.key == 'e' && event.ctrlKey){
+			custom_email_dialog(event);
+			event.stopPropagation();
+			event.preventDefault();
+		}
+	}, true);
 });
 
 // add links to senstech wiki
@@ -195,26 +211,35 @@ function print_pdf_directly(e) {
 	}
 }
 
-function fix_email_draft() {
-	
-	if(cur_frm && cur_frm.doc.name && cur_frm.doc.contact_display) {
-		// Remove any draft document
-		localStorage.removeItem(cur_frm.doc.doctype + cur_frm.doc.name);
-		
-		// Create sensible email draft
-		var splitDisplay = cur_frm.doc.contact_display.split(" ");
-		if(splitDisplay[0] == 'Herr') {
-			cur_frm.doc.real_name = "Sehr geehrter Herr " + splitDisplay.splice(2).join(" ");
-			
-		} else if(splitDisplay[0] == 'Frau') {
-			cur_frm.doc.real_name = "Sehr geehrte Frau " + splitDisplay.splice(2).join(" ");
-		} else {
-			cur_frm.doc.real_name = "Guten Tag"
-		}
-		
-		var betterDraft = "Im Anhang finden Sie unser Dokument Nr. "+cur_frm.doc.name+".<br><br>";
-		localStorage.setItem(cur_frm.doc.doctype + cur_frm.doc.name, betterDraft);
-		frappe.last_edited_communication = {};
 
+function custom_email_dialog(e) {
+	frappe.last_edited_communication = {};
+	new frappe.views.CommunicationComposer({
+		doc: cur_frm.doc,
+		frm: cur_frm,
+		subject: __(cur_frm.meta.name) + ': ' + cur_frm.docname,
+		recipients: cur_frm.doc.email || cur_frm.doc.email_id || cur_frm.doc.contact_email,
+		bcc: 'erp_archiv@senstech.ch',
+		attach_document_print: true, /* This tick is changed by JS along with the attachment ticks - which can't be passed as arguments */
+		message: '', /* Gets overwritten by txt (txt must be passed to avoid loading draft messages from LocalStorage) */
+		real_name: '', /* Do not pass this as it triggers automatic salutation with "Dear" */
+		txt: get_email_draft(cur_frm.doc.real_name || cur_frm.doc.contact_display || cur_frm.doc.contact_name, cur_frm.docname)
+	});
+}
+
+
+function get_email_draft(real_name, doc_id) {
+	
+	var splitDisplay = real_name.split(" ");
+	var salutation;
+	if(splitDisplay[0] == 'Herr') {
+		salutation = "Sehr geehrter Herr " + splitDisplay.splice(2).join(" ");
+	} else if(splitDisplay[0] == 'Frau') {
+		salutation = "Sehr geehrte Frau " + splitDisplay.splice(2).join(" ");
+	} else {
+		salutation = "Sehr geehrte Damen und Herren"
 	}
+	
+	var draft = salutation + ',<br>Im Anhang finden Sie unser Dokument Nr. '+doc_id+'.<br><br>';
+	return draft;
 }
