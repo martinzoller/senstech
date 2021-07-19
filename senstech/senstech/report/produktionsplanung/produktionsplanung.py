@@ -3,6 +3,7 @@ import frappe, erpnext
 from frappe import _
 from frappe.utils import flt
 from erpnext.stock.get_item_details import get_item_defaults
+from senstech.senstech.utils import str_to_dt, dt_to_local_str
 import workalendar.europe
 import datetime
 
@@ -239,18 +240,6 @@ def get_blanket_orders_with_mq(filters):
     ), as_dict=True)
     return blanket_orders
 
-
-# Frappe 'YYYY-MM-DD' to Python datetime.date
-# Modified to also accept datetime.date as input, since apparently some SQL DATE columns are returned as datetime.date by frappe.db.sql.
-def str_to_dt(datestr):
-    if isinstance(datestr, datetime.date):
-        return datestr
-    else:
-        return datetime.datetime.strptime(datestr,'%Y-%m-%d').date()
-
-# Python datetime.date to Swiss 'DD.MM.YYYY'
-def dt_to_local_str(dt):
-    return dt.strftime('%d.%m.%Y')
 
 
 
