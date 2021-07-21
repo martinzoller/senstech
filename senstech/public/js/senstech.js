@@ -223,7 +223,7 @@ function custom_email_dialog(e) {
 		attach_document_print: true, /* This tick is changed by JS along with the attachment ticks - which can't be passed as arguments */
 		message: '', /* Gets overwritten by txt (txt must be passed to avoid loading draft messages from LocalStorage) */
 		real_name: '', /* Do not pass this as it triggers automatic salutation with "Dear" */
-		txt: get_email_draft(cur_frm.doc.real_name || cur_frm.doc.contact_display || cur_frm.doc.contact_name, cur_frm.docname)
+		txt: get_email_draft(cur_frm.doc.real_name || cur_frm.doc.contact_display || cur_frm.doc.contact_name || '', cur_frm.docname)
 	});
 }
 
