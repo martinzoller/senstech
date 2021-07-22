@@ -171,10 +171,10 @@ def get_batch_stock_summary(item_code, warehouse, reject_percentage):
         WHERE
           batch.item='{item_code}'
         GROUP BY
-          sle.batch_no
+          batch.name
         HAVING
           remaining_stock_qty > 0 OR
-          (production_launch_date <> NULL AND projected_remaining_mfg_qty > 0)
+          (production_launch_date <> '' AND projected_remaining_mfg_qty > 0)
         ORDER BY
           (SUM(sle.actual_qty) > 0) DESC,
           completed DESC,
