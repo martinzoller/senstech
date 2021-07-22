@@ -18,6 +18,13 @@ def get_data():
           'label': _('Lieferantenauftrag')
         },
         {
+          'type': 'report',
+          'is_query_report': False,
+          'doctype': 'Purchase Order',
+          'name': 'Lieferantenauftrag mit Artikel SR',
+          'label': _('Lieferantenauftrag: Bericht mit Artikel')
+        },
+        {
           'type': 'doctype',
           'name': 'Purchase Invoice',
           'label': _('Lieferanten-RG')
