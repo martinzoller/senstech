@@ -41,7 +41,7 @@
 												{% if supplier_details.lieferanten_artikelnummer %}{{ supplier_details.lieferanten_artikelnummer }}<br>{% endif %}
 												{% if supplier_details.lieferanten_artikelbezeichnung %}{{ supplier_details.lieferanten_artikelbezeichnung }}<br>{% endif %}
 										{% else %}
-												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item.item_name %}{{ item_stamm.artikelcode_kunde }} {{ item_stamm.produktrevision_kunde or '' }}<br>{% endif %}
+												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
 										{% endif %}										
 										<b>{{ _(item.item_name) }}</b>
 										{% if item.description | replace('<div>', '') | replace('</div>', '') != item.item_name %}<br>{{ _(item.description) }}{% endif %}
