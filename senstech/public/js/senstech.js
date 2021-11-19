@@ -214,7 +214,8 @@ function print_pdf_directly(e) {
 
 function custom_email_dialog(e) {
 	frappe.last_edited_communication = {};
-	new frappe.views.CommunicationComposer({
+	localStorage.clear(); /* Not strictly necessary, just clear localStorage to avoid "drafts" showing up */
+	var comcom = new frappe.views.CommunicationComposer({
 		doc: cur_frm.doc,
 		frm: cur_frm,
 		subject: __(cur_frm.meta.name) + ': ' + cur_frm.docname,
@@ -223,12 +224,12 @@ function custom_email_dialog(e) {
 		attach_document_print: true, /* This tick is changed by JS along with the attachment ticks - which can't be passed as arguments */
 		message: '', /* Gets overwritten by txt (txt must be passed to avoid loading draft messages from LocalStorage) */
 		real_name: '', /* Do not pass this as it triggers automatic salutation with "Dear" */
-		txt: get_email_draft(cur_frm.doc.real_name || cur_frm.doc.contact_display || cur_frm.doc.contact_name || '', cur_frm.docname)
+		txt: get_email_draft(cur_frm.doc.real_name || cur_frm.doc.contact_display || cur_frm.doc.contact_name || '', cur_frm.doc)
 	});
 }
 
 
-function get_email_draft(real_name, doc_id) {
+function get_email_draft(real_name, doc) {
 	
 	var splitDisplay = real_name.split(" ");
 	var salutation;
@@ -239,7 +240,13 @@ function get_email_draft(real_name, doc_id) {
 	} else {
 		salutation = "Sehr geehrte Damen und Herren"
 	}
-	
-	var draft = salutation + ',<br>Im Anhang finden Sie unser Dokument Nr. '+doc_id+'.<br><br>';
+	var our_doc_text = {'Sales Order': 'unsere Auftragsbestätigung',
+											'Purchase Order': 'unseren Lieferantenauftrag',
+											'Delivery Note': 'unseren Lieferschein',
+											'Quotation': 'unsere Offerte',
+											'Request for Quotation': 'unsere Offertanfrage',
+											'Sales Invoice': 'unsere Rechnung',
+											'Blanket Order': 'unsere Rahmenauftragsbestätigung'};
+	var draft = salutation + ',<br>Im Anhang finden Sie '+(our_doc_text[doc.doctype] || 'unser Dokument')+' Nr. '+doc.name+'.<br><br>';
 	return draft;
 }
