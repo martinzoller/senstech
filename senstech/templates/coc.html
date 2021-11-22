@@ -80,7 +80,7 @@ coc_data  COC-specific data (item, batch, qty)
 			{% endif %}
 			<tr>
 				<!--{#<td>{{ loop.index }}</td>#}-->
-				<td>{{ item_stamm.item_code }}<br>{% if item_stamm.artikelcode_kunde %}{{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}<b>{{ item_stamm.item_name }}</b><br>{{ short_description[0]|replace("<div>", "") }}<br>{{ _("Bemerkungen") }}: {{ charge_stamm.description or _('keine') }}</td>
+				<td>{{ item_stamm.item_code }}<br>{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}<b>{{ item_stamm.item_name }}</b><br>{{ short_description[0]|replace("<div>", "") }}<br>{{ _("Bemerkungen") }}: {{ charge_stamm.description or _('keine') }}</td>
 				<td>{{ coc_data.qty | int }} {{ _(item_stamm.stock_uom) }}</td>
 				<td>{{ charge_stamm.chargennummer }}</td>
 				<td>{{ frappe.utils.get_datetime(charge_stamm.manufacturing_date).strftime('%d.%m.%Y') }}</td>
@@ -99,35 +99,46 @@ coc_data  COC-specific data (item, batch, qty)
 	<table style="width: 99%; font-size: 8.5pt !important;">
 		<tr>
 			<td style="text-align: left;"><br><br></td>
-			<td style="text-align: center;">{{ _("Datum") }}<br></td>
+			<td style="text-align: left;">{{ _("Datum") }}<br></td>
 			<td style="text-align: center;">{{ _("Unterschrift") }}<br></td>
+			<td style="text-align: left;">{{ _("Name") }}<br></td>
 		</tr>
 		<tr>
 			<td style="text-align: left;">{{ _("Produktverantwortlicher Senstech AG:") }}</td>
-			<td style="text-align: center;">{{ frappe.utils.get_datetime(spez_kontrolle.neueste).strftime('%d.%m.%Y') }}</td>
+			<td style="text-align: left;">{{ frappe.utils.get_datetime(spez_kontrolle.neueste).strftime('%d.%m.%Y') }}</td>
 			<td style="text-align: center;">
-				{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": spez_kontrolle.ersteller }) %}
+				{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift","first_name","last_name"), filters={"user_id": spez_kontrolle.ersteller }) %}
 				{% if employee_list_ersteller %}
 					{% set unterschrift_ersteller = employee_list_ersteller[0].unterschrift %}
+					{% set name_ersteller = employee_list_ersteller[0].first_name + ' ' + employee_list_ersteller[0].last_name %}
 				{% else %}
 						{% set unterschrift_ersteller = "" %}
+						{% set name_ersteller = "" %}
 						<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ spez_kontrolle.ersteller }}" nicht gefunden</div>
 				{% endif %}
 				<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 			</td>
+			<td style="text-align: left;">
+			    {{ name_ersteller }}
+			</td>
 		</tr>
 		<tr>
 			<td style="text-align: left;">{{ _("Produktbetreuer Senstech AG:")}}</td>
-			<td style="text-align: center;">{{ frappe.utils.get_datetime(spez_kontrolle.freigabe).strftime('%d.%m.%Y') }}</td>
+			<td style="text-align: left;">{{ frappe.utils.get_datetime(spez_kontrolle.freigabe).strftime('%d.%m.%Y') }}</td>
 			<td style="text-align: center;">
-				{% set employee_list_freigabe_durch = frappe.get_list("Employee", fields=("unterschrift"), filters={"employee_name": spez_kontrolle.freigabe_durch }) %}
+				{% set employee_list_freigabe_durch = frappe.get_list("Employee", fields=("unterschrift","first_name","last_name"), filters={"employee_name": spez_kontrolle.freigabe_durch }) %}
 				{% if employee_list_freigabe_durch %}
 					{% set unterschrift_freigabe_durch = employee_list_freigabe_durch[0].unterschrift %}
+					{% set name_freigabe_durch = employee_list_freigabe_durch[0].first_name + ' ' + employee_list_freigabe_durch[0].last_name %}
 				{% else %}
 						{% set unterschrift_freigabe_durch = "" %}
+						{% set name_freigabe_durch = "" %}
 						<div class="errorpopup">Fehler: Unterschrift von CoC-Freigeber "{{ spez_kontrolle.freigabe_durch }}" nicht gefunden</div>
 				{% endif %}
 				<img src="{{ unterschrift_freigabe_durch }}" style="width: 100px !important; margin-top: -15px;">
+			</td>
+			<td style="text-align: left;">
+			    {{ name_freigabe_durch }}
 			</td>
 		</tr>
 	</table>
