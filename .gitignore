@@ -4,3 +4,4 @@
 *.swp
 tags
 senstech/docs/current
+__pycache__
