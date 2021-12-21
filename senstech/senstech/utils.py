@@ -26,6 +26,37 @@ def get_batch_info(item_code):
     data = frappe.db.sql(sql_query, as_dict=1)
     return data
 
+@frappe.whitelist()
+def get_next_batch_no(item_code):
+    item_doc = frappe.get_doc('Item', item_code)
+    this_year = datetime.date.today().strftime("%y")
+    sql_query = """SELECT `chargennummer`,`creation` 
+        FROM `tabBatch`
+        WHERE MID(`chargennummer`,4,2)='{year}'
+        AND item='{item}'
+        ORDER BY CONCAT(LEFT(`chargennummer`,2),TRIM(MID(`chargennummer`,6))) DESC LIMIT 1;""".format(year=this_year,item=item_code)
+    
+    latest_batch = frappe.db.sql(sql_query, as_dict=1)
+    if len(latest_batch) == 1:
+        latest_batch = latest_batch[0]
+        # Create another batch on same day: Assume next sub-batch, if applicable
+        if item_doc.has_sub_batches and latest_batch.creation.date() == datetime.date.today():
+            prev_sub_batch = latest_batch.chargennummer[5:].strip()
+            if prev_sub_batch == '':
+                next_sub_batch = 'A'
+            else:
+                next_sub_batch = chr(ord(prev_sub_batch[0])+1)
+            next_batch = latest_batch.chargennummer[0:5] + ' ' + next_sub_batch
+        else:
+            next_batch = ('%02d/' % (int(latest_batch.chargennummer[0:2])+1)) + this_year
+            if item_doc.has_sub_batches:
+                next_batch += ' A'
+    else:
+        next_batch = '01/'+this_year
+        if item_doc.has_sub_batches:
+            next_batch += ' A'
+    return next_batch
+
 
 @frappe.whitelist()
 def get_batch_production_details(batch):
@@ -64,7 +95,7 @@ def get_batch_production_details(batch):
     
     if len(stock_summary) == 1:
         stock_summary = stock_summary[0]
-        if stock_summary.production_launch_date and stock_summary.projected_remaining_mfg_qty > 0 and stock_summary.completed == 0 and item_doc.mfg_duration > 0:
+        if stock_summary.production_launch_date and stock_summary.completed == 0 and item_doc.mfg_duration > 0:
             launch_date_dt = str_to_dt(stock_summary.production_launch_date)
             ready_date_dt = zurich_cal.add_working_days(launch_date_dt, item_doc.mfg_duration)
             completion = dt_to_local_str(ready_date_dt)
