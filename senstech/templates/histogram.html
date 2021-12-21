@@ -14,8 +14,8 @@ batch			  The production batch whose histogram should be shown
 {% if not batch %}
   {% set batch = doc %}
 {% endif %}
-{% set item = frappe.get_doc("Item", batch.item) %}
-{% set stock_data = get_stock_qty(batch.name, 'Fertigerzeugnisse - ST', batch.item) %}
+{% set item = frappe.get_doc("Item", batch.artikelcode) %}
+{% set stock_data = get_stock_qty(batch.name, 'Fertigerzeugnisse - ST', batch.artikelcode) %}
 {% if not doc_data %}
   {% set doc_data = {} %}
   {{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
@@ -39,14 +39,14 @@ batch			  The production batch whose histogram should be shown
 		<td style="width: 24%;">{{ doc.po_no or '-' }}</td>
 		<td style="width: 3%;"></td>
 		<td style="width: 24%;">{{ _("Artikel") }}</td>
-		<td style="width: 24%;">{{ batch.item }}</td>
+		<td style="width: 24%;">{{ batch.artikelcode }}</td>
 	</tr>
 	<tr>
 		<td>{{ _("Ihre Kundennummer") }}</td>
 		<td>{{ doc.customer or '-' }}</td>
 		<td></td>
 		<td></td>
-		<td>{{ batch.item_name }}</td>			
+		<td>{{ batch.artikelbezeichnung or batch.item_name }}</td>			
 	</tr>
 	<tr>
 		<td>{{ _("Unsere Lieferantennr.") }}</td>
@@ -100,7 +100,7 @@ batch			  The production batch whose histogram should be shown
 
 <!-- Qualitätstext -->
 <div style="height:2mm"></div>
-<div style="font-size: 8.5pt !important;">{{ item.text_histogramm }}</div>
+<div style="font-size: 8.5pt !important;">{{ batch.histogramm_text or item.text_histogramm }}</div>
 <div><br></div>
 <!-- /Qualitätstext -->
 
@@ -116,12 +116,12 @@ batch			  The production batch whose histogram should be shown
 		<td style="text-align: left;">{{ _("Produktverantwortlicher Senstech AG:") }}</td>
 		<td style="text-align: center;">{{ frappe.utils.get_datetime(batch.manufacturing_date).strftime('%d.%m.%Y') }}</td>
 		<td style="text-align: center;">
-			{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": batch.owner }) %}
+			{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": (batch.freigabe_beantragt_durch or batch.owner) }) %}
 			{% if employee_list_ersteller %}
 				{% set unterschrift_ersteller = employee_list_ersteller[0].unterschrift %}
 			{% else %}
 					{% set unterschrift_ersteller = "" %}
-					<div class="errorpopup">Fehler: Unterschrift von Histogramm-Ersteller "{{ batch.owner }}" nicht gefunden</div>
+					<div class="errorpopup">Fehler: Unterschrift von Histogramm-Ersteller "{{ batch.freigabe_beantragt_durch or batch.owner }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
