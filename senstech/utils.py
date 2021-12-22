@@ -127,11 +127,6 @@ def check_for_batch_quick_stock_entry(batch_no, warehouse, item):
 
 @frappe.whitelist()
 def batch_quick_stock_entry(batch_no, warehouse, item, qty):
-    batch = frappe.get_doc("Batch", batch_no)
-    if not batch.manufacturing_date:
-        batch.manufacturing_date = today()
-        batch.save()
-        frappe.db.commit()
     stock_entry = frappe.get_doc({
         'doctype': 'Stock Entry',
         'stock_entry_type': "Material Receipt",
