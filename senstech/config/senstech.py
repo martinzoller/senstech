@@ -325,7 +325,14 @@ def get_data():
           'doctype': 'GL Entry',
           'name': 'Cash Flow',
           'label': _('Cash Flow')
-        }
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'doctype': 'Item',
+          'name': 'Lagerliste Inventur',
+          'label': _('Lagerliste Inventur')
+        }        
       ]
     },
     {
