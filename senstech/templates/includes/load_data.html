@@ -125,6 +125,11 @@
 <!-- lieferkonditionen -->
 {% set lieferkond = {'found': 0, 'txt': '', 'amount': 0} %}
 {% for item in doc.items %}
+		{% if doc.doctype == "Blanket Order" %}
+			<!-- Rahmenauftrag: Keine vollständigen Item-Einträge => aus Stamm ergänzen -->
+			{% set item_stamm = frappe.get_doc("Item", item.item_code) %}
+			{% if item.update({'amount': item.rate * item.qty, 'item_group': item_stamm.item_group}) %}{% endif %}
+		{% endif %}
 		{% if item.item_group == 'Versandkosten' %}
 				{% if lieferkond.update({'found': 1, 'txt': item.item_name, 'amount': lieferkond.amount + item.amount}) %}{% endif %}
 		{% endif %}
