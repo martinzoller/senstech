@@ -18,6 +18,13 @@ def get_data():
           'label': _('Lieferantenauftrag')
         },
         {
+          'type': 'report',
+          'is_query_report': False,
+          'doctype': 'Purchase Order',
+          'name': 'Lieferantenauftrag mit Artikel SR',
+          'label': _('Lieferantenauftrag: Bericht mit Artikel')
+        },
+        {
           'type': 'doctype',
           'name': 'Purchase Invoice',
           'label': _('Lieferanten-RG')
@@ -153,6 +160,12 @@ def get_data():
           'type': 'doctype',
           'name': 'Batch',
           'label': _('Produktionscharge')
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'name': 'Produktionsplanung',
+          'label': _('Produktionsplanung')
         },
         {
           'type': 'page',
@@ -312,7 +325,14 @@ def get_data():
           'doctype': 'GL Entry',
           'name': 'Cash Flow',
           'label': _('Cash Flow')
-        }
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'doctype': 'Item',
+          'name': 'Lagerliste Inventur',
+          'label': _('Lagerliste Inventur')
+        }        
       ]
     },
     {
@@ -322,18 +342,33 @@ def get_data():
           'type': 'report',
           'is_query_report': True,
           'doctype': 'Sales Order',
-          'name': 'Sales Analytics',
-          'label': _('Ertrag nach Kunde'),
-          'route_options': { 'range': 'Quarterly' }
+          'name': 'Sales Order Trends',
+          'label': _('Umsatz bestellt nach Quartal'),
+          'route_options': { 'period': 'Quarterly' }
         },
         {
           'type': 'report',
           'is_query_report': True,
-          'doctype': 'Sales Order',
-          'name': 'Sales Analytics',
-          'label': _('Ertrag nach Artikel'),
-          'route_options': { 'range': 'Quarterly', 'tree_type': 'Item' }
+          'doctype': 'Sales Invoice',
+          'name': 'Sales Invoice Trends',
+          'label': _('Umsatz verrechnet nach Quartal'),
+          'route_options': { 'period': 'Quarterly' }
         },
+        {
+          'type': 'report',
+          'is_query_report': False,
+          'doctype': 'Sales Invoice',
+          'name': 'Gestellte Rechnungen MZ',
+          'label': _('Umsatz verrechnet detailliert'),
+        },
+#        {
+#          'type': 'report',
+#          'is_query_report': True,
+#          'doctype': 'Sales Order',
+#          'name': 'Sales Analytics',
+#          'label': _('Ertrag nach Artikel'),
+#          'route_options': { 'range': 'Quarterly', 'tree_type': 'Item' }
+#        },
         {
           'type': 'report',
           'is_query_report': True,
@@ -344,19 +379,19 @@ def get_data():
         {
           'type': 'report',
           'is_query_report': True,
-          'doctype': 'Purchase Order',
-          'name': 'Purchase Analytics',
-          'label': _('Aufwand nach Lieferantengruppe'),
-          'link': 'query-report/Purchase Analytics?tree_type=Supplier Group&range=Quarterly'
+          'doctype': 'Purchase Invoice',
+          'name': 'Purchase Invoice Trends',
+          'label': _('Aufwand nach Quartal'),
+          'link': 'query-report/Purchase Invoice Trends?period=Quarterly'
         },
-        {
-          'type': 'report',
-          'is_query_report': True,
-          'doctype': 'Purchase Order',
-          'name': 'Purchase Analytics',
-          'label': _('Aufwand nach EK-Artikel'),
-          'link': 'query-report/Purchase Analytics?tree_type=Item&range=Quarterly'
-        },
+#        {
+#          'type': 'report',
+#          'is_query_report': True,
+#          'doctype': 'Purchase Order',
+#          'name': 'Purchase Analytics',
+#          'label': _('Aufwand nach EK-Artikel'),
+#          'link': 'query-report/Purchase Analytics?tree_type=Item&range=Quarterly'
+#        },
         {
           'type': 'report',
           'is_query_report': True,

@@ -127,6 +127,11 @@ def check_for_batch_quick_stock_entry(batch_no, warehouse, item):
 
 @frappe.whitelist()
 def batch_quick_stock_entry(batch_no, warehouse, item, qty):
+    batch = frappe.get_doc("Batch", batch_no)
+    if not batch.manufacturing_date:
+        batch.manufacturing_date = today()
+        batch.save()
+        frappe.db.commit()
     stock_entry = frappe.get_doc({
         'doctype': 'Stock Entry',
         'stock_entry_type': "Material Receipt",
@@ -561,6 +566,8 @@ def direct_print_pdf(file):
     return
     
 @frappe.whitelist()
-def change_blanket_order_to_date(bo, date):
-    frappe.db.sql("""UPDATE `tabBlanket Order` SET `to_date` = '{date}' WHERE `name` = '{bo}'""".format(date=date, bo=bo), as_list=True)
+def change_blanket_order_to_date(bo, date, bis_auf_weiteres):
+    if bis_auf_weiteres == "1":
+        date = '2099-12-31'
+    frappe.db.sql("""UPDATE `tabBlanket Order` SET `to_date` = '{date}', `bis_auf_weiteres` = '{baw}' WHERE `name` = '{bo}'""".format(date=date, bo=bo, baw=bis_auf_weiteres), as_list=True)
     return
