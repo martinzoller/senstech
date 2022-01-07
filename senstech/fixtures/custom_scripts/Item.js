@@ -10,6 +10,20 @@ frappe.ui.form.on('Item', {
 		}
 	    
 		if (!frm.doc.__islocal) {
+            if (cur_frm.doc.variant_of) {
+                var variant_desc = '<div id="variant_description"><b>Variantenbeschreibung (erscheint oberhalb der Artikelbeschreibung)</b>';
+                frappe.call({
+                    'method': 'senstech.utils.get_item_variant_description',
+                    'args': {
+                        'item': cur_frm.doc.name
+                    },
+                    'callback': function(response) {
+                        variant_desc += response.message + '</div>';
+                        cur_frm.fields_dict['description'].$wrapper.find('#variant_description').remove();
+                        cur_frm.fields_dict['description'].$wrapper.prepend(variant_desc);
+                    }
+                });
+            }
 		    get_batch_info(frm);
 			if (cur_frm.doc.is_purchase_item) {
 				frm.add_custom_button(__("Nachbestellen"), function() {

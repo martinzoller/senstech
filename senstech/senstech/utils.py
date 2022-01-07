@@ -113,8 +113,6 @@ def get_batch_production_details(batch):
     else:
         return None
     
-
-    
     
 # Frappe 'YYYY-MM-DD' to Python datetime.date
 # Modified to also accept datetime.date as input, since apparently some SQL DATE columns are returned as datetime.date by frappe.db.sql.

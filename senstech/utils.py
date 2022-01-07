@@ -533,3 +533,14 @@ def change_blanket_order_to_date(bo, date, bis_auf_weiteres):
         date = '2099-12-31'
     frappe.db.sql("""UPDATE `tabBlanket Order` SET `to_date` = '{date}', `bis_auf_weiteres` = '{baw}' WHERE `name` = '{bo}'""".format(date=date, bo=bo, baw=bis_auf_weiteres), as_list=True)
     return
+
+
+@frappe.whitelist()
+def get_item_variant_description(item):
+    item_doc = frappe.get_doc("Item", item)
+    item_desc = '<ul>'
+    for attr in item_doc.attributes:
+        attr_doc = frappe.get_doc("Item Attribute", attr.attribute)
+        item_desc += '<li>' + _(attr_doc.display_name) + ': ' + _(attr.attribute_value) + '</li>'
+    item_desc += '</ul>'
+    return item_desc

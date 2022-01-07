@@ -38,7 +38,8 @@ jenv = {
 	"methods": [
 		"get_stock_qty:senstech.utils.check_for_batch_quick_stock_entry",
         "json_loads:senstech.utils.json_loads",
-        "template_exists:senstech.utils.template_exists"
+        "template_exists:senstech.utils.template_exists",
+        "get_item_variant_description:senstech.utils.get_item_variant_description"
 	]
 }
 
