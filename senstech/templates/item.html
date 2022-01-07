@@ -1,0 +1,79 @@
+{% set dot = ' <b>&nbsp;·&nbsp;</b> ' %}
+{% if doc.has_batch_no %}
+  {% set batch_txt = 'Teilchargen' if doc.has_sub_batches else 'Chargen' %}
+  {% set batch_txt = batch_txt + ' mit Freigabe' if doc.benoetigt_chargenfreigabe else batch_txt + ' ohne Freigabe' %}
+{% else %}
+  {% set batch_txt = 'Keine Chargen' %}
+{% endif %}
+
+<p class="oneline">{{ doc.item_code }}{{ dot + doc.artikelcode_kunde if doc.artikelcode_kunde else '' }}</p>
+<h1>{{ doc.item_name.replace(doc.item_code,'') + (' (Variante)' if doc.variant_of else '') }}</h1>
+<div><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ doc.item_code }}&h=70&tc=fff" style="height:11mm"></div>
+<p class="oneline">{{ 'VK' if doc.is_sales_item else 'EK' }}/{{ doc.item_group + dot + batch_txt }}</p>
+<p class="twolines">{% for attr in doc.attributes %}{{ attr.attribute_value + (dot if attr.idx < doc.attributes|length else '') }}{% endfor %}</p>
+
+
+<style type="text/css">
+@font-face {
+   font-family: MyriadProCond;
+   src: url('/files/MyriadPro-Cond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-weight: bold;
+   src: url('/files/MyriadPro-SemiboldCond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-style: italic;
+   src: url('/files/MyriadPro-CondIt.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+	 font-weight: bold;
+	 font-style: italic;
+     src: url('/files/MyriadPro-SemiboldCondIt.otf');
+}
+
+.print-format {
+    page-width: 57mm;
+		page-height: 32mm;
+    margin-left: 1mm;
+    margin-right: 1mm;
+    margin-top: 2mm;
+    margin-bottom: 2mm;
+    font-family: MyriadProCond;
+    font-size: 9pt;
+    line-height: 9.5pt;
+}
+
+.print-format h1 {
+    font-family: MyriadProCond;
+    font-size: 11pt;
+    line-height: 11.5pt;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p {
+    margin: 0 !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p.oneline {
+    white-space: nowrap;
+}
+
+.print-format p.twolines {
+    height: 18pt;
+    padding:0;
+    margin: 0;
+    /* Hack to avoid a page break */
+    position:absolute;
+    top:21.3mm;
+}
+</style>
