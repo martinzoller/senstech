@@ -12,12 +12,13 @@ import frappe
 import json
 import urllib.parse
 import six
-import pdfkit, os
+import pdfkit, os, io
 from frappe import _, attach_print
 from frappe.utils.data import today, add_days
 from frappe.contacts.doctype.address.address import get_address_display
 import csv
 from PyPDF2 import PdfFileWriter, PdfFileReader
+from frappe.utils.print_format import read_multi_pdf
 import socket
 
 @frappe.whitelist()
@@ -348,13 +349,13 @@ def template_exists(path):
     return os.path.exists(full_path)
 
 @frappe.whitelist()
-def print_multiple_label_pdf(label_reference, contents):
-    label = frappe.get_doc("Label Printer", label_reference)
-    pdf_fnames = []
+def print_multiple_label_pdf(printer_name, contents):
+    label_printer = frappe.get_doc("Label Printer", printer_name)
     if isinstance(contents, six.string_types):
-            contents = json.loads(contents)
+        contents = json.loads(contents)
     
-    #create single label pdf for each item batch based on verpackungseinheit
+    # Create a multi-page PDF with several labels for each batch (based on 'verpackungseinheit')
+    output = PdfFileWriter()
     for content in contents:
         item = frappe.get_doc("Item", content[0])
         if item.verpackungseinheit > 0:
@@ -363,43 +364,19 @@ def print_multiple_label_pdf(label_reference, contents):
             item_code = content[0]
             if item.artikelcode_kunde:
                 item_code = item.artikelcode_kunde
+            # One label per full packing size
             for i in range(loops):
-                _content = """
-                    <div>
-                        Artikel: {item_code}<br>
-                        Produktionscharge: {batch}<br>
-                        Menge: {qty} {stock_uom}
-                    </div>
-                """.format(item_code=item_code, batch=content[2], qty=loop_qty, stock_uom=item.stock_uom)
-                pdf_fnames.append(create_single_label_pdf(label, _content))
+                create_single_label_pdf(label_printer, item, content[2], loop_qty, output)
+            # Optional extra label for remaining quantity
             if (loops * loop_qty) < content[1]:
-                _content = """
-                    <div>
-                        Artikel: {item_code}<br>
-                        Produktionscharge: {batch}<br>
-                        Menge: {qty} {stock_uom}
-                    </div>
-                """.format(item_code=item_code, batch=content[2], qty=(content[1] - (loops * loop_qty)), stock_uom=item.stock_uom)
-                pdf_fnames.append(create_single_label_pdf(label, _content))
+                create_single_label_pdf(label_printer, item, content[2], (content[1] - (loops * loop_qty)), output)
     
-    # merge all single label pdf to one pdf
-    merged_pdf = merge_pdfs(pdf_fnames)
-    
-    # remove all single label pdfs
-    cleanup(pdf_fnames)
-    
-    direct_print_pdf(merged_pdf)
-    
-    # and clean up the merged pdf as well
-    if os.path.exists(merged_pdf):
-        os.remove(merged_pdf)
-    
-    return
+    # print the merged pdf
+    filedata = read_multi_pdf(output)
+    direct_print_pdf(filedata, printer_name)
 
 
-def create_single_label_pdf(label_printer, content):
-    # create temporary file
-    fname = os.path.join("/tmp", "frappe-pdf-{0}.pdf".format(frappe.generate_hash()))
+def create_single_label_pdf(label_printer, item, batch, qty, output=None):
 
     options = { 
         'page-width': '{0}mm'.format(label_printer.width), 
@@ -408,8 +385,15 @@ def create_single_label_pdf(label_printer, content):
         'margin-bottom': '0mm',
         'margin-left': '0mm',
         'margin-right': '0mm' }
-
-    html_content = """
+        
+    label_content = """
+        <div>
+            Artikel: {item_code}<br>
+            Produktionscharge: {batch}<br>
+            Menge: {qty} {stock_uom}
+        </div>
+    """.format(item_code=item.item_code, batch=batch, qty=qty, stock_uom=item.stock_uom)
+    html = """
     <!DOCTYPE html>
     <html>
     <head>
@@ -419,34 +403,17 @@ def create_single_label_pdf(label_printer, content):
         {content}
     <body>
     </html>
-    """.format(content=content)
+    """.format(content=label_content)
 
-    pdfkit.from_string(html_content, fname, options=options or {})
+    filedata = pdfkit.from_string(html, False, options=options or {})
+    
+    if output:
+        reader = PdfFileReader(io.BytesIO(filedata))
+        output.appendPagesFromReader(reader)
+        return output
+    else:
+        return filedata
 
-    return fname
-
-def merge_pdfs(pdf_fnames):
-    from PyPDF2 import PdfFileMerger
-
-    pdfs = pdf_fnames
-    merger = PdfFileMerger()
-
-    for pdf in pdfs:
-        merger.append(pdf)
-
-    fname = "merge-{0}.pdf".format(frappe.generate_hash())
-    fpath = frappe.get_site_path('private', 'files', fname)
-
-    merger.write(fpath)
-    merger.close()
-
-    return fpath
-
-def cleanup(pdf_fnames):
-    for fname in pdf_fnames:
-        if os.path.exists(fname):
-            os.remove(fname)
-    return
 
 @frappe.whitelist()
 def unlinke_email_queue(communication):
@@ -541,22 +508,22 @@ def add_cancelled_watermark(dt, dn):
     return
 
 
-@frappe.whitelist()
-def direct_print_pdf(file):
+def direct_print_pdf(pdf_data, printer_name):
 
-    label_printer_hostname = frappe.db.get_single_value('Senstech Einstellungen', 'label_printer_hostname');
-
-    if not os.path.abspath(file).startswith(os.path.abspath(frappe.get_site_path())+os.sep):
-        raise Exception('Only files within the site can be printed')
-        return
-    
-    pdf = open(file, 'rb')
-    pdfcontent = pdf.read()
-    pdf.close()
+    label_printer = frappe.get_doc("Label Printer", printer_name)
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    soc.connect((label_printer_hostname, 9100))
-    soc.sendall(pdfcontent)
+    soc.connect((label_printer.hostname, label_printer.port))
+    soc.sendall(pdf_data)
     soc.close()
+    
+    return
+
+
+@frappe.whitelist()
+def direct_print_doc(doctype, name, print_format, printer_name):
+
+    pdfcontent = frappe.get_print(doctype, name, print_format, as_pdf=True)
+    direct_print_pdf(pdfcontent, printer_name)
     
     return
     
