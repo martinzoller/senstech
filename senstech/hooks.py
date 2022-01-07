@@ -139,3 +139,5 @@ jenv = {
 # 	"Task": "senstech.task.get_dashboard_data"
 # }
 
+fixture = [ 'Custom Script' ]
+fixtures = [ 'Custom Script' ]
