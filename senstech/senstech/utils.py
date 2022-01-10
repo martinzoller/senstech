@@ -46,15 +46,15 @@ def get_next_batch_no(item_code):
                 next_sub_batch = 'A'
             else:
                 next_sub_batch = chr(ord(prev_sub_batch[0])+1)
-            next_batch = latest_batch.chargennummer[0:5] + ' ' + next_sub_batch
+            next_batch = latest_batch.chargennummer[0:5] + next_sub_batch
         else:
             next_batch = ('%02d/' % (int(latest_batch.chargennummer[0:2])+1)) + this_year
             if item_doc.has_sub_batches:
-                next_batch += ' A'
+                next_batch += 'A'
     else:
         next_batch = '01/'+this_year
         if item_doc.has_sub_batches:
-            next_batch += ' A'
+            next_batch += 'A'
     return next_batch
 
 

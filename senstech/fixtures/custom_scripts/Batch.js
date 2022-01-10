@@ -13,10 +13,10 @@ frappe.ui.form.on('Batch', {
 			    var hat_teilchargen = r.message.has_sub_batches;	            
 			    var chargennummer = cur_frm.doc.chargennummer.trim();
 			    const schema_basis = /[0-9]{2}\/[0-9]{2}/;
-			    const schema_teilcharge = /[0-9]{2}\/[0-9]{2} [A-Z]{1}/;
+			    const schema_teilcharge = /[0-9]{2}\/[0-9]{2}[A-Z]{1}/;
 
     			if(hat_teilchargen && chargennummer.match(schema_teilcharge) != chargennummer) {
-    			    frappe.msgprint(__("Bitte eine gültige Chargennummer nach Schema 'NN/YY X' angeben"), __("Validation"));
+    			    frappe.msgprint(__("Bitte eine gültige Chargennummer mit Teilcharge nach Schema 'NN/YYX' angeben"), __("Validation"));
     	            frappe.validated=false;			    
     			}
     			else if(!hat_teilchargen && chargennummer.match(schema_basis) != chargennummer) {
