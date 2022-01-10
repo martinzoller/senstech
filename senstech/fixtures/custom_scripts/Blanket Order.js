@@ -41,7 +41,7 @@ frappe.ui.form.on('Blanket Order', {
         }
         change_customer(frm);
         if (cur_frm.doc.customer_address) {
-		    update_adress_display(frm, 'address_display', cur_frm.doc.customer_address);
+		    update_address_display(frm, 'address_display', cur_frm.doc.customer_address);
         }
 	},
 	customer(frm) {
@@ -89,7 +89,7 @@ function change_to_date(frm) {
     ],
     function(values){
         frappe.call({
-            "method": "senstech.utils.change_blanket_order_to_date",
+            "method": "senstech.scripts.blanket_order_tools.change_blanket_order_to_date",
             "args": {
                 "bo": cur_frm.doc.name,
                 "date": values.date,
@@ -173,12 +173,12 @@ function change_customer(frm) {
     });
 }
 
-function update_adress_display(frm, fields, addresses, as_list=false) {
+function update_address_display(frm, fields, addresses, as_list=false) {
     if (!as_list) {
         as_list = '';
     }
     frappe.call({
-        "method": "senstech.utils.update_adress_display",
+        "method": "senstech.scripts.tools.update_address_display",
         "args": {
             "doctype": cur_frm.doctype,
             "doc_name": cur_frm.docname,
@@ -203,7 +203,7 @@ function update_adress_display(frm, fields, addresses, as_list=false) {
 
 function attach_pdf_print(frm) {
     frappe.call({
-        "method": "senstech.utils.add_freeze_pdf_to_dt",
+        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
         "args": {
             "dt": cur_frm.doctype,
             "dn": cur_frm.docname,
@@ -217,7 +217,7 @@ function attach_pdf_print(frm) {
 
 function add_cancelled_watermark(frm) {
     frappe.call({
-        "method": "senstech.utils.add_cancelled_watermark",
+        "method": "senstech.scripts.tools.add_cancelled_watermark",
         "args": {
             "dt": cur_frm.doctype,
             "dn": cur_frm.docname

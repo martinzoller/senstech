@@ -40,7 +40,7 @@ function check_batch_release(frm) {
 
 							if (entry.t_warehouse == 'Fertigerzeugnisse - ST') {
                                 frappe.call({
-                                    method: 'senstech.utils.check_for_batch_quick_stock_entry',
+                                    method: 'senstech.scripts.tools.check_for_batch_quick_stock_entry',
 		        		            args: {
     				                    item: entry.item_code,
 	    				                batch_no: entry.batch_no,
@@ -72,7 +72,7 @@ function entnahme_blech(frm) {
 					var item = d.get_values().scan_item;
 					if (item) {
 						frappe.call({
-						   method: "senstech.utils.entnahme_blech",
+						   method: "senstech.scripts.stock_entry_tools.entnahme_blech",
 						   args: {
 								"item": item
 						   },

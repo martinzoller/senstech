@@ -38,13 +38,13 @@ frappe.ui.form.on('Sales Invoice', {
             check_mail_contact(frm);
         }
         if (cur_frm.doc.customer_address && cur_frm.doc.shipping_address_name) {
-            update_adress_display(frm, ['address_display', 'shipping_address'], [cur_frm.doc.customer_address, cur_frm.doc.shipping_address_name], true);
+            update_address_display(frm, ['address_display', 'shipping_address'], [cur_frm.doc.customer_address, cur_frm.doc.shipping_address_name], true);
         } else {
             if (cur_frm.doc.customer_address) {
-                update_adress_display(frm, 'address_display', cur_frm.doc.customer_address);
+                update_address_display(frm, 'address_display', cur_frm.doc.customer_address);
             }
             if (cur_frm.doc.shipping_address_name) {
-                update_adress_display(frm, 'shipping_address', cur_frm.doc.shipping_address_name);
+                update_address_display(frm, 'shipping_address', cur_frm.doc.shipping_address_name);
             }
         }
         if (cur_frm.doc.docstatus == 1 && cur_frm.doc.status != 'Paid') {
@@ -72,7 +72,7 @@ frappe.ui.form.on('Sales Invoice', {
 
 function create_auto_pament(frm) {
     frappe.call({
-        "method": "senstech.utils.create_payment",
+        "method": "senstech.scripts.sales_invoice_tools.create_payment",
         "args": {
             "sinv": cur_frm.doc.name
         },
@@ -202,12 +202,12 @@ frappe.ui.form.on('Sales Invoice Item', {
    }
 })
 
-function update_adress_display(frm, fields, addresses, as_list=false) {
+function update_address_display(frm, fields, addresses, as_list=false) {
     if (!as_list) {
         as_list = '';
     }
     frappe.call({
-        "method": "senstech.utils.update_adress_display",
+        "method": "senstech.scripts.tools.update_address_display",
         "args": {
             "doctype": cur_frm.doctype,
             "doc_name": cur_frm.docname,
@@ -232,7 +232,7 @@ function update_adress_display(frm, fields, addresses, as_list=false) {
 
 function attach_pdf_print(frm) {
     frappe.call({
-        "method": "senstech.utils.add_freeze_pdf_to_dt",
+        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
         "args": {
             "dt": cur_frm.doctype,
             "dn": cur_frm.docname,
@@ -246,7 +246,7 @@ function attach_pdf_print(frm) {
 
 function add_cancelled_watermark(frm) {
     frappe.call({
-        "method": "senstech.utils.add_cancelled_watermark",
+        "method": "senstech.scripts.tools.add_cancelled_watermark",
         "args": {
             "dt": cur_frm.doctype,
             "dn": cur_frm.docname

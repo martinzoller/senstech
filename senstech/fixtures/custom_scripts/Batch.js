@@ -56,9 +56,8 @@ frappe.ui.form.on('Batch', {
 				qr_labels(frm);
 			});
 		    
-		    /* Funktion gefixt und erweitert MZ 2021-01-06 */
 			frappe.call({
-				method: 'senstech.utils.check_for_batch_quick_stock_entry',
+				method: 'senstech.scripts.tools.check_for_batch_quick_stock_entry',
 				args: {
 				    item: frm.doc.item,
 					batch_no: frm.doc.name,
@@ -164,7 +163,7 @@ function an_lager_legen(frm, open_qty) {
 
 function batch_quick_stock_entry(frm, qty) {
 	frappe.call({
-		method: 'senstech.utils.batch_quick_stock_entry',
+		method: 'senstech.scripts.batch_tools.batch_quick_stock_entry',
 		args: {
 			batch_no: frm.doc.name,
 			warehouse: 'Fertigerzeugnisse - ST',
@@ -198,7 +197,7 @@ function batch_quick_stock_entry(frm, qty) {
 
 function get_histogram_data(frm) {
 	frappe.call({
-		method: 'senstech.utils.get_histogramm_data',
+		method: 'senstech.scripts.batch_tools.get_histogramm_data',
 		args: {
 			item: cur_frm.doc.item,
             batch: cur_frm.doc.name,
@@ -233,7 +232,7 @@ function show_histograms(frm) {
 
 function show_prod_details(frm) {
     frappe.call({
-				method: 'senstech.senstech.utils.get_batch_production_details',
+				method: 'senstech.scripts.batch_tools.get_batch_production_details',
 				args: {
 				    batch: cur_frm.doc.name,
 				},
@@ -564,7 +563,7 @@ function qr_labels(frm) {
 
 function auto_chargennr(frm){
     frappe.call({
-		method: 'senstech.senstech.utils.get_next_batch_no',
+		method: 'senstech.scripts.batch_tools.get_next_batch_no',
 		args: {
 			item_code: frm.doc.item,
 		},

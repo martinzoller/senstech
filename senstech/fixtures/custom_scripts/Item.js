@@ -13,7 +13,7 @@ frappe.ui.form.on('Item', {
             if (cur_frm.doc.variant_of) {
                 var variant_desc = '<div id="variant_description"><b>Variantenbeschreibung (erscheint oberhalb der Artikelbeschreibung)</b>';
                 frappe.call({
-                    'method': 'senstech.utils.get_item_variant_description',
+                    'method': 'senstech.scripts.item_tools.get_item_variant_description',
                     'args': {
                         'item': cur_frm.doc.name
                     },
@@ -109,7 +109,7 @@ frappe.ui.form.on('Item', {
 
 function get_batch_info(frm) {
     frappe.call({
-    	'method': 'senstech.senstech.utils.get_batch_info',
+    	'method': 'senstech.scripts.item_tools.get_batch_info',
     	'args': {
     		'item_code': cur_frm.doc.item_code
     	},
@@ -138,7 +138,7 @@ function get_batch_info(frm) {
 
 function get_next_purchase_item_number(frm) {
 	frappe.call({
-    	'method': 'senstech.utils.get_next_purchase_item_number',
+    	'method': 'senstech.scripts.item_tools.get_next_purchase_item_number',
     	'callback': function(response) {
             var next_number = response.message;
             if (next_number) {
@@ -200,7 +200,7 @@ function nachbestellen(frm) {
 
 function _nachbestellen(frm, supplier, qty) {
 	frappe.call({
-    	'method': 'senstech.utils.nachbestellung',
+    	'method': 'senstech.scripts.item_tools.nachbestellung',
     	'args': {
     		'item': cur_frm.doc.name,
 			'supplier': supplier,

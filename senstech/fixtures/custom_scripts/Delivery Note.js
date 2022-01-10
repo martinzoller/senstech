@@ -28,13 +28,13 @@ frappe.ui.form.on('Delivery Note', {
     },
     refresh(frm) {
         if (cur_frm.doc.customer_address && cur_frm.doc.shipping_address_name) {
-            update_adress_display(frm, ['address_display', 'shipping_address'], [cur_frm.doc.customer_address, cur_frm.doc.shipping_address_name], true);
+            update_address_display(frm, ['address_display', 'shipping_address'], [cur_frm.doc.customer_address, cur_frm.doc.shipping_address_name], true);
         } else {
             if (cur_frm.doc.customer_address) {
-                update_adress_display(frm, 'address_display', cur_frm.doc.customer_address, false);
+                update_address_display(frm, 'address_display', cur_frm.doc.customer_address, false);
             }
             if (cur_frm.doc.shipping_address_name) {
-                update_adress_display(frm, 'shipping_address', cur_frm.doc.shipping_address_name, false);
+                update_address_display(frm, 'shipping_address', cur_frm.doc.shipping_address_name, false);
             }
         }
         frm.add_custom_button(__("Label Verpackungseinheit"), function() {
@@ -110,12 +110,12 @@ function fetch_taxes_and_charges_from_customer(frm) {
 }
 
 
-function update_adress_display(frm, fields, addresses, as_list=false) {
+function update_address_display(frm, fields, addresses, as_list=false) {
     if (!as_list) {
         as_list = '';
     }
     frappe.call({
-        "method": "senstech.utils.update_adress_display",
+        "method": "senstech.scripts.tools.update_address_display",
         "args": {
             "doctype": cur_frm.doctype,
             "doc_name": cur_frm.docname,
@@ -142,7 +142,7 @@ function create_label(frm) {
     var label_printer = "Zebra 57x32"; 
     var contents = get_label_content(frm); 
     frappe.call({
-        "method": "senstech.utils.print_multiple_label_pdf",
+        "method": "senstech.scripts.delivery_note_tools.print_multiple_label_pdf",
         "args": {
             "printer_name": label_printer,
             "contents": contents
@@ -168,7 +168,7 @@ function get_label_content(frm) {
 
 function attach_pdf_print(frm) {
     frappe.call({
-        "method": "senstech.utils.add_freeze_pdf_to_dt",
+        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
         "args": {
             "dt": cur_frm.doctype,
             "dn": cur_frm.docname,
@@ -182,7 +182,7 @@ function attach_pdf_print(frm) {
 
 function add_cancelled_watermark(frm) {
     frappe.call({
-        "method": "senstech.utils.add_cancelled_watermark",
+        "method": "senstech.scripts.tools.add_cancelled_watermark",
         "args": {
             "dt": cur_frm.doctype,
             "dn": cur_frm.docname
