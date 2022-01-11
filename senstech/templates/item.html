@@ -6,11 +6,21 @@
   {% set batch_txt = 'Keine Chargen' %}
 {% endif %}
 
-<p class="oneline">{{ doc.item_code }}{{ dot + doc.artikelcode_kunde if doc.artikelcode_kunde else '' }}</p>
-<h1>{{ doc.item_name.replace(doc.variant_of+'-','') if doc.variant_of else doc.item_name }}</h1>
-<div><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ doc.item_code }}&h=70&tc=fff" style="height:11mm"></div>
-<p class="oneline">{{ 'VK' if doc.is_sales_item else 'EK' }}/{{ doc.item_group + dot + batch_txt }}</p>
-<p class="twolines">{% for attr in doc.attributes %}{{ attr.attribute_value + (dot if attr.idx < doc.attributes|length else '') }}{% endfor %}</p>
+{% if doc.has_variants %}
+  {% set docs = frappe.get_list("Item", ['item_code', 'artikelcode_kunde', 'item_name', 'variant_of', 'is_sales_item', 'item_group' ], { 'variant_of': doc.name, 'disabled': False }) %}
+{% else %}
+  {% set docs = [doc] %}
+{% endif %}
+
+{% for label in docs %}
+	<p class="oneline">{{ label.item_code }}{{ dot + label.artikelcode_kunde if label.artikelcode_kunde else '' }}</p>
+	<h1>{{ label.item_name.replace(label.variant_of+'-','') if label.variant_of else label.item_name }}</h1>
+	<div><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ label.item_code }}&h=70&tc=fff" style="height:11mm"></div>
+	<p class="oneline">{{ 'VK' if label.is_sales_item else 'EK' }}/{{ label.item_group + dot + batch_txt }}</p>
+	{% set attrs = frappe.get_list("Item Variant Attribute", ['idx', 'attribute_value' ], filters = { 'parent': label.item_code, 'parenttype': 'Item' }, order_by = 'idx ASC') %}
+	<p class="twolines">{% for attr in attrs %}{{ attr.attribute_value + (dot if attr.idx < attrs|length else '') }}{% endfor %}</p>
+	{% if label != docs[-1] %}<div class="page-break"></div>{% endif %}
+{% endfor %}
 
 
 <style type="text/css">
@@ -41,7 +51,7 @@
     margin-left: 1mm;
     margin-right: 1mm;
     margin-top: 2mm;
-    margin-bottom: 2mm;
+    margin-bottom: 1mm;
     font-family: MyriadProCond;
     font-size: 9pt;
     line-height: 9.5pt;
@@ -70,10 +80,7 @@
 
 .print-format p.twolines {
     height: 18pt;
-    padding:0;
-    margin: 0;
-    /* Hack to avoid a page break */
-    position:absolute;
-    top:21.3mm;
+    padding:0 !important;
+    margin: 0 !important;
 }
 </style>
