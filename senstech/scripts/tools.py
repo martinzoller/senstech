@@ -118,7 +118,7 @@ def add_cancelled_watermark(dt, dn):
 
     pdf_file = input_file_fpath
     merged = output_file_fpath
-    watermark = frappe.get_site_path('public', 'pdf', 'abgebrochen.pdf')
+    watermark = frappe.get_app_path('senstech', 'public', 'pdf', 'abgebrochen.pdf')
 
     try:
         with open(pdf_file, "rb") as input_file, open(watermark, "rb") as watermark_file:
