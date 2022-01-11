@@ -25,6 +25,9 @@ frappe.ui.form.on('Item', {
                 });
             }
 		    get_batch_info(frm);
+			frm.add_custom_button(__("Lageretikett drucken"), function() {
+				lageretikett(frm);
+			});
 			if (cur_frm.doc.is_purchase_item) {
 				frm.add_custom_button(__("Nachbestellen"), function() {
 					nachbestellen(frm);
@@ -209,6 +212,20 @@ function _nachbestellen(frm, supplier, qty) {
     	},
 		'callback': function(response) {
 			frappe.set_route('Form', 'Purchase Order', response.message);
+		}
+    });
+}
+
+function lageretikett(frm) {
+	frappe.call({
+    	'method': 'senstech.scripts.tools.direct_print_doc',
+    	'args': {
+			'doctype': 'Item',
+    		'name': cur_frm.doc.name,
+			'print_format': 'Item Label ST',
+			'printer_name': 'Zebra 57x32'
+    	},
+		'callback': function(response) {
 		}
     });
 }
