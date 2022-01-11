@@ -36,21 +36,27 @@ frappe.ui.form.on('Batch', {
 	    }
 	},
 	refresh(frm) {
+		/* Charge freigegeben oder Freigabe beantragt: Fast alles schreibgeschützt */
+		if(cur_frm.doc.freigabe_beantragt_durch || cur_frm.doc.freigabedatum) {
+			cur_frm.set_df_property('stueckzahl','read_only',1);
+			cur_frm.set_df_property('messdaten_nullpunkt','read_only',1);
+			cur_frm.set_df_property('messdaten_last','read_only',1);
+		}
+		else {
+			cur_frm.set_df_property('stueckzahl','read_only',0);
+			cur_frm.set_df_property('messdaten_nullpunkt','read_only',0);
+			cur_frm.set_df_property('messdaten_last','read_only',0);
+		}
+		
+		if(frm.is_new()) {
+			cur_frm.set_df_property('item','read_only',0);
+		}
+		else {
+			cur_frm.set_df_property('item','read_only',1);
+		}
+
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
 		if(!frm.is_new()) {
-		    
-		    /* Charge freigegeben oder Freigabe beantragt: Fast alles schreibgeschützt */
-		    if(cur_frm.doc.freigabe_beantragt_durch || cur_frm.doc.freigabedatum) {
-		        cur_frm.set_df_property('stueckzahl','read_only',1);
-		        cur_frm.set_df_property('messdaten_nullpunkt','read_only',1);
-		        cur_frm.set_df_property('messdaten_last','read_only',1);
-		    }
-		    else {
-		        cur_frm.set_df_property('stueckzahl','read_only',0);
-		        cur_frm.set_df_property('messdaten_nullpunkt','read_only',0);
-		        cur_frm.set_df_property('messdaten_last','read_only',0);
-		    }
-            
             
 		    frm.add_custom_button(__("QR-Labels erzeugen"), function() {
 				qr_labels(frm);
