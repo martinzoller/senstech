@@ -36,9 +36,11 @@ app_include_js = "/assets/senstech/js/senstech.js"
 
 jenv = {
 	"methods": [
-		"get_stock_qty:senstech.utils.check_for_batch_quick_stock_entry",
-        "json_loads:senstech.utils.json_loads",
-        "template_exists:senstech.utils.template_exists"
+		"get_stock_qty:senstech.scripts.tools.check_for_batch_quick_stock_entry",
+        "json_loads:senstech.scripts.tools.json_loads",
+        "template_exists:senstech.scripts.tools.template_exists",
+        "get_item_variant_description:senstech.scripts.item_tools.get_item_variant_description",
+        "get_sensor_measurements:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_sensor_measurements"
 	]
 }
 
@@ -139,3 +141,5 @@ jenv = {
 # 	"Task": "senstech.task.get_dashboard_data"
 # }
 
+fixture = [ 'Custom Script' ]
+fixtures = [ 'Custom Script' ]

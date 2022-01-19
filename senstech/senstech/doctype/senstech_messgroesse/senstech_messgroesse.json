@@ -1,0 +1,53 @@
+{
+ "autoname": "field:measurand",
+ "creation": "2022-01-17 17:44:24.830508",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "measurand",
+  "base_uom"
+ ],
+ "fields": [
+  {
+   "fieldname": "measurand",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Messgr\u00f6sse",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "base_uom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Basiseinheit",
+   "options": "UOM",
+   "reqd": 1
+  }
+ ],
+ "modified": "2022-01-18 10:37:00.698190",
+ "modified_by": "Administrator",
+ "module": "Senstech",
+ "name": "Senstech Messgroesse",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

@@ -1,0 +1,119 @@
+{% set params = doc.print_format_parameters or '999-1' %}
+{% set params = params.split('-') %}
+{% set from_no = params[0]|int %}
+{% set num_pages = params[1]|int %}
+
+{% for pg in range(0,num_pages) %}
+    <table>
+    {% for row in range(0,15) %}
+    <tr>
+      {% for col in range(0,2) %}
+        {% set sensor_id = doc.chargennummer + '/%03d' % (from_no+30*pg+2*row+col) %}
+        <td class="half-label"><img src="/files/Senstech_Logo_Website_EN.png" class="stlogo"></td>
+        <td class="half-label">
+          <table class="subtable"><tr><td class="qr"><img src="https://chart.googleapis.com/chart?cht=qr&chs=100x100&chld=L|0&chl={{ doc.item + '-' + sensor_id }}" class="qr"></td><td class="labeltext">{{ doc.item }}<br>{{ doc.item_name }}<br><span style="font-size:11pt;line-height:1.1">{{ sensor_id }}</span></td></tr></table>
+        </td>
+        {% if col == 0 %}
+          <td class="spacer"></td>
+        {% endif %}
+      {% endfor %}
+    </tr>
+    <tr><td class="vert-spacer" colspan="6"></td></tr>
+    {% endfor %}
+    </table>
+    {% if pg < num_pages - 1 %}
+        <!--<div class="page-break"></div>-->
+    {% endif %}
+{% endfor %}
+
+<style type="text/css">
+@font-face {
+   font-family: MyriadPro;
+   src: url('/files/MyriadPro-Regular.otf');
+}
+@font-face {
+   font-family: MyriadPro;
+	 font-weight: bold;
+   src: url('/files/MyriadPro-Semibold.otf');
+}
+@font-face {
+   font-family: MyriadPro;
+	 font-style: italic;
+   src: url('/files/MyriadPro-It.otf');
+}
+@font-face {
+   font-family: MyriadPro;
+	 font-weight: bold;
+	 font-style: italic;
+   src: url('/files/MyriadPro-SemiboldIt.otf');
+}
+
+.errorpopup {
+    position: absolute;
+    width: 150mm;
+    left: 30mm;
+    top: 30mm;
+    padding: 10mm;
+    border: 2px solid red;
+    background-color: #fdd;
+    font-size: 14pt;
+    color: red;
+}
+
+.print-format {
+  margin-top: 8.5mm;
+  margin-left: 17.5mm;
+  margin-right: 0mm;
+  margin-bottom: 0mm;
+  font-family: MyriadPro !important;
+  font-size: 5.5pt !important;
+}
+body {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: -17.5mm;
+  top: -8.5mm;
+}
+table {
+  border: 0;
+}
+.print-format td {
+  padding: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+td.half-label {
+  width: 42.5mm;
+  height: 14mm;
+  border: 1px solid #fafafa;
+}
+td.spacer {
+  width: 5mm;
+  height: 14mm;
+  text-align: center;
+}
+td.vert-spacer {
+  height: 5mm;
+}
+table.subtable {
+  margin: auto;
+  height: 100%;
+}
+td.qr {
+  padding-left: 4mm !important;
+}
+img.qr {
+  width: 11mm;
+  height: 11mm;
+}
+img.stlogo {
+  width: 30mm;
+  padding-right: 4mm !important;
+}
+td.labeltext {
+  padding-left: 2mm !important;
+  text-align: left !important;
+}
+
+</style>

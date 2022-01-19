@@ -137,7 +137,7 @@ $(document).ready(function() {
 frappe.provide('frappe.help.help_links');
 
 frappe.call({
-	method: 'senstech.utils.get_help_links',
+	method: 'senstech.scripts.tools.get_help_links',
 	callback: function(r) {
 		if(r.message) {
 			var links = r.message;
@@ -178,7 +178,7 @@ function print_pdf_directly(e) {
 			// No attached PDF exists: Create one in background!
 			if(!att_url) {
 				frappe.call({
-					"method": "senstech.utils.add_freeze_pdf_to_dt",
+					"method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
 					"args": {
 							"dt": cur_frm.doctype,
 							"dn": cur_frm.docname,

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2021, libracore AG and Contributors
+# Copyright (c) 2022, libracore AG and Contributors
 # See license.txt
 from __future__ import unicode_literals
 
 # import frappe
 import unittest
 
-class TestSenstechEinstellungen(unittest.TestCase):
+class TestSenstechMessdaten(unittest.TestCase):
 	pass

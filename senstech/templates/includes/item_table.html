@@ -48,7 +48,8 @@
 												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
 										{% endif %}										
 										<b>{{ _(item.item_name) }}</b>
-										{% if item.description | replace('<div>', '') | replace('</div>', '') != item.item_name %}<br>{{ _(item.description) }}{% endif %}
+										{% if item_stamm.variant_of %}{{ get_item_variant_description(item.item_code) }}{% endif %}
+										{% if item.description | replace('<div>', '') | replace('</div>', '') != item.item_name %}{{ _(item.description) }}{% endif %}
 										{% if doc_data.adresse_lieferung.land != "Schweiz" and zolltarif %}<div style="height:2mm"></div>{{ _("Zolltarifnummer") }}: {{ zolltarif }}{% endif %}
 										{% if doc.doctype == "Blanket Order" %}
 											<div style="height:2mm"></div>{{ _("Losgrösse:") }} {{ "{:,.0f}".format(item.lot_size).replace(",", "'") }}&nbsp;{{ _(item_stamm.stock_uom) }}<br>

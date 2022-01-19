@@ -116,7 +116,11 @@ batch			  The production batch whose histogram should be shown
 		<td style="text-align: left;">{{ _("Produktverantwortlicher Senstech AG:") }}</td>
 		<td style="text-align: center;">{{ frappe.utils.get_datetime(batch.manufacturing_date).strftime('%d.%m.%Y') }}</td>
 		<td style="text-align: center;">
-			{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": (batch.freigabe_beantragt_durch or batch.owner) }) %}
+			{%if batch.freigabe_beantragt_durch %}
+			  {% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift"), filters={"employee_name": batch.freigabe_beantragt_durch }) %}
+			{% else %}
+			  {% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": batch.owner }) %}
+			{% endif %}
 			{% if employee_list_ersteller %}
 				{% set unterschrift_ersteller = employee_list_ersteller[0].unterschrift %}
 			{% else %}
