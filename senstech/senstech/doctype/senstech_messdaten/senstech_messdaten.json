@@ -1,0 +1,101 @@
+{
+ "creation": "2022-01-17 17:25:27.717939",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "batch",
+  "sensor_id",
+  "measurand",
+  "value",
+  "uom",
+  "test_result",
+  "measured_by",
+  "sent_from_host"
+ ],
+ "fields": [
+  {
+   "fieldname": "batch",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Produktionscharge",
+   "options": "Batch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sensor_id",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sensor-ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "measurand",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Messgr\u00f6sse",
+   "options": "Senstech Messgroesse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Messwert",
+   "precision": "9",
+   "reqd": 1
+  },
+  {
+   "default": "NONE",
+   "fieldname": "test_result",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Testergebnis",
+   "options": "NONE\nPASS\nFAIL"
+  },
+  {
+   "fieldname": "measured_by",
+   "fieldtype": "Link",
+   "label": "Gemessen durch",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "uom",
+   "fieldtype": "Link",
+   "label": "Messeinheit",
+   "options": "UOM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sent_from_host",
+   "fieldtype": "Data",
+   "label": "Gesendet von Host"
+  }
+ ],
+ "modified": "2022-01-19 10:42:40.056604",
+ "modified_by": "martin.zoller@senstech.ch",
+ "module": "Senstech",
+ "name": "Senstech Messdaten",
+ "owner": "martin.zoller@senstech.ch",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
