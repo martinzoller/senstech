@@ -1,0 +1,108 @@
+{% set batch_doc = frappe.get_doc("Batch",doc.batch) %}
+{% set measurements = get_sensor_measurements(doc.name) %}
+
+<table style="width:49mm">
+<tr style="height:10mm">
+	<td style="width:22mm">&nbsp; <!-- Leerer Bereich oben rechts --></td>
+  <td colspan="3" style="width:27mm"><table class="measurements">
+	{% set n = namespace(lines_left=3) %}
+	{% set npkt = measurements.pop('Nullpunkt') %}
+  {% if npkt %}
+	   <tr><td>{{ _(npkt.measurand) }}</td><td>{{ npkt.value }} {{ npkt.uom_symbol }}</td></tr>
+		 {% set n.lines_left = n.lines_left - 1 %}
+	{% endif %}
+	{% for key in measurements %}
+	  {% set m = measurements[key] %}
+	  {% if n.lines_left > 0 %}
+	    <tr><td>{{ _(m.measurand) }}</td><td>{{ m.value }} {{ m.uom_symbol }}</td></tr>
+	    {% set n.lines_left = n.lines_left - 1 %}
+		{% endif %}
+	{% endfor %}
+	</table></td>
+</tr>
+<tr style="height:10.1mm">
+	<td style="width:22mm">&nbsp; <!-- Klebezone Kabel --></td>
+	<td style="width:7mm"><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=qr&d=%7B%22item%22:%22{{ batch_doc.item }}%22,%22batch%22:%22{{ batch_doc.chargennummer }}%22,%22id%22:%22{{ doc.sensor_id }}%22,%22offset%22:%200.057,%22sensitivity%22:0.015%7D&tc=fff" style="width:10mm !important;height:10mm;position:relative;top:0.1mm"></td>
+	<td style="width:1mm"></td>
+	<td style="width:18mm"><h1 style="width:24mm;margin-top:1mm">{{ batch_doc.item }}<br>{{ batch_doc.chargennummer }}/{{ doc.sensor_id }}</h1><div style="text-align:right;width:23mm"><img src="/files/Senstech_Logo_CAD_ohne_Text.png" style="width:14mm;margin-top:1.5mm"></div></td>
+</tr>
+</table>
+
+
+<style type="text/css">
+@font-face {
+   font-family: MyriadProCond;
+   src: url('/files/MyriadPro-Cond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-weight: bold;
+   src: url('/files/MyriadPro-SemiboldCond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-style: italic;
+   src: url('/files/MyriadPro-CondIt.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+	 font-weight: bold;
+	 font-style: italic;
+     src: url('/files/MyriadPro-SemiboldCondIt.otf');
+}
+
+.print-format {
+    page-width: 49mm;
+		page-height: 20mm;
+    margin-left: 0mm;
+    margin-right: 0mm;
+    margin-top: 0mm;
+    margin-bottom: 0mm;
+    font-family: MyriadProCond;
+    font-size: 6pt;
+    line-height: 6.3pt;
+}
+
+.print-format h1 {
+    font-family: MyriadProCond;
+    font-size: 7pt;
+    line-height: 7.3pt;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p {
+    margin: 0 !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p.oneline {
+    white-space: nowrap;
+}
+
+.print-format p.twolines {
+    height: 18pt;
+    padding:0 !important;
+    margin: 0 !important;
+}
+
+.print-format td {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		padding: 0 !important;
+}
+
+.print-format table.measurements {
+		position: relative;
+		top: 1mm;
+}
+
+.print-format .measurements td {
+		padding: 0.5mm 1mm !important;
+}
+</style>

@@ -58,6 +58,25 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
         else:
             return(e)
 
+# Read the batch and sensor ID from a given measurement dataset,
+# and return this sensor's most recent measurement for each available measurand
+# as a hash by measurand, with columns 'timestamp','measurand','value','uom_name','uom_symbol'
+@frappe.whitelist()
+def get_sensor_measurements(reference_measurement_id):
+    ref_doc = frappe.get_doc("Senstech Messdaten", reference_measurement_id)
+    docs = frappe.db.sql(("""
+        SELECT MAX(md.creation) AS timestamp,measurand,value,md.uom AS uom_name,
+               uom.symbol AS uom_symbol
+        FROM `tabSenstech Messdaten` md LEFT JOIN `tabUOM` uom ON md.uom = uom.name
+        WHERE md.sensor_id='{sensor_id}'
+        AND md.batch='{batch}'
+        GROUP BY measurand"""
+    ).format(sensor_id=ref_doc.sensor_id, batch=ref_doc.batch), as_dict=True)
+    by_measurand = {}
+    for doc in docs:
+        by_measurand[doc.measurand] = doc
+    return by_measurand
+    
 
 class SenstechMessdaten(Document):
 

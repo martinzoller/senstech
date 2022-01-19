@@ -39,7 +39,8 @@ jenv = {
 		"get_stock_qty:senstech.scripts.tools.check_for_batch_quick_stock_entry",
         "json_loads:senstech.scripts.tools.json_loads",
         "template_exists:senstech.scripts.tools.template_exists",
-        "get_item_variant_description:senstech.scripts.item_tools.get_item_variant_description"
+        "get_item_variant_description:senstech.scripts.item_tools.get_item_variant_description",
+        "get_sensor_measurements:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_sensor_measurements"
 	]
 }
 
