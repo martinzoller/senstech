@@ -3,28 +3,27 @@
 
 <table style="width:49mm">
 <tr style="height:10mm">
-	<td style="width:22mm">&nbsp; <!-- Leerer Bereich oben rechts --></td>
-  <td colspan="3" style="width:27mm"><table class="measurements">
+	<td style="width:20mm">&nbsp; <!-- Leerer Bereich oben rechts --></td>
+  <td colspan="2" style="width:28mm;max-width:28mm"><table class="measurements" style="width:28mm">
 	{% set n = namespace(lines_left=3) %}
 	{% set npkt = measurements.pop('Nullpunkt') %}
   {% if npkt %}
-	   <tr><td>{{ _(npkt.measurand) }}</td><td>{{ npkt.value }} {{ npkt.uom_symbol }}</td></tr>
+	   <tr><td style="width:15mm;max-width:15mm">{{ _(npkt.measurand) }}</td><td style="width:13mm;max-width:13mm">{{ "%.4g"|format(npkt.value) }} {{ npkt.uom_symbol }}</td></tr>
 		 {% set n.lines_left = n.lines_left - 1 %}
 	{% endif %}
 	{% for key in measurements %}
 	  {% set m = measurements[key] %}
 	  {% if n.lines_left > 0 %}
-	    <tr><td>{{ _(m.measurand) }}</td><td>{{ m.value }} {{ m.uom_symbol }}</td></tr>
+	    <tr><td style="width:15mm;max-width:15mm">{{ _(m.measurand) }}</td><td style="width:13mm;max-width:13mm">{{ "%.4g"|format(m.value) }} {{ m.uom_symbol }}</td></tr>
 	    {% set n.lines_left = n.lines_left - 1 %}
 		{% endif %}
 	{% endfor %}
 	</table></td>
 </tr>
 <tr style="height:10.1mm">
-	<td style="width:22mm">&nbsp; <!-- Klebezone Kabel --></td>
-	<td style="width:7mm"><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=qr&d=%7B%22item%22:%22{{ batch_doc.item }}%22,%22batch%22:%22{{ batch_doc.chargennummer }}%22,%22id%22:%22{{ doc.sensor_id }}%22,%22offset%22:%200.057,%22sensitivity%22:0.015%7D&tc=fff" style="width:10mm !important;height:10mm;position:relative;top:0.1mm"></td>
-	<td style="width:1mm"></td>
-	<td style="width:18mm"><h1 style="width:24mm;margin-top:1mm">{{ batch_doc.item }}<br>{{ batch_doc.chargennummer }}/{{ doc.sensor_id }}</h1><div style="text-align:right;width:23mm"><img src="/files/Senstech_Logo_CAD_ohne_Text.png" style="width:14mm;margin-top:1.5mm"></div></td>
+	<td style="width:20mm">&nbsp; <!-- Klebezone Kabel --></td>
+	<td style="width:10mm;max-width:10mm"><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=qr&d={{ batch_doc.item }}-{{ batch_doc.chargennummer }}/{{ doc.sensor_id }}&tc=fff" style="width:10mm !important;height:10mm"><!--<img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=qr&d=%7B%22item%22:%22{{ batch_doc.item }}%22,%22batch%22:%22{{ batch_doc.chargennummer }}%22,%22id%22:%22{{ doc.sensor_id }}%22,%22offset%22:%200.057,%22sensitivity%22:0.015%7D&tc=fff" style="width:10mm !important;height:10mm;position:relative;top:0.1mm">--></td>
+	<td style="width:18.5mm;max-width:18.5mm"><h1 style="width:18.5mm;max-width:18.5mm;margin-top:1mm">{{ batch_doc.item }}<br>{{ batch_doc.chargennummer }}/{{ doc.sensor_id }}</h1><div style="text-align:right;width:17.5mm;max-width:18.5mm"><img src="/files/Senstech_Logo_CAD_ohne_Text.png" style="width:14mm;margin-top:1.5mm"></div></td>
 </tr>
 </table>
 

@@ -70,7 +70,8 @@ def get_sensor_measurements(reference_measurement_id):
         FROM `tabSenstech Messdaten` md LEFT JOIN `tabUOM` uom ON md.uom = uom.name
         WHERE md.sensor_id='{sensor_id}'
         AND md.batch='{batch}'
-        GROUP BY measurand"""
+        GROUP BY measurand
+        ORDER BY measurand"""
     ).format(sensor_id=ref_doc.sensor_id, batch=ref_doc.batch), as_dict=True)
     by_measurand = {}
     for doc in docs:
