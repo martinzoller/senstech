@@ -50,9 +50,11 @@ frappe.ui.form.on('Batch', {
 		
 		if(frm.is_new()) {
 			cur_frm.set_df_property('item','read_only',0);
+			cur_frm.set_df_property('chargennummer','read_only',0);
 		}
 		else {
 			cur_frm.set_df_property('item','read_only',1);
+			cur_frm.set_df_property('chargennummer','read_only',1);
 		}
 
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
