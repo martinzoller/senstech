@@ -56,6 +56,8 @@ frappe.ui.form.on('Batch', {
 			cur_frm.set_df_property('item','read_only',1);
 			cur_frm.set_df_property('chargennummer','read_only',1);
 		}
+		/* Benötigt, damit Abschnitt "Messdaten" immer erscheint, wenn er bearbeitbar ist */
+		cur_frm.layout.refresh_sections();
 
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
 		if(!frm.is_new()) {
@@ -85,12 +87,21 @@ frappe.ui.form.on('Batch', {
 				    else {
     				    if(freigabe_noetig && !frm.doc.freigabedatum) {
     				        if(frm.doc.freigabe_beantragt_durch) {
+								var button_shown = false;
     				            if(freigabe_erlaubt) {
+									button_shown = true;
         	                        frm.add_custom_button(__("Charge freigeben"), function() {
         	                            charge_freigeben(frm);
         	                        });
         						}
-        						else {
+								if(frm.doc.freigabe_beantragt_durch == frappe.session.user_fullname) {
+									button_shown = true;
+									frm.add_custom_button(__("Freigabeantrag zurücknehmen"), function() {
+										freigabeantrag_zurueck(frm);
+									});
+								}
+								// Wenn weder Freigabe noch Rücknahme des Antrages möglich ist, wird der Klarheit halber ein "Pseudobutton" dargestellt
+        						if(!button_shown) {
     						        frm.add_custom_button(__("Chargenfreigabe hängig"), function() {}, __("Keine Lagerbuchung möglich"));
         						}
     				        }
@@ -131,9 +142,6 @@ frappe.ui.form.on('Batch', {
 	        auto_chargennr(frm);
 	    }
 	},
-    reload_histogramme(frm) {
-        get_histogram_data(frm);
-    },
     messdaten_nullpunkt(frm) {
         if(cur_frm.doc.messdaten_nullpunkt) {
             get_histogram_data(frm);
@@ -234,6 +242,13 @@ function show_histograms(frm) {
     				
 	} else {
 	    cur_frm.set_df_property('histogramm_grafik','options', '<div>Messdaten ungültig</div>');
+		if(cur_frm.doc.messdaten_nullpunkt || cur_frm.doc.messdaten_last) {
+			// Save docname in a global variable to prevent a reload loop
+			if(window.last_reloaded_doc != cur_frm.docname) {
+				window.last_reloaded_doc = cur_frm.docname;
+				get_histogram_data(frm);
+			}
+		}
 	}
 }
 
@@ -356,6 +371,24 @@ function freigabeantrag(frm) {
     });
 }
 
+
+function freigabeantrag_zurueck(frm) {
+	// Artikelstammdaten leeren
+	cur_frm.set_value('artikelcode', '');
+	cur_frm.set_value('artikelbezeichnung', '');
+	cur_frm.set_value('artikelcode_kunde', '');
+	cur_frm.set_value('produktrevision_kunde', '');
+	cur_frm.set_value('qualitaetsspezifikation', '');
+	cur_frm.set_value('short_description', '');
+	
+	// Antragsdaten leeren
+	cur_frm.set_value('manufacturing_date', '');
+	cur_frm.set_value('freigabe_beantragt_durch', '');
+		   
+	cur_frm.save().then(r => {
+		cur_frm.reload_doc();
+	});
+}
 
 function charge_freigeben(frm) {
     if(frm.is_dirty()) {
