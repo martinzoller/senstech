@@ -65,6 +65,8 @@ frappe.ui.form.on('Batch', {
 		    frm.add_custom_button(__("QR-Labels erzeugen"), function() {
 				qr_labels(frm);
 			});
+			
+			cur_frm.set_df_property('section_break_x','hidden',0);
 		    
 			frappe.call({
 				method: 'senstech.scripts.tools.check_for_batch_quick_stock_entry',
@@ -135,6 +137,12 @@ frappe.ui.form.on('Batch', {
 			});
 			show_histograms(frm);
 			show_prod_details(frm);
+		}
+		else {
+			// Neues Dokument: ggf. Daten der zuvor geöffneten Charge ausblenden
+			cur_frm.set_df_property('production_details','options', ' ');
+			cur_frm.set_df_property('histogramm_grafik','options', ' ');
+			cur_frm.set_df_property('section_break_x','hidden',1);
 		}
 	},
 	item(frm) {
@@ -241,13 +249,16 @@ function show_histograms(frm) {
         cur_frm.set_df_property('histogramm_grafik','options', histogramm);
     				
 	} else {
-	    cur_frm.set_df_property('histogramm_grafik','options', '<div>Messdaten ungültig</div>');
 		if(cur_frm.doc.messdaten_nullpunkt || cur_frm.doc.messdaten_last) {
+			cur_frm.set_df_property('histogramm_grafik','options', '<div>Messdaten ungültig</div>');
 			// Save docname in a global variable to prevent a reload loop
 			if(window.last_reloaded_doc != cur_frm.docname) {
 				window.last_reloaded_doc = cur_frm.docname;
 				get_histogram_data(frm);
 			}
+		}
+		else {
+			cur_frm.set_df_property('histogramm_grafik','options', '<div>Keine Messdaten vorhanden</div>');
 		}
 	}
 }
