@@ -1,4 +1,10 @@
-Module: Selling,Blanket Order,Rahmenauftrag
+DocType: Blanket Order,New To Date,Neues Bis-Datum
+DocType: Blanket Order,Change To Date,Änderung Bis-Datum
+DocType: Request for Quotation,Request for Quotation,Offertanfrage
+DocType: Blanket Order,Blanket Order,Rahmenauftrag
+DocType: Sales Order,Sales Order,Kunden-AB
+DocType: Sales Invoice,Sales Invoice,Kunden-RG
+DocType: Purchase Invoice,Purchase Invoice,Lieferanten-RG
 apps/frappe/frappe/public/js/frappe/views/communication.js,Dear, 
 Module: Stock,Batch,Produktionscharge
 apps/frappe/frappe/public/js/frappe/ui/filters/filter_list.js,Clear Filters,Filter entfernen
