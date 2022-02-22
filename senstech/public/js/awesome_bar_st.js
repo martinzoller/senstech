@@ -59,13 +59,13 @@ frappe.search.AwesomeBar = Class.extend({
 			var $this = $(this);
 			clearTimeout($this.data('timeout'));
 
-			$this.data('timeout', setTimeout(function(){
+			$this.data('timeout', setTimeout(async function(){
 				me.options = [];
 				if(txt && txt.length > 1) {
 					if(last_space !== -1) {
 						me.set_specifics(txt.slice(0,last_space), txt.slice(last_space+1));
 					}
-					me.add_defaults(txt, awesomplete);
+					await me.add_defaults(txt);
 					me.options = me.options.concat(me.build_options(txt));
 					me.options = me.options.concat(me.global_results);
 				} else {
@@ -161,12 +161,12 @@ frappe.search.AwesomeBar = Class.extend({
 		});
 	},
 
-	add_defaults: function(txt, awesomplete) {
+	add_defaults: async function(txt) {
 		this.make_global_search(txt);
 		this.make_search_in_current(txt);
 		this.make_calculator(txt);
 		this.make_random(txt);
-		this.make_goto(txt, awesomplete);
+		await this.make_goto(txt);
 	},
 
 	build_options: function(txt) {
@@ -288,7 +288,7 @@ frappe.search.AwesomeBar = Class.extend({
 		}
 	},
 	
-	make_goto: function(txt, awesomplete) {
+	make_goto: async function(txt) {
 		var dt = this.get_doctype(txt.toUpperCase());
 		if(dt) {
 			// Entire search string is a doctype prefix => go to list
@@ -322,21 +322,19 @@ frappe.search.AwesomeBar = Class.extend({
 					if(dt=="Item" && dn_number.includes("/")) {
 						dt = "Batch";
 					}
-					frappe.db.exists(dt, dn).then(doc_exists => {
-						if(doc_exists) {
-							console.log('Exists:'+dt+':'+dn);						
-							//this.options.push(...) doesn't work as the Awesomplete will already be populated by the time this db.exists() promise resolves
-							awesomplete._list.unshift({
-								label: __('Go to {0} "{1}"', [__(dt), dn.bold()]),
-								value: __('Go to {0} "{1}"', [__(dt), dn]),
-								match: txt,
-								index: 200,
-								default: "GoTo",
-								route: ['Form', dt, dn]
-							});
-							awesomplete.evaluate();
-						}
-					});
+					// Do this synchronously as the list should be complete before a default action is executed
+					var doc_exists = await Promise.resolve(frappe.db.exists(dt, dn));
+					if(doc_exists) {
+						console.log('Exists:'+dt+':'+dn);						
+						this.options.push({
+							label: __('Go to {0} "{1}"', [__(dt), dn.bold()]),
+							value: __('Go to {0} "{1}"', [__(dt), dn]),
+							match: txt,
+							index: 200,
+							default: "GoTo",
+							route: ['Form', dt, dn]
+						});
+					}
 				}
 			}
 		}
