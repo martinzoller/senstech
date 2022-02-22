@@ -62,9 +62,13 @@ frappe.ui.form.on('Batch', {
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
 		if(!frm.is_new()) {
             
+			/*
 		    frm.add_custom_button(__("QR-Labels erzeugen"), function() {
 				qr_labels(frm);
-			});
+			});*/
+			frm.add_custom_button(__("Chargenetikett drucken"), function() {
+				batch_label(frm);
+			})
 			
 			cur_frm.set_df_property('section_break_x','hidden',0);
 		    
@@ -581,6 +585,7 @@ function chargenfreigabe_aufheben(frm) {
 }
 
 
+// Funktion für QR-Code Labels auf Etikettenbogen A4 (aktuell nicht in Gebrauch)
 function qr_labels(frm) {
 	var d = new frappe.ui.Dialog({
 		'fields': [
@@ -625,4 +630,18 @@ function auto_chargennr(frm){
 			}
 		}
 	});
+}
+
+function batch_label(frm) {
+	frappe.call({
+    	'method': 'senstech.scripts.tools.direct_print_doc',
+    	'args': {
+			'doctype': 'Batch',
+    		'name': frm.doc.name,
+			'print_format': 'Batch Label ST',
+			'printer_name': 'Zebra 57x32'
+    	},
+		'callback': function(response) {
+		}
+    });
 }
