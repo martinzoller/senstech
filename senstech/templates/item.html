@@ -15,10 +15,12 @@
 {% for label in docs %}
 	<p class="oneline">{{ label.item_code }}{{ dot + label.artikelcode_kunde if label.artikelcode_kunde else '' }}</p>
 	<h1>{{ label.item_name.replace(label.variant_of+'-','') if label.variant_of else label.item_name }}</h1>
-	<div><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ label.item_code }}&h=70&tc=fff" style="height:11mm"></div>
+	<div><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=code-128&d={{ label.item_code }}&h=100&tc=fff" style="height:16mm;position:relative;top:-1mm"></div>
+	<div style="position:relative;top:-2mm;height:8mm">
 	<p class="oneline">{{ 'VK' if label.is_sales_item else 'EK' }}/{{ label.item_group + dot + batch_txt }}</p>
 	{% set attrs = frappe.get_list("Item Variant Attribute", ['idx', 'attribute_value' ], filters = { 'parent': label.item_code, 'parenttype': 'Item' }, order_by = 'idx ASC') %}
 	<p class="twolines">{% for attr in attrs %}{{ attr.attribute_value + (dot if attr.idx < attrs|length else '') }}{% endfor %}</p>
+	</div>
 	{% if label != docs[-1] %}<div class="page-break"></div>{% endif %}
 {% endfor %}
 
@@ -48,13 +50,14 @@
 .print-format {
     page-width: 57mm;
 		page-height: 32mm;
+		height: 31mm;
     margin-left: 1mm;
     margin-right: 1mm;
-    margin-top: 2mm;
-    margin-bottom: 1mm;
+    margin-top: 1mm;
+		margin-bottom: 0mm;
     font-family: MyriadProCond;
-    font-size: 9pt;
-    line-height: 9.5pt;
+    font-size: 8.5pt;
+    line-height: 9pt;
 }
 
 .print-format h1 {
