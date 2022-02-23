@@ -192,6 +192,38 @@ def template_exists(path):
     return os.path.exists(full_path)
 
 
+# Angehängte Zeichnungen von Artikeln automatisch an Einkaufsdokument (RQ, PO) anhängen
+@frappe.whitelist()
+def transfer_item_drawings(dt, dn, items):
+    if isinstance(items, six.string_types):
+        items = json.loads(items)
+    counter = 0
+    for _item in items:
+        item = frappe.get_doc("Item", _item)
+        if item.zeichnung:
+            file_url = item.zeichnung
+            filename = get_file_name(file_url)
+            if len(check_if_attachment_exists(file_url, dn)) < 1:
+                f = frappe.get_doc({
+                    "doctype": "File",
+                    "file_url": file_url,
+                    "file_name": filename,
+                    "attached_to_doctype": dt,
+                    "attached_to_name": dn,
+                    "folder": 'Home/Attachments',
+                    "file_size": 0,
+                    "is_private": 0
+                })
+                f.flags.ignore_permissions = True
+                try:
+                    f.insert()
+                    frappe.db.commit()
+                    counter += 1
+                except:
+                    pass
+    return counter
+
+
 # PDF-Dokument (aus Variable) über Socket Connection direkt an Zebra-Etikettendrucker senden
 def direct_print_pdf(pdf_data, printer_name):
     label_printer = frappe.get_doc("Label Printer", printer_name)
@@ -200,3 +232,13 @@ def direct_print_pdf(pdf_data, printer_name):
     soc.sendall(pdf_data)
     soc.close()
     return
+
+
+# Dateiname eines Attachments aus URL ermitteln
+def get_file_name(file_url):
+    return frappe.db.sql("""SELECT `file_name` FROM `tabFile` WHERE `file_url` = '{file_url}' LIMIT 1""".format(file_url=file_url), as_list=True)[0][0]
+
+
+# Sicherstellen dass attachment existiert
+def check_if_attachment_exists(file_url, dn):
+    return frappe.db.sql("""SELECT `name` FROM `tabFile` WHERE `file_url` = '{file_url}' AND `attached_to_name` = '{dn}'""".format(file_url=file_url, dn=dn), as_list=True)
