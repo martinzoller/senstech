@@ -14,6 +14,11 @@ def get_data():
         },
         {
           'type': 'doctype',
+          'name': 'Request for Quotation',
+          'label': _('Offertanfrage')
+        },
+        {
+          'type': 'doctype',
           'name': 'Purchase Order',
           'label': _('Lieferantenauftrag')
         },

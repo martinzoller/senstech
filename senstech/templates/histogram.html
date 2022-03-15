@@ -14,8 +14,8 @@ batch			  The production batch whose histogram should be shown
 {% if not batch %}
   {% set batch = doc %}
 {% endif %}
-{% set item = frappe.get_doc("Item", batch.artikelcode) %}
-{% set stock_data = get_stock_qty(batch.name, 'Fertigerzeugnisse - ST', batch.artikelcode) %}
+{% set item = frappe.get_doc("Item", batch.item) %} <!-- Hier nicht batch.artikelcode verwenden, da es Umbenennung von Artikeln nicht mitmacht -->
+{% set stock_data = get_stock_qty(batch.name, 'Fertigerzeugnisse - ST', batch.item) %}
 {% if not doc_data %}
   {% set doc_data = {} %}
   {{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}

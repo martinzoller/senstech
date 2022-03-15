@@ -51,6 +51,13 @@ frappe.ui.form.on('Sales Order', {
         }, 1000);
         if(cur_frm.doc.__islocal) {
             // ggf. Kundendaten abrufen
+			if(cur_frm.doc.items){
+				if(cur_frm.doc.items[0].blanket_order) {
+					setTimeout(function(){
+						fetch_templates_from_blanket_order(frm, cur_frm.doc.items[0].blanket_order);
+					}, 1000);
+				}
+			}
             if (!cur_frm.doc.taxes_and_charges || !cur_frm.doc.payment_terms_template){
                 setTimeout(function(){
                     fetch_templates_from_customer(frm);
@@ -161,9 +168,11 @@ function fetch_templates_from_blanket_order(frm, blanket_order) {
     frappe.db.get_doc("Blanket Order", blanket_order).then(bo => {
         if(bo) {
     		if(bo.taxes_and_charges) {
+					cur_frm.set_value('taxes_and_charges', '');
     				cur_frm.set_value('taxes_and_charges', bo.taxes_and_charges);
     		}
     		if(bo.payment_terms) {
+					cur_frm.set_value('payment_terms_template', '');
     				cur_frm.set_value('payment_terms_template', bo.payment_terms);
     		}
         }

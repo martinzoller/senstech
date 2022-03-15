@@ -1,0 +1,75 @@
+{% set dot = ' <b>&nbsp;·&nbsp;</b> ' %}
+{% set label = doc %}
+
+{% set item_name = label.artikelbezeichnung or label.item_name %}
+{% set item_stamm = frappe.get_doc("Item", label.item) %}
+{% set cust_item_code = label.artikelcode_kunde or item_stamm.artikelcode_kunde %}
+<h1>{{ label.chargennummer }} - {{ item_name.replace(item_stamm.variant_of+'-','') if item_stamm.variant_of else item_name }}</h1>
+<div>
+	<img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=qr&d={{ label.name }}&tc=fff" style="height:18mm;width:18mm;float:right">
+	<p class="oneline" style="padding-top:2.5mm">{{ label.artikelcode or label.item }}{{ dot + cust_item_code if cust_item_code else '' }}</p>
+	<p class="oneline">{{ 'VK' if item_stamm.is_sales_item else 'EK' }}/{{ item_stamm.item_group }}</p>
+</div>
+
+
+<style type="text/css">
+@font-face {
+   font-family: MyriadProCond;
+   src: url('/files/MyriadPro-Cond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-weight: bold;
+   src: url('/files/MyriadPro-SemiboldCond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-style: italic;
+   src: url('/files/MyriadPro-CondIt.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+	 font-weight: bold;
+	 font-style: italic;
+     src: url('/files/MyriadPro-SemiboldCondIt.otf');
+}
+
+.print-format {
+    page-width: 57mm;
+		page-height: 32mm;
+    margin-left: 1mm;
+    margin-right: 0.1mm;
+    margin-top: 2.5mm;
+		margin-bottom: 1mm;
+    font-family: MyriadProCond;
+    font-size: 9pt;
+    line-height: 10.5pt;
+}
+
+.print-format h1 {
+    font-family: MyriadProCond;
+    font-size: 11pt;
+    line-height: 11.5pt;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p {
+    margin: 0 !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p.oneline {
+    white-space: nowrap;
+}
+
+.print-format p.twolines {
+    height: 21pt;
+    padding:0 !important;
+    margin: 0 !important;
+}
+</style>

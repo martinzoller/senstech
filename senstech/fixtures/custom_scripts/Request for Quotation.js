@@ -1,4 +1,4 @@
-frappe.ui.form.on('Purchase Order', {
+frappe.ui.form.on('Request for Quotation', {
     before_save(frm) {
 		if (!cur_frm.doc.taxes_and_charges) {
 		    fetch_taxes_and_charges_from_supplier(frm);
@@ -15,7 +15,7 @@ frappe.ui.form.on('Purchase Order', {
 		    frappe.call({
             	method: 'senstech.scripts.tools.transfer_item_drawings',
             	args: {
-			dt: 'Purchase Order',
+					dt: 'Request for Quotation',
             		dn: cur_frm.doc.name,
             		items: items
             	},
@@ -70,7 +70,7 @@ frappe.ui.form.on('Purchase Order', {
     }
 })
 
-frappe.ui.form.on('Purchase Order Item', {
+frappe.ui.form.on('Request for Quotation Item', {
 	items_add: function(frm, cdt, cdn) {
       var current_item = locals[cdt][cdn];
       var all_items = cur_frm.doc.items;
@@ -154,7 +154,7 @@ function attach_pdf_print(frm) {
         "args": {
             "dt": cur_frm.doctype,
             "dn": cur_frm.docname,
-            "printformat": 'Purchase Order ST'
+            "printformat": 'Request for Quotation ST'
         },
         "callback": function(response) {
             cur_frm.reload_doc();

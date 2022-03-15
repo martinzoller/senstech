@@ -1,0 +1,58 @@
+<!-- Purchase Order -->
+
+<!-- Load Data -->
+{% set doc_data = {'titel': 'Lieferantenauftrag'} %}
+{{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Load Data -->
+
+<!-- Header und Footer -->
+{{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Header und Footer -->
+
+<!-- Adresse -->
+{{ frappe.render_template('templates/includes/address.html', {'adresse': doc_data.adresse_lieferant}) }}
+<!-- /Adresse -->
+
+<!-- Titel und oberer Fliesstext -->
+{{ frappe.render_template('templates/includes/title_and_terms.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Titel und oberer Fliesstext -->
+
+<!-- Detailtabelle -->
+<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+	<tr>
+		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
+		<td style="width: 24%;">{% if doc.referenz_des_lieferanten %}{{ doc.referenz_des_lieferanten }}{% else %}-{% endif %}</td>
+		<td style="width: 3%;"></td>
+		<td style="width: 24%;">{{ _("Datum") }}</td>
+		<td style="width: 24%;">{{ doc.get_formatted('transaction_date') }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Kontakt") }}</td>
+		<td>{{ doc_data.kontakt }}</td>
+		<td></td>
+		<td>{{ _("Ihr Ansprechpartner") }}</td>
+		<td>{{ doc_data.ansprechpartner }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Unsere Kundennummer") }}</td>
+		<td>{% if doc_data.unsere_kundennummer %}{{ doc_data.unsere_kundennummer }}{% else %}-{% endif %}</td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+</table>
+<!-- /Detailtabelle -->
+
+<div><br></div>
+
+<!-- Artikeltabelle -->
+{{ frappe.render_template('templates/includes/item_table.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Artikeltabelle -->
+
+<div><br></div>
+
+<!-- Abschlussblock -->
+<div>
+{{ frappe.render_template('templates/includes/closing.html', {'doc': doc, 'doc_data': doc_data}) }}
+</div>
+<!-- /Abschlussblock -->

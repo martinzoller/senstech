@@ -50,17 +50,27 @@ frappe.ui.form.on('Batch', {
 		
 		if(frm.is_new()) {
 			cur_frm.set_df_property('item','read_only',0);
+			cur_frm.set_df_property('chargennummer','read_only',0);
 		}
 		else {
 			cur_frm.set_df_property('item','read_only',1);
+			cur_frm.set_df_property('chargennummer','read_only',1);
 		}
+		/* Benötigt, damit Abschnitt "Messdaten" immer erscheint, wenn er bearbeitbar ist */
+		cur_frm.layout.refresh_sections();
 
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
 		if(!frm.is_new()) {
             
+			/*
 		    frm.add_custom_button(__("QR-Labels erzeugen"), function() {
 				qr_labels(frm);
-			});
+			});*/
+			frm.add_custom_button(__("Chargenetikett drucken"), function() {
+				batch_label(frm);
+			})
+			
+			cur_frm.set_df_property('section_break_x','hidden',0);
 		    
 			frappe.call({
 				method: 'senstech.scripts.tools.check_for_batch_quick_stock_entry',
@@ -83,12 +93,21 @@ frappe.ui.form.on('Batch', {
 				    else {
     				    if(freigabe_noetig && !frm.doc.freigabedatum) {
     				        if(frm.doc.freigabe_beantragt_durch) {
+								var button_shown = false;
     				            if(freigabe_erlaubt) {
+									button_shown = true;
         	                        frm.add_custom_button(__("Charge freigeben"), function() {
         	                            charge_freigeben(frm);
         	                        });
         						}
-        						else {
+								if(frm.doc.freigabe_beantragt_durch == frappe.session.user_fullname) {
+									button_shown = true;
+									frm.add_custom_button(__("Freigabeantrag zurücknehmen"), function() {
+										freigabeantrag_zurueck(frm);
+									});
+								}
+								// Wenn weder Freigabe noch Rücknahme des Antrages möglich ist, wird der Klarheit halber ein "Pseudobutton" dargestellt
+        						if(!button_shown) {
     						        frm.add_custom_button(__("Chargenfreigabe hängig"), function() {}, __("Keine Lagerbuchung möglich"));
         						}
     				        }
@@ -123,15 +142,18 @@ frappe.ui.form.on('Batch', {
 			show_histograms(frm);
 			show_prod_details(frm);
 		}
+		else {
+			// Neues Dokument: ggf. Daten der zuvor geöffneten Charge ausblenden
+			cur_frm.set_df_property('production_details','options', ' ');
+			cur_frm.set_df_property('histogramm_grafik','options', ' ');
+			cur_frm.set_df_property('section_break_x','hidden',1);
+		}
 	},
 	item(frm) {
 	    if(cur_frm.doc.__islocal){
 	        auto_chargennr(frm);
 	    }
 	},
-    reload_histogramme(frm) {
-        get_histogram_data(frm);
-    },
     messdaten_nullpunkt(frm) {
         if(cur_frm.doc.messdaten_nullpunkt) {
             get_histogram_data(frm);
@@ -231,7 +253,17 @@ function show_histograms(frm) {
         cur_frm.set_df_property('histogramm_grafik','options', histogramm);
     				
 	} else {
-	    cur_frm.set_df_property('histogramm_grafik','options', '<div>Messdaten ungültig</div>');
+		if(cur_frm.doc.messdaten_nullpunkt || cur_frm.doc.messdaten_last) {
+			cur_frm.set_df_property('histogramm_grafik','options', '<div>Messdaten ungültig</div>');
+			// Save docname in a global variable to prevent a reload loop
+			if(window.last_reloaded_doc != cur_frm.docname) {
+				window.last_reloaded_doc = cur_frm.docname;
+				get_histogram_data(frm);
+			}
+		}
+		else {
+			cur_frm.set_df_property('histogramm_grafik','options', '<div>Keine Messdaten vorhanden</div>');
+		}
 	}
 }
 
@@ -354,6 +386,24 @@ function freigabeantrag(frm) {
     });
 }
 
+
+function freigabeantrag_zurueck(frm) {
+	// Artikelstammdaten leeren
+	cur_frm.set_value('artikelcode', '');
+	cur_frm.set_value('artikelbezeichnung', '');
+	cur_frm.set_value('artikelcode_kunde', '');
+	cur_frm.set_value('produktrevision_kunde', '');
+	cur_frm.set_value('qualitaetsspezifikation', '');
+	cur_frm.set_value('short_description', '');
+	
+	// Antragsdaten leeren
+	cur_frm.set_value('manufacturing_date', '');
+	cur_frm.set_value('freigabe_beantragt_durch', '');
+		   
+	cur_frm.save().then(r => {
+		cur_frm.reload_doc();
+	});
+}
 
 function charge_freigeben(frm) {
     if(frm.is_dirty()) {
@@ -535,6 +585,7 @@ function chargenfreigabe_aufheben(frm) {
 }
 
 
+// Funktion für QR-Code Labels auf Etikettenbogen A4 (aktuell nicht in Gebrauch)
 function qr_labels(frm) {
 	var d = new frappe.ui.Dialog({
 		'fields': [
@@ -579,4 +630,18 @@ function auto_chargennr(frm){
 			}
 		}
 	});
+}
+
+function batch_label(frm) {
+	frappe.call({
+    	'method': 'senstech.scripts.tools.direct_print_doc',
+    	'args': {
+			'doctype': 'Batch',
+    		'name': frm.doc.name,
+			'print_format': 'Batch Label ST',
+			'printer_name': 'Zebra 57x32'
+    	},
+		'callback': function(response) {
+		}
+    });
 }

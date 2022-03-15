@@ -93,14 +93,21 @@ coc_data  COC-specific data (item, batch, qty)
 		<td style="text-align: left;">{{ _("Produktverantwortlicher Senstech AG:") }}</td>
 		<td style="text-align: left;">{{ frappe.utils.get_datetime(charge_stamm.manufacturing_date).strftime('%d.%m.%Y') }}</td>
 		<td style="text-align: center;">
-			{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift","first_name","last_name"), filters={"user_id": charge_stamm.freigabe_beantragt_durch or charge_stamm.owner }) %}
+			{% if charge_stamm.freigabe_beantragt_durch %}
+			  {% set id_field_ersteller = "employee_name" %}
+				{% set value_ersteller = charge_stamm.freigabe_beantragt_durch %}
+			{% else %}
+				{% set id_field_ersteller = "user_id"  %}
+				{% set value_ersteller = charge_stamm.owner %}
+			{% endif %}
+			{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift","first_name","last_name"), filters={ id_field_ersteller: value_ersteller }) %}
 			{% if employee_list_ersteller %}
 				{% set unterschrift_ersteller = employee_list_ersteller[0].unterschrift %}
 				{% set name_ersteller = employee_list_ersteller[0].first_name + ' ' + employee_list_ersteller[0].last_name %}
 			{% else %}
 					{% set unterschrift_ersteller = "" %}
 					{% set name_ersteller = "" %}
-					<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ charge_stamm.freigabe_beantragt_durch or charge_stamm.owner }}" nicht gefunden</div>
+					<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ value_ersteller }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
