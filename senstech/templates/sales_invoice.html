@@ -93,7 +93,11 @@
 
 <!-- Abschlussblock -->
 <div>
-		{% if doc_data.adresse_lieferung.land != "Schweiz" %}
+		{% if doc_data.adresse_lieferung.land == "Schweiz" %}
+		  {% if doc.preferential_origin %}
+				{{ _("Der Unterzeichner erklärt, dass die in diesem Dokument aufgeführten Waren Ursprungserzeugnisse der Schweiz sind und den Ursprungsregeln im Präferenzverkehr mit EU, EFTA, UK, TR, EG, IL, JO, CN, HK, CA, SACU, RS, SG, KR, JP, GCC entsprechen.") }}
+			{% endif %}
+		{% else %}
 			{% if doc.preferential_origin %}
 				{{ _("Der Ausführer der Waren, auf die sich dieses Handelspapier bezieht, erklärt, dass diese Waren, soweit nicht anders angegeben, präferenzbegünstigte schweizerische Ursprungswaren sind.") }}
 			{% endif %}
