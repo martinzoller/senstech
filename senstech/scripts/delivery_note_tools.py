@@ -27,8 +27,6 @@ def print_multiple_label_pdf(printer_name, contents):
             loops = int(content[1] / item.verpackungseinheit)
             loop_qty = item.verpackungseinheit
             item_code = content[0]
-            if item.artikelcode_kunde:
-                item_code = item.artikelcode_kunde
             # One label per full packing size
             for i in range(loops):
                 create_single_label_pdf(label_printer, item, content[2], loop_qty, output)
@@ -50,31 +48,6 @@ def create_single_label_pdf(label_printer, item, batch, qty, output=None):
         'margin-bottom': '0mm',
         'margin-left': '0mm',
         'margin-right': '0mm' }
-        
-    label_content = """
-        <div>
-            Artikel: {item_code}<br>
-            Produktionscharge: {batch}<br>
-            Menge: {qty} {stock_uom}
-        </div>
-    """.format(item_code=item.item_code, batch=batch, qty=qty, stock_uom=item.stock_uom)
-    html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-    </head>
-    <body>
-        {content}
-    <body>
-    </html>
-    """.format(content=label_content)
-
-    filedata = pdfkit.from_string(html, False, options=options or {})
     
-    if output:
-        reader = PdfFileReader(io.BytesIO(filedata))
-        output.appendPagesFromReader(reader)
-        return output
-    else:
-        return filedata
+    label_html = frappe.render_template("senstech/templates/delivery_note_packing_unit_label.html", {"item": item, "batch": batch, "qty": qty})
+    return frappe.utils.pdf.get_pdf(label_html, options, output)

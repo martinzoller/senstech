@@ -1,0 +1,71 @@
+<div>
+	<img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=gs1-dmtx&d=(91){{ item.artikelcode_kunde }}(10){{ batch }}&tc=fff" style="height:20mm;width:20mm;float:right;margin-top:7mm;margin-right:5mm">
+	<p class="oneline" style="font-family: MyriadProCond;font-size: 11pt">Artikel: {{ item.item_code }}</p>
+	<p class="oneline" style="font-family: MyriadProCond;font-size: 11pt">Artikelnr. Kunde: {{ item.artikelcode_kunde }}</p>
+	<p class="oneline" style="font-family: MyriadProCond;font-size: 11pt">Produktionscharge: {{ batch }}</p>
+	<p class="oneline" style="font-family: MyriadProCond;font-size: 11pt">Menge: {{ qty }} {{ item.stock_uom }}</p>
+</div>
+
+<style type="text/css">
+@font-face {
+   font-family: MyriadProCond;
+   src: url('/files/MyriadPro-Cond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-weight: bold;
+   src: url('/files/MyriadPro-SemiboldCond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-style: italic;
+   src: url('/files/MyriadPro-CondIt.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+	 font-weight: bold;
+	 font-style: italic;
+     src: url('/files/MyriadPro-SemiboldCondIt.otf');
+}
+
+.print-format {
+    page-width: 57mm;
+		page-height: 32mm;
+    margin-left: 1mm;
+    margin-right: 0.1mm;
+    margin-top: 2.5mm;
+		margin-bottom: 1mm;
+    font-family: MyriadProCond;
+    font-size: 9pt;
+    line-height: 10.5pt;
+}
+
+.print-format h1 {
+    font-family: MyriadProCond;
+    font-size: 11pt;
+    line-height: 11.5pt;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p {
+    font-family: MyriadProCond;
+    font-size: 11pt;
+    margin: 0 !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p.oneline {
+    white-space: nowrap;
+}
+
+.print-format p.twolines {
+    height: 21pt;
+    padding:0 !important;
+    margin: 0 !important;
+}
+</style>
