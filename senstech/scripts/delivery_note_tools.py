@@ -33,7 +33,8 @@ def print_multiple_label_pdf(printer_name, contents):
             # Optional extra label for remaining quantity
             if (loops * loop_qty) < content[1]:
                 create_single_label_pdf(label_printer, item, content[2], (content[1] - (loops * loop_qty)), output)
-    
+        else:
+            frappe.msgprint(msg=_('Verpackungseinheit nicht definiert für Artikel:')+' '+item.name, title=_('Fehler'))
     # print the merged pdf
     filedata = read_multi_pdf(output)
     direct_print_pdf(filedata, printer_name)
