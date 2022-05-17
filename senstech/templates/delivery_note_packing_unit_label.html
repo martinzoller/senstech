@@ -1,5 +1,5 @@
 <div>
-	<img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=gs1-dmtx&d=(91){{ item.artikelcode_kunde }}(10){{ batch }}&tc=fff" style="height:20mm;width:20mm;float:right;margin-top:7mm;margin-right:5mm">
+	<img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=gs1-dmtx&d=91{{ item.artikelcode_kunde }}%1D10{{ batch }}&tc=fff" style="height:20mm;width:20mm;float:right;margin-top:7mm;margin-right:5mm">
 	<p class="oneline" style="font-family: MyriadProCond;font-size: 11pt">Artikel: {{ item.item_code }}</p>
 	<p class="oneline" style="font-family: MyriadProCond;font-size: 11pt">Artikelnr. Kunde: {{ item.artikelcode_kunde }}</p>
 	<p class="oneline" style="font-family: MyriadProCond;font-size: 11pt">Produktionscharge: {{ batch }}</p>
