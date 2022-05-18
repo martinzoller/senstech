@@ -18,17 +18,35 @@ frappe.ui.form.on('Sales Order', {
             frappe.validated=false;
 	        frm.scroll_to_field('taxes_and_charges');
 	    }
-        var count = 0;
+	    var processed_count = 0;
+        var found_count = 0;
         var items = cur_frm.doc.items;
         items.forEach(function(entry) {
-            if (entry.item_group == 'Versandkosten') {
-                count = count + 1;
-            } 
-        });
-        if (count != 1) {
-            frappe.msgprint( __("Bitte genau einmal Versandkosten hinterlegen"), __("Validation") );
-            frappe.validated=false;
-        }
+			if (entry.item_group) {
+			    processed_count++;
+			    if (entry.item_group == 'Versandkosten') {
+                    found_count++;
+                }
+                if(processed_count == items.length && found_count != 1) {
+        			frappe.msgprint( __("Bitte genau einmal Versandkosten hinterlegen"), __("Validation") );
+		            frappe.validated=false;
+                }
+			}
+			else {
+				// Documents with "local" items (no item group available): Fetch item group from server
+				// This is to avoid validation errors when creating a Sales Order from a Blanket Order
+				frappe.db.get_value('Item',entry.item_code,'item_group').then(r => {
+				    processed_count++;
+                    if (r.message.item_group == 'Versandkosten') {
+                        found_count++;
+                    }
+                    if(processed_count == items.length && found_count != 1) {
+            			frappe.msgprint( __("Bitte genau einmal Versandkosten hinterlegen"), __("Validation") );
+			            frappe.validated=false;
+                    }
+				});
+			}
+		});
         reload_contacts(frm);
     },
     after_save(frm) {
