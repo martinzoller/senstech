@@ -14,8 +14,8 @@ from senstech.scripts.tools import direct_print_doc
 @frappe.whitelist()
 def submit_measurements(user, item, batch, sensor_id, measurands, values, units, test_results=None, print_label='False', sent_from_host='', label_printer='Zebra Flag Labels'):
     try:
-        batch_id = frappe.db.exists('Batch',{'item': item, 'chargennummer':batch})
-        user_id = frappe.db.get_value('User',{'full_name':user},'name')
+        batch_id = frappe.db.exists('Batch', {'item': item, 'chargennummer':batch})
+        user_id = frappe.db.get_value('User', {'full_name':user}, 'name')
         measurands = json.loads(measurands)
         values = json.loads(values)
         units = json.loads(units)
@@ -23,6 +23,7 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
         if test_results:
             test_results = json.loads(test_results)
         mdocs = []
+        measured_before = frappe.db.exists('Senstech Messdaten', {'batch': batch_id, 'sensor_id': sensor_id, 'measurand': ['in', measurands]})
         for i,val in enumerate(values):
             mdoc = frappe.get_doc({
               'doctype': 'Senstech Messdaten',
@@ -50,7 +51,10 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
         if print_label:
             print_format = frappe.get_doc("Item", item).single_label_print_format or "Sensor Flag Label ST"
             direct_print_doc("Senstech Messdaten", mdocs[0].name, print_format, label_printer)
-        return 'OK'
+        if measured_before:
+            return 'measured_before' # If sensor has been measured before, Vee will show a warning, but the data is saved anyway
+        else:
+            return 'OK'
     except Exception as e:
         # Don't send a whole traceback in case of a validation error
         frappe.local.message_log = None
