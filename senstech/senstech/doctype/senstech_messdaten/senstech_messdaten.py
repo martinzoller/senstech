@@ -12,7 +12,7 @@ from erpnext.stock.doctype.item.item import get_uom_conv_factor
 from senstech.scripts.tools import direct_print_doc
 
 @frappe.whitelist()
-def submit_measurements(user, item, batch, sensor_id, measurands, values, units, test_results=None, print_label='False', sent_from_host=''):
+def submit_measurements(user, item, batch, sensor_id, measurands, values, units, test_results=None, print_label='False', sent_from_host='', label_printer='Zebra Flag Labels'):
     try:
         batch_id = frappe.db.exists('Batch',{'item': item, 'chargennummer':batch})
         user_id = frappe.db.get_value('User',{'full_name':user},'name')
@@ -48,7 +48,8 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
             
         frappe.db.commit()
         if print_label:
-            direct_print_doc("Senstech Messdaten", mdocs[0].name, "Sensor Flag Label ST", "Zebra Flag Labels")
+            print_format = frappe.get_doc("Item", item).single_label_print_format or "Sensor Flag Label ST"
+            direct_print_doc("Senstech Messdaten", mdocs[0].name, print_format, label_printer)
         return 'OK'
     except Exception as e:
         # Don't send a whole traceback in case of a validation error
