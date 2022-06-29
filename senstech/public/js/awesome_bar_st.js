@@ -12,6 +12,8 @@ frappe.search.AwesomeBar = Class.extend({
 
 		this.options = [];
 		this.global_results = [];
+		this.dropdown_loading = false;
+		this.select_rejected = false;
 
 		var awesomplete = new Awesomplete(input, {
 			minChars: 0,
@@ -48,6 +50,8 @@ frappe.search.AwesomeBar = Class.extend({
 		input.awesomplete = awesomplete;
 
 		$input.on("input", function(e) {
+			me.dropdown_loading = true;
+			me.select_rejected = false;
 			var value = e.target.value;
 			var txt = value.trim().replace(/\s\s+/g, ' ');
 			var last_space = txt.lastIndexOf(' ');
@@ -76,6 +80,11 @@ frappe.search.AwesomeBar = Class.extend({
 				me.add_help();
 
 				awesomplete.list = me.deduplicate(me.options);
+				me.dropdown_loading = false;
+				if(me.select_rejected){
+					me.select_rejected = false;
+					awesomplete.select();
+				}
 			}, 100));
 
 		});
@@ -96,6 +105,13 @@ frappe.search.AwesomeBar = Class.extend({
 		});
 
 		$input.on("awesomplete-select", function(e) {
+			if(me.dropdown_loading) {
+				me.select_rejected = true;
+				return false;
+			}
+		});
+
+		$input.on("awesomplete-selectcomplete", function(e) {
 			var o = e.originalEvent;
 			var value = o.text.value;
 			var item = awesomplete.get_item(value);
@@ -114,11 +130,7 @@ frappe.search.AwesomeBar = Class.extend({
 				if (window.location.hash == previous_hash) {
 					frappe.route();
 				}
-			}
-			$input.val("");
-		});
-
-		$input.on("awesomplete-selectcomplete", function(e) {
+			}			
 			$input.val("");
 		});
 
