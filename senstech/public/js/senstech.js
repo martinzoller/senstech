@@ -101,12 +101,11 @@ $(document).ready(function() {
 		var on_print_menuitem = event.target.children.length > 0
 												 && event.target.children[0].classList.contains('menu-item-label')
 												 && ['Drucken','Print'].includes(event.target.children[0].innerText);
+		var within_form_context = $(event.target).parents("div[id^='page-Form/']").length > 0;
 
-		if(on_printer_icon || on_print_menutext || on_print_menuitem) {
+		if((on_printer_icon || on_print_menutext || on_print_menuitem) && within_form_context) {			
+			$(event.target).parent().off('click');
 			print_pdf_directly(event);
-			$('.fa-print').parent().off('click');
-			$('.menu-item-label[data-label="Print"]').parent().off('click');
-			$('.menu-item-label[data-label="Drucken"]').parent().off('click');
 		}
 		
 		// Replace email dialog to get a more sensible draft message

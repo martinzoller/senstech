@@ -66,6 +66,14 @@ frappe.ui.form.on('Batch', {
 		    frm.add_custom_button(__("QR-Labels erzeugen"), function() {
 				qr_labels(frm);
 			});*/
+			frm.remove_custom_button(__("View Ledger"));
+			frm.add_custom_button(__("Lagerbuchungen anzeigen"), function() {
+                frappe.route_options = {
+					batch_no: frm.doc.name,
+					from_date: "1900-01-01"
+				};
+				frappe.set_route("query-report", "Stock Ledger");
+			});
 			frm.add_custom_button(__("Chargenetikett drucken"), function() {
 				batch_label(frm);
 			})

@@ -18,6 +18,13 @@
 		
 		{% for item in doc.items %}
 				{% set item_stamm = frappe.get_doc("Item", item.item_code) %}
+				<!-- Generischen Anfang der Artikelbezeichnung ("Kraftsensor", "Drehmomentsensor" etc.) separat übersetzen -->
+				<!-- (So wird vermieden, dass man für jede Artikelvariante eine Übersetzung anlegen muss) -->
+				{% set item_name_parts = _(item.item_name).split(" «") %}
+				{% set item_name_start = _(item_name_parts.pop(0)) %}
+				{% if item_name_parts.insert(0, item_name_start) %}{% endif %}
+				{% set item_name_translated = item_name_parts|join(" «") %}
+
 				{% if doc.doctype == "Blanket Order" %}
 						<!-- Rahmenauftrag: Keine vollständigen Item-Einträge => aus Stamm ergänzen -->
 						{% if item.update({'amount': item.rate * item.qty, 'item_group': item_stamm.item_group, 'description': item_stamm.description, 'conversion_factor': 1, 'stock_uom': item_stamm.stock_uom}) %}{% endif %}
@@ -47,7 +54,7 @@
 										{% else %}
 												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
 										{% endif %}										
-										<b>{{ _(item.item_name) }}</b>
+										<b>{{ item_name_translated }}</b>
 										{% if item_stamm.variant_of %}{{ get_item_variant_description(item.item_code) }}{% endif %}
 										{% if item.description | replace('<div>', '') | replace('</div>', '') != item.item_name %}{{ _(item.description) }}{% endif %}
 										{% if doc_data.adresse_lieferung.land != "Schweiz" and zolltarif %}<div style="height:2mm"></div>{{ _("Zolltarifnummer") }}: {{ zolltarif }}{% endif %}

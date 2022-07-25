@@ -33,8 +33,9 @@ frappe.ui.form.on('Item', {
 					nachbestellen(frm);
 				});
 			}
-		    item_group_filter(frm);			
+		    item_group_filter(frm);
 		}
+		print_format_filter(frm);		
 	},
 	validate(frm) {
 	    var plain_description = cur_frm.doc.description.replace('<div>','').replace('</div>','').replace('<br>','');
@@ -170,6 +171,14 @@ function item_group_filter(frm) {
             filters: groupfilters
         }
     });
+}
+
+function print_format_filter(frm) {
+	frm.set_query('single_label_print_format', () => {
+        return {
+            filters: { doc_type: 'Senstech Messdaten' }
+        }
+    });	
 }
 
 function nachbestellen(frm) {
