@@ -174,6 +174,12 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 							return;
 						}
 						r.results = me.merge_duplicates(r.results);
+						
+						// search_link does not support an "order by" clause, therefore sort results on client side
+						// Sorting is required to work around an Awesomplete bug: when an exact match exists, but other items
+						// containing the search text come first, it will not select the exact match. eg. if the list contains
+						// entries "Foo Bar" and "Foo" [in this order], a search for "Foo" will select "Foo Bar".
+						r.results.sort((f,g) => { return (f.value > g.value) });						
 
 						// show filter description in awesomplete
 						if (args.filters) {
