@@ -299,7 +299,15 @@ def get_data():
           'doctype': 'Sales Invoice',
           'name': 'Kontrolle MwSt',
           'label': _('Kontrolle MwSt')
-        }
+        },
+        {
+					"type": "doctype",
+					"name": "Account",
+					"icon": "fa fa-sitemap",
+					"label": _("Chart of Accounts"),
+					"route": "#Tree/Account",
+					"description": _("Tree of financial accounts."),
+				}
       ]
     },
     {
