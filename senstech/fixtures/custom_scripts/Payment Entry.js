@@ -23,32 +23,44 @@ frappe.ui.form.on('Payment Entry', {
             frm.add_custom_button(__("SVA"), function() {
                 sva(frm);
             });
+            frm.add_custom_button(__("Kurs"), function() {
+                exchange(frm);
+            });
         }
     }
 });
 
 function deduct_to_unclear(frm) {
-    add_deduction("1097 - Durchlaufkonto Zahlungskonten - ST", "Haupt - ST", frm.doc.unallocated_amount);
+    add_deduction("1097 - Durchlaufkonto Zahlungskonten - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function credit_card(frm) {
-    add_deduction("1095 - Firmenkreditkarte - ST", "Haupt - ST", cur_frm.doc.unallocated_amount);
+    add_deduction("1095 - Firmenkreditkarte - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function rounding(frm) {
-    add_deduction("6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount);
+    add_deduction("6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function bank_expenses(frm) {
-    add_deduction("6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount);
+    add_deduction("6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function salaries(frm) {
-    add_deduction("1091 - Lohndurchlaufkonto - ST", "Haupt - ST", cur_frm.doc.unallocated_amount);
+    add_deduction("1091 - Lohndurchlaufkonto - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function sva(frm) {
-    add_deduction("5700 - AHV / IV / EO - ST", "Haupt - ST", cur_frm.doc.unallocated_amount);
+    add_deduction("5700 - AHV / IV / EO - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+}
+
+function exchange(frm) {
+    var amount = frm.doc.unallocated_amount || frm.doc.difference_amount;
+    if (amount > 0) {
+        add_deduction("6974 - realisierte Kursverluste - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    } else {
+        add_deduction("6975 - realisierte Kursgewinne - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    }
 }
 
 function add_deduction(account, cost_center, amount) {
