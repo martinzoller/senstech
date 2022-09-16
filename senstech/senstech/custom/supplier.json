@@ -1622,7 +1622,7 @@
    "doctype_or_field": "DocField",
    "field_name": "payment_terms",
    "idx": 0,
-   "modified": "2021-05-19 08:33:32.192221",
+   "modified": "2022-09-16 08:33:32.192221",
    "modified_by": "martin.zoller@senstech.ch",
    "name": "Supplier-payment_terms-default",
    "owner": "martin.zoller@senstech.ch",
@@ -1631,7 +1631,7 @@
    "parenttype": null,
    "property": "default",
    "property_type": "Text",
-   "value": "30 Tage netto"
+   "value": ""
   },
   {
    "_assign": null,
