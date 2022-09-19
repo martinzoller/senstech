@@ -301,13 +301,20 @@ def get_data():
           'label': _('Kontrolle MwSt')
         },
         {
-					"type": "doctype",
-					"name": "Account",
-					"icon": "fa fa-sitemap",
-					"label": _("Chart of Accounts"),
-					"route": "#Tree/Account",
-					"description": _("Tree of financial accounts."),
-				}
+            "type": "doctype",
+            "name": "Account",
+            "icon": "fa fa-sitemap",
+            "label": _("Chart of Accounts"),
+            "route": "#Tree/Account",
+            "description": _("Tree of financial accounts."),
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'doctype': 'GL Entry',
+          'name': 'Saldenliste EH',
+          'label': _('Saldenliste EH')
+        },
       ]
     },
     {
