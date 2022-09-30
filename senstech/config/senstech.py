@@ -437,6 +437,26 @@ def get_data():
         },
         {
           'type': 'doctype',
+          'name': 'Salary Structure Assignment',
+          'label': _('Salary Structure Assignment')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Payroll Entry',
+          'label': _('Lohnlauf')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Salary Structure',
+          'label': _('Salary Structure')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Salary Slip',
+          'label': _('Lohnzettel')
+        },
+        {
+          'type': 'doctype',
           'name': 'HR Settings',
           'label': _('Einstellungen zum Modul Personalwesen')
         }
