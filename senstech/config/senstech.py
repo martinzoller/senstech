@@ -299,7 +299,22 @@ def get_data():
           'doctype': 'Sales Invoice',
           'name': 'Kontrolle MwSt',
           'label': _('Kontrolle MwSt')
-        }
+        },
+        {
+            "type": "doctype",
+            "name": "Account",
+            "icon": "fa fa-sitemap",
+            "label": _("Chart of Accounts"),
+            "route": "#Tree/Account",
+            "description": _("Tree of financial accounts."),
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'doctype': 'GL Entry',
+          'name': 'Saldenliste EH',
+          'label': _('Saldenliste EH')
+        },
       ]
     },
     {
@@ -419,6 +434,26 @@ def get_data():
           'type': 'doctype',
           'name': 'Designation',
           'label': _('Jobtitel')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Salary Structure Assignment',
+          'label': _('Salary Structure Assignment')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Payroll Entry',
+          'label': _('Lohnlauf')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Salary Structure',
+          'label': _('Salary Structure')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Salary Slip',
+          'label': _('Lohnzettel')
         },
         {
           'type': 'doctype',
