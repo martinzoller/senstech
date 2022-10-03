@@ -1,0 +1,125 @@
+{% set batch_doc = frappe.get_doc("Batch",doc.batch) %}
+{% set item_doc = frappe.get_doc("Item",batch_doc.item) %}
+
+{% set item_title = item_doc.item_name.replace(item_doc.variant_of+'-','') if item_doc.variant_of else item_doc.item_name %}
+{% set attrs = frappe.get_list("Item Variant Attribute", ['idx', 'attribute_value' ], filters = { 'parent': item_doc.item_code, 'parenttype': 'Item' }, order_by = 'idx ASC') %}
+{% set dot = ' <b>&nbsp;·&nbsp;</b> ' %}
+{% set batchno_id = batch_doc.chargennummer + "/%04d"|format(doc.sensor_id) %}
+
+{% set measurements = get_sensor_measurements(doc.name) %}
+
+
+<table style="width:60mm">
+<tr style="height:7mm">
+	<td colspan="2" style="width:60mm;max-width:60mm"><div style="padding-left:2mm"><h1>{{ item_doc.item_name }}</h1>
+	  {% if item_doc.variant_of %}
+	    {% for attr in attrs %}
+		    {{ attr.attribute_value + (dot if attr.idx < attrs|length else '') }}
+		  {% endfor %}
+	  {% else %}
+		  {{ item_doc.item_code }}
+	  {% endif %}
+  </div></td>
+</tr>
+<tr style="height:23mm">
+  <td style="width:18mm;max-width:18mm"><img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=qr&d={{ batch_doc.item }}-{{ batchno_id }}&tc=fff" style="width:100% !important;height:18mm;margin-top:-1mm"></td>
+  <td style="width:42mm;max-width:42mm">
+	<table class="measurements" style="width:42mm;float:right">
+		<tr><td style="width:21mm;max-width:21mm">Produktionscharge</td><td style="width:21mm;max-width:21mm">{{ batch_doc.chargennummer }}</td></tr>
+		<tr><td style="width:21mm;max-width:21mm">Sensor-ID</td><td style="width:21mm;max-width:21mm">{{ "%04d"|format(doc.sensor_id) }}</td></tr>
+		{% set n = namespace(lines_left=3) %}
+		{% set npkt = measurements.pop('Nullpunkt') %}
+		{% if npkt %}
+			 <tr><td style="width:21mm;max-width:21mm">{{ _(npkt.measurand) }}</td><td style="width:21mm;max-width:21mm">{{ "%.4g"|format(npkt.value) }} {{ npkt.uom_symbol }}</td></tr>
+			 {% set n.lines_left = n.lines_left - 1 %}
+		{% endif %}
+		{% for key in measurements %}
+			{% set m = measurements[key] %}
+			{% if n.lines_left > 0 %}
+				<tr><td style="width:21mm;max-width:21mm">{{ _(m.measurand) }}</td><td style="width:21mm;max-width:21mm">{{ "%.4g"|format(m.value) }} {{ m.uom_symbol }}</td></tr>
+				{% set n.lines_left = n.lines_left - 1 %}
+			{% endif %}
+		{% endfor %}
+		<tr><td style="width:21mm;max-width:21mm"></td><td style="width:21mm;max-width:21mm"><img src="/files/Senstech_Logo_CAD_ohne_Text.png" style="width:16mm;margin-top:1.5mm"></td></tr>
+	</table></td>
+</tr>
+</table>
+
+
+<style type="text/css">
+@font-face {
+   font-family: MyriadProCond;
+   src: url('/files/MyriadPro-Cond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-weight: bold;
+   src: url('/files/MyriadPro-SemiboldCond.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+   font-style: italic;
+   src: url('/files/MyriadPro-CondIt.otf');
+}
+@font-face {
+   font-family: MyriadProCond;
+	 font-weight: bold;
+	 font-style: italic;
+     src: url('/files/MyriadPro-SemiboldCondIt.otf');
+}
+
+.print-format {
+    page-width: 60mm;
+		page-height: 34mm;
+    margin-left: 0mm;
+    margin-right: 1mm;
+    margin-top: 2.5mm;
+		margin-bottom: 1mm;
+    font-family: MyriadProCond;
+    font-size: 7.5pt;
+    line-height: 8.0pt;
+}
+
+.print-format h1 {
+    font-family: MyriadProCond;
+    font-size: 9pt;
+    line-height: 9.6pt;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p {
+    margin: 0 !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.print-format p.oneline {
+    white-space: nowrap;
+}
+
+.print-format p.twolines {
+    height: 18pt;
+    padding:0 !important;
+    margin: 0 !important;
+}
+
+.print-format td {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		padding: 0 !important;
+}
+
+.print-format table.measurements {
+		position: relative;
+		top: 1mm;
+}
+
+.print-format .measurements td {
+		padding: 0.5mm 1mm !important;
+}
+</style>
