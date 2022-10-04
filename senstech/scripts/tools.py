@@ -10,6 +10,7 @@ from frappe import _, attach_print
 from frappe.contacts.doctype.address.address import get_address_display
 import json, socket, os, six
 from PyPDF2 import PdfFileWriter, PdfFileReader
+import tempfile
 
 
 # Bestimmtes Druckformat eines Dokumentes direkt auf Zebra-Etikettendrucker ausgeben
@@ -227,8 +228,22 @@ def transfer_item_drawings(dt, dn, items):
 # PDF-Dokument (aus Variable) über Socket Connection direkt an Zebra-Etikettendrucker senden
 def direct_print_pdf(pdf_data, printer_name):
     label_printer = frappe.get_doc("Label Printer", printer_name)
+
+    # PDF in eine Datei schreiben, geht wohl nicht anders?
+    tmp_pdf = tempfile.TemporaryFile()
+    tmp_pdf.write(pdf_data)
+
+    # Dokumentbreite ermitteln
+    pdf_reader = PdfFileReader(tmp_pdf)
+    print_width = pdf_reader.pages[0].mediaBox.getWidth()*25.4/72
+    tmp_pdf.close()
+
+    # Drucker auf gleiche Breite einstellen
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect((label_printer.hostname, label_printer.port))
+    soc.sendall('! U1 setvar "ezpl.print_width" "{width}"'.format(width=print_width))
+
+    # Dokument senden
     soc.sendall(pdf_data)
     soc.close()
     return
