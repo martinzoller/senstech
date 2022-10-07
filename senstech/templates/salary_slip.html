@@ -1,0 +1,162 @@
+<!-- header -->
+<div id="header-html" class="hidden-pdf">
+  {% set letter_head = frappe.get_doc("Letter Head", "senstech_de") %}
+  {% if letter_head %}
+    {{ letter_head.content }}
+  {% else %}
+    <p>Letter head senstech_de not found. Please define the letter head under print settings.</p>
+  {% endif %}
+</div>
+
+<!-- intro -->
+<table style="width: 100%;">
+   <tr>
+	<td style="width: 50%; text-align: left; vertical-align: top;">
+		</td>
+	<td style="width: 50%; text-align: left; vertical-align: middle;  text-transform: none">{% set u = frappe.get_doc("Employee", doc.employee) %}
+{{ u.employee_name }}<br />
+{{ (u.permanent_address or "").replace("\n", "<br />") }}</td>
+   </tr>
+</table>
+<p><br><br><br><br></p>
+<p style="font-size: 15px;  text-transform: none"><strong>Lohnabrechnung Periode {{ doc.get_formatted('start_date') }} - {{ doc.get_formatted('end_date') }} </strong></p><br />
+
+<!-- content -->
+<table style="width: 100%;">
+   <tr style="border-bottom: solid black 1px;">
+	<td style="width: 40%; text-align: left; ">
+<strong>Detail</strong>
+		</td>
+	<td style="width: 20%; text-align: left; ">
+<strong>Anzahl</strong>
+		</td>
+	<td style="width: 20%; text-align: left; ">
+<strong>Ansatz</strong>
+		</td>
+	<td style="width: 20%; text-align: left; ">
+<strong>Betrag</strong>
+		</td>
+   </tr>
+{% for einkommen in doc.earnings %}
+  {% if doc.salary_slip_based_on_timesheet %}
+   <!-- hourly salary -->
+   <tr>
+	<td style="width: 40%; text-align: left; ">{{ einkommen.salary_component }}</td>
+	<td style="width: 20%; text-align: left; ">{{ "{0:,.3f}".format(doc.total_working_hours) }} h</td>
+	<td style="width: 20%; text-align: left; ">
+      {{ "{:,.2f}".format(einkommen.amount / doc.total_working_hours).replace(",", "'") }} CHF/h
+	</td>
+	<td style="width: 20%; text-align: left; ">
+      {{ einkommen.get_formatted('amount') }}
+	</td>
+   </tr>  
+  {% else %}
+   <!-- monthly salary -->
+   {% if einkommen.amount > 0 %}
+   <tr>
+	<td style="width: 40%; text-align: left; ">{{ einkommen.salary_component }}</td>
+	<td style="width: 20%; text-align: left; ">100%</td>
+	<td style="width: 20%; text-align: left; ">
+      {{ einkommen.get_formatted('amount') }}
+	</td>
+	<td style="width: 20%; text-align: left; ">
+      {{ einkommen.get_formatted('amount') }}
+	</td>
+   </tr>
+   {% endif %}
+   {% endif %}
+{% endfor %}
+<tr style="border-bottom: solid black 1px;">
+	<td style="width: 40%; text-align: left; ">
+<strong>Bruttolohn</strong>
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+<strong>{{ doc.get_formatted('gross_pay') }}</strong>
+		</td>
+   </tr>
+
+<!-- compute taxable pay -->
+{% set vars = {'taxable_amount': 0.0} %}
+{% for einkommen in doc.earnings %}
+    {% if einkommen.salary_component in ["Grundlohn", "Dreizehnter Monatslohn", "Bonus"] %}
+        {% if vars.update({'taxable_amount': vars.taxable_amount + einkommen.amount}) %}{% endif %}
+    {% endif %}
+{% endfor %}
+
+
+{% for abzuge in doc.deductions %}
+   <tr>
+	<td style="width: 40%; text-align: left; ">
+{{ abzuge.salary_component }}
+		</td>
+	<td style="width: 20%; text-align: left; ">
+{% set u = frappe.get_doc("Salary Component", abzuge.salary_component) %}
+{# {{ u.description or '' }} #}
+{% if doc.salary_slip_based_on_timesheet %}
+    {{ "{0:,.3f}".format( 100 * abzuge.amount / doc.gross_pay ) }} %
+{% else %}
+    {{ "{0:,.3f}".format( 100 * abzuge.amount / vars.taxable_amount ) }} %
+{% endif %}
+		</td>
+	<td style="width: 20%; text-align: left; ">
+{% if doc.salary_slip_based_on_timesheet %}
+  {{ doc.get_formatted('gross_pay') }}
+{% else %}
+  {% if u.description %}
+     CHF {{ "{0:,.2f}".format( vars.taxable_amount ).replace(",", "'") }}
+  {% endif %}
+{% endif %}
+		</td>
+	<td style="width: 20%; text-align: left; ">
+- {{ abzuge.get_formatted('amount') }}
+		</td>
+   </tr>
+{% endfor %}
+<tr style="border-bottom: solid black 1px;">
+	<td style="width: 40%; text-align: left; ">
+<strong>Total Abzüge</strong>
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+<strong>- {{ doc.get_formatted('total_deduction') }}</strong>
+		</td>
+   </tr>
+<tr style="border-bottom: solid black 1px;">
+	<td style="width: 40%; text-align: left; ">
+<strong>Nettolohn</strong>
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+<strong>{{ doc.get_formatted('net_pay') }}</strong>
+		</td>
+   </tr>
+<tr>
+	<td style="width: 40%; text-align: left; ">
+<strong>Total Auszahlung am {{ doc.get_formatted('posting_date') }}</strong>
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+		</td>
+	<td style="width: 20%; text-align: left; ">
+<strong>{{ doc.get_formatted('net_pay') }}</strong>
+		</td>
+   </tr>
+</table>
+
+<!-- end -->
+<br /><p style=" text-transform: none">Die Vergütung erfolgt auf das Konto {{ doc.bank_account_no }} der {{ doc.bank_name }}.</p>
+
+{% if doc.remarks %}<br /><p style=" text-transform: none">{{ doc.remarks or "" }}</p>{% endif %}
+
+{% if doc.signature %}<br /><img src="{{ doc.signature }}">{% endif %}
