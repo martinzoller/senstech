@@ -40,7 +40,10 @@ jenv = {
         "json_loads:senstech.scripts.tools.json_loads",
         "template_exists:senstech.scripts.tools.template_exists",
         "get_item_variant_description:senstech.scripts.item_tools.get_item_variant_description",
-        "get_sensor_measurements:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_sensor_measurements"
+        "get_sensor_measurements:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_sensor_measurements",
+        "get_signature_for_name:senstech.scripts.tools.get_signature_for_name",
+        "get_signature_for_user_id:senstech.scripts.tools.get_signature_for_user_id",
+        "get_employee_name:senstech.scripts.tools.get_employee_name"
 	]
 }
 

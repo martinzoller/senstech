@@ -259,3 +259,14 @@ def get_file_name(file_url):
 # Sicherstellen dass attachment existiert
 def check_if_attachment_exists(file_url, dn):
     return frappe.db.sql("""SELECT `name` FROM `tabFile` WHERE `file_url` = '{file_url}' AND `attached_to_name` = '{dn}'""".format(file_url=file_url, dn=dn), as_list=True)
+
+
+# Bild-URL der Unterschrift zurückgeben (auch ohne Zugriffsrecht auf jew. Employee-Datensatz)
+def get_signature_for_user_id(user_id):
+    return frappe.get_doc("Employee", {"user_id": user_id}).unterschrift
+
+def get_signature_for_name(employee_name):
+    return frappe.get_doc("Employee", {"employee_name": employee_name}).unterschrift
+
+def get_employee_name(user_id):
+    return frappe.get_doc("Employee", {"user_id": user_id}).employee_name

@@ -46,9 +46,9 @@
 {% endif %}
 
 <!-- unterschrift -->
-{% set unterschriften_liste = frappe.get_list("Employee", fields=("unterschrift"), filters={"user_id": doc_data.user_id }) %}
-{% if unterschriften_liste|length > 0 %}
-		{% if doc_data.update({ 'unterschrift': unterschriften_liste[0].unterschrift }) %}{% endif %}
+{% set doc_unterschrift = get_signature_for_user_id(user_id) %}
+{% if doc_unterschrift %}
+		{% if doc_data.update({ 'unterschrift': doc_unterschrift }) %}{% endif %}
 {% endif %}
 
 <!-- adresse_kunde (QN, SO, DN, SI) -->

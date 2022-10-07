@@ -94,19 +94,14 @@ coc_data  COC-specific data (item, batch, qty)
 		<td style="text-align: left;">{{ frappe.utils.get_datetime(charge_stamm.manufacturing_date).strftime('%d.%m.%Y') }}</td>
 		<td style="text-align: center;">
 			{% if charge_stamm.freigabe_beantragt_durch %}
-			  {% set id_field_ersteller = "employee_name" %}
-				{% set value_ersteller = charge_stamm.freigabe_beantragt_durch %}
+			  {% set unterschrift_ersteller = get_signature_for_name(charge_stamm.freigabe_beantragt_durch) %}
+				{% set name_ersteller = charge_stamm.freigabe_beantragt_durch %}
 			{% else %}
-				{% set id_field_ersteller = "user_id"  %}
-				{% set value_ersteller = charge_stamm.owner %}
+			  {% set unterschrift_ersteller = get_signature_for_user_id(charge_stamm.owner) %}
+				{% set name_ersteller = get_employee_name(charge_stamm.owner) %}
 			{% endif %}
-			{% set employee_list_ersteller = frappe.get_list("Employee", fields=("unterschrift","first_name","last_name"), filters={ id_field_ersteller: value_ersteller }) %}
-			{% if employee_list_ersteller %}
-				{% set unterschrift_ersteller = employee_list_ersteller[0].unterschrift %}
-				{% set name_ersteller = employee_list_ersteller[0].first_name + ' ' + employee_list_ersteller[0].last_name %}
-			{% else %}
-					{% set unterschrift_ersteller = "" %}
-					{% set name_ersteller = "" %}
+			
+			{% if not (unterschrift_ersteller and name_ersteller) %}
 					<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ value_ersteller }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
@@ -119,19 +114,14 @@ coc_data  COC-specific data (item, batch, qty)
 		<td style="text-align: left;">{{ _("Produktbetreuer Senstech AG:")}}</td>
 		<td style="text-align: left;">{{ frappe.utils.get_datetime(charge_stamm.freigabedatum).strftime('%d.%m.%Y') }}</td>
 		<td style="text-align: center;">
-			{% set employee_list_freigabe_durch = frappe.get_list("Employee", fields=("unterschrift","first_name","last_name"), filters={"employee_name": charge_stamm.freigegeben_durch }) %}
-			{% if employee_list_freigabe_durch %}
-				{% set unterschrift_freigabe_durch = employee_list_freigabe_durch[0].unterschrift %}
-				{% set name_freigabe_durch = employee_list_freigabe_durch[0].first_name + ' ' + employee_list_freigabe_durch[0].last_name %}
-			{% else %}
-					{% set unterschrift_freigabe_durch = "" %}
-					{% set name_freigabe_durch = "" %}
+		  {% set unterschrift_freigabe_durch = get_signature_for_name(charge_stamm.freigegeben_durch) %}
+			{% if not unterschrift_freigabe_durch %}
 					<div class="errorpopup">Fehler: Unterschrift von CoC-Freigeber "{{ charge_stamm.freigegeben_durch }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_freigabe_durch }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
 		<td style="text-align: left;">
-				{{ name_freigabe_durch }}
+				{{ charge_stamm.freigegeben_durch }}
 		</td>
 	</tr>
 </table>
