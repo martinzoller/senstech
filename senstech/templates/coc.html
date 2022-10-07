@@ -102,7 +102,7 @@ coc_data  COC-specific data (item, batch, qty)
 			{% endif %}
 			
 			{% if not (unterschrift_ersteller and name_ersteller) %}
-					<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ value_ersteller }}" nicht gefunden</div>
+					<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ charge_stamm.freigabe_beantragt_durch or charge_stamm.owner }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 		</td>

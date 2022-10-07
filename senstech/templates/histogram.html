@@ -109,28 +109,35 @@ batch			  The production batch whose histogram should be shown
 <table style="width: 99%; font-size: 8.5pt !important;">
 	<tr>
 		<td style="text-align: left;"><br><br></td>
-		<td style="text-align: center;">{{ _("Datum") }}<br></td>
+		<td style="text-align: left;">{{ _("Datum") }}<br></td>
 		<td style="text-align: center;">{{ _("Unterschrift") }}<br></td>
+		<td style="text-align: left;">{{ _("Name") }}<br></td>		
 	</tr>
 	<tr>
 		<td style="text-align: left;">{{ _("Produktverantwortlicher Senstech AG:") }}</td>
-		<td style="text-align: center;">{{ frappe.utils.get_datetime(batch.manufacturing_date).strftime('%d.%m.%Y') }}</td>
+		<td style="text-align: left;">{{ frappe.utils.get_datetime(batch.manufacturing_date).strftime('%d.%m.%Y') }}</td>
 		<td style="text-align: center;">
 			{% if batch.freigabe_beantragt_durch %}
 			  {% set unterschrift_ersteller = get_signature_for_name(batch.freigabe_beantragt_durch) %}
+				{% set name_ersteller = batch.freigabe_beantragt_durch %}				
 			{% else %}
 			  {% set unterschrift_ersteller = get_signature_for_user_id(batch.owner) %}
+				{% set name_ersteller = get_employee_name(batch.owner) %}				
 			{% endif %}
-			{% if not unterschrift_ersteller %}
+			
+			{% if not (unterschrift_ersteller and name_ersteller) %}
 					<div class="errorpopup">Fehler: Unterschrift von Histogramm-Ersteller "{{ batch.freigabe_beantragt_durch or batch.owner }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
+		<td style="text-align: left;">
+				{{ name_ersteller }}
+		</td>		
 	</tr>
 {% if batch.freigabedatum %}
 	<tr>
 		<td style="text-align: left;">{{ _("Produktbetreuer Senstech AG:")}}</td>
-		<td style="text-align: center;">{{ frappe.utils.get_datetime(batch.freigabedatum).strftime('%d.%m.%Y') }}</td>
+		<td style="text-align: left;">{{ frappe.utils.get_datetime(batch.freigabedatum).strftime('%d.%m.%Y') }}</td>
 		<td style="text-align: center;">
 			{% set unterschrift_freigabe_durch = get_signature_for_name(batch.freigegeben_durch) %}
 			{% if not unterschrift_freigabe_durch %}
@@ -138,6 +145,9 @@ batch			  The production batch whose histogram should be shown
 			{% endif %}
 			<img src="{{ unterschrift_freigabe_durch }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
+		<td style="text-align: left;">
+			{{ batch.freigegeben_durch }}
+		</td>		
 	</tr>
 {% elif doc.doctype != 'Batch' %}
 	<div class="errorpopup">Fehler: Produktionscharge nicht freigegeben</div>
