@@ -232,16 +232,18 @@ def direct_print_pdf(pdf_data, printer_name):
     # PDF in eine Datei schreiben, geht wohl nicht anders?
     tmp_pdf = tempfile.TemporaryFile()
     tmp_pdf.write(pdf_data)
+    tmp_pdf.seek(0)
 
     # Dokumentbreite ermitteln
     pdf_reader = PdfFileReader(tmp_pdf)
-    print_width = pdf_reader.pages[0].mediaBox.getWidth()*25.4/72
+    print_width = pdf_reader.pages[0].mediaBox.getWidth()*25.4/72 # point zu mm
+    zebra_width = round(print_width*203/25.4) # mm zu Zebra-point bei 203 dpi
     tmp_pdf.close()
 
     # Drucker auf gleiche Breite einstellen
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect((label_printer.hostname, label_printer.port))
-    soc.sendall('! U1 setvar "ezpl.print_width" "{width}"'.format(width=print_width))
+    soc.sendall("! U1 setvar \"ezpl.print_width\" \"{width}\"\r\n".format(width=zebra_width).encode())
 
     # Dokument senden
     soc.sendall(pdf_data)
