@@ -70,13 +70,17 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
 def get_sensor_measurements(reference_measurement_id):
     ref_doc = frappe.get_doc("Senstech Messdaten", reference_measurement_id)
     docs = frappe.db.sql(("""
-        SELECT MAX(md.creation) AS timestamp,measurand,value,md.uom AS uom_name,
-               uom.symbol AS uom_symbol
-        FROM `tabSenstech Messdaten` md LEFT JOIN `tabUOM` uom ON md.uom = uom.name
-        WHERE md.sensor_id='{sensor_id}'
-        AND md.batch='{batch}'
-        GROUP BY measurand
-        ORDER BY measurand"""
+      SELECT
+        md.creation,
+        md.measurand,
+        md.value,
+        md.uom AS uom_name,
+        uom.symbol AS uom_symbol
+      FROM
+        (SELECT measurand,MAX(creation) AS creation FROM `tabSenstech Messdaten` WHERE sensor_id='{sensor_id}' AND batch='{batch}' GROUP BY measurand) AS latest_md
+        INNER JOIN `tabSenstech Messdaten` md ON latest_md.measurand = md.measurand AND latest_md.creation = md.creation
+        LEFT JOIN `tabUOM` uom ON md.uom = uom.name
+      ORDER BY measurand"""
     ).format(sensor_id=ref_doc.sensor_id, batch=ref_doc.batch), as_dict=True)
     by_measurand = {}
     for doc in docs:

@@ -10,6 +10,7 @@ from frappe import _, attach_print
 from frappe.contacts.doctype.address.address import get_address_display
 import json, socket, os, six
 from PyPDF2 import PdfFileWriter, PdfFileReader
+import tempfile
 
 
 # Bestimmtes Druckformat eines Dokumentes direkt auf Zebra-Etikettendrucker ausgeben
@@ -227,8 +228,24 @@ def transfer_item_drawings(dt, dn, items):
 # PDF-Dokument (aus Variable) über Socket Connection direkt an Zebra-Etikettendrucker senden
 def direct_print_pdf(pdf_data, printer_name):
     label_printer = frappe.get_doc("Label Printer", printer_name)
+
+    # PDF in eine Datei schreiben, geht wohl nicht anders?
+    tmp_pdf = tempfile.TemporaryFile()
+    tmp_pdf.write(pdf_data)
+    tmp_pdf.seek(0)
+
+    # Dokumentbreite ermitteln
+    pdf_reader = PdfFileReader(tmp_pdf)
+    print_width = pdf_reader.pages[0].mediaBox.getWidth()*25.4/72 # point zu mm
+    zebra_width = round(print_width*203/25.4) # mm zu Zebra-point bei 203 dpi
+    tmp_pdf.close()
+
+    # Drucker auf gleiche Breite einstellen
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect((label_printer.hostname, label_printer.port))
+    soc.sendall("! U1 setvar \"ezpl.print_width\" \"{width}\"\r\n".format(width=zebra_width).encode())
+
+    # Dokument senden
     soc.sendall(pdf_data)
     soc.close()
     return
@@ -242,3 +259,14 @@ def get_file_name(file_url):
 # Sicherstellen dass attachment existiert
 def check_if_attachment_exists(file_url, dn):
     return frappe.db.sql("""SELECT `name` FROM `tabFile` WHERE `file_url` = '{file_url}' AND `attached_to_name` = '{dn}'""".format(file_url=file_url, dn=dn), as_list=True)
+
+
+# Bild-URL der Unterschrift zurückgeben (auch ohne Zugriffsrecht auf jew. Employee-Datensatz)
+def get_signature_for_user_id(user_id):
+    return frappe.get_doc("Employee", {"user_id": user_id}).unterschrift
+
+def get_signature_for_name(employee_name):
+    return frappe.get_doc("Employee", {"employee_name": employee_name}).unterschrift
+
+def get_employee_name(user_id):
+    return frappe.get_doc("Employee", {"user_id": user_id}).employee_name

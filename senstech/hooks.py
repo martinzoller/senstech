@@ -16,7 +16,7 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/senstech/css/senstech.css"
-app_include_js = [ "/assets/senstech/js/senstech.js", "/assets/senstech/js/awesome_bar_st.js" ]
+app_include_js = [ "/assets/senstech/js/senstech.js", "/assets/senstech/js/awesome_bar_st.js", "/assets/senstech/js/link_st.js" ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/senstech/css/senstech.css"
@@ -40,7 +40,10 @@ jenv = {
         "json_loads:senstech.scripts.tools.json_loads",
         "template_exists:senstech.scripts.tools.template_exists",
         "get_item_variant_description:senstech.scripts.item_tools.get_item_variant_description",
-        "get_sensor_measurements:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_sensor_measurements"
+        "get_sensor_measurements:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_sensor_measurements",
+        "get_signature_for_name:senstech.scripts.tools.get_signature_for_name",
+        "get_signature_for_user_id:senstech.scripts.tools.get_signature_for_user_id",
+        "get_employee_name:senstech.scripts.tools.get_employee_name"
 	]
 }
 
