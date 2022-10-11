@@ -72,7 +72,7 @@ frappe.ui.form.on('Batch', {
 					batch_no: frm.doc.name,
 					from_date: "1900-01-01"
 				};
-				frappe.set_route("query-report", "Stock Ledger");
+				frappe.set_route("query-report", "Lagerbuch Produktionscharge MZ");
 			});
 			frm.add_custom_button(__("Chargenetikett drucken"), function() {
 				batch_label(frm);
@@ -93,7 +93,10 @@ frappe.ui.form.on('Batch', {
 				    var freigabe_erlaubt = frm.get_perm(1, 'write');
 				    
 				    if(frm.doc.batch_completed) {
-				        frm.add_custom_button(__("Produktionscharge ist abgeschlossen"), function() {}, __("Keine Lagerbuchung möglich"));
+				        frm.add_custom_button(__("Produktionscharge ist abgeschlossen"), function() {}, __("Keine Einbuchung möglich"));
+						frm.add_custom_button(__("Aus Lager entnehmen"), function() {
+							aus_lager_entnehmen(frm);
+						});
                         frm.add_custom_button(__("Charge wiedereröffnen"), function() {
                             charge_wiedereroeffnen(frm);
                         });
@@ -132,7 +135,7 @@ frappe.ui.form.on('Batch', {
     				            })
     				        }
     				        if(entry_qty >= frm.doc.stueckzahl) {
-    				            frm.add_custom_button(__("Anfangsstückzahl erreicht"), function() {}, __("Keine Lagerbuchung möglich"));
+    				            frm.add_custom_button(__("Anfangsstückzahl erreicht"), function() {}, __("Keine Einbuchung möglich"));
     				        }
     					    else {
         						var open_qty = frm.doc.stueckzahl - entry_qty;
@@ -140,6 +143,9 @@ frappe.ui.form.on('Batch', {
         							an_lager_legen(frm, open_qty);
         						});
     					    }
+							frm.add_custom_button(__("Aus Lager entnehmen"), function() {
+								aus_lager_entnehmen(frm);
+							});
     						frm.add_custom_button(__("Charge abschliessen"), function() {
                                 charge_abschliessen(frm);
                             });
@@ -178,8 +184,8 @@ function an_lager_legen(frm, open_qty) {
     
 	var d = new frappe.ui.Dialog({
 		'fields': [
-			{'fieldname': 'qty', 'fieldtype': 'Float', 'reqd': 1, 'label': __('Quantity'), 'default': 0.000},
-			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': cur_frm.doc.item, 'read_only': 1, 'label': __('Item')},
+			{'fieldname': 'qty', 'fieldtype': 'Float', 'reqd': 1, 'label': __('Stückzahl'), 'default': 0.000},
+			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': cur_frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
 			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': cur_frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')}
 		],
 		primary_action: function(){
@@ -191,6 +197,47 @@ function an_lager_legen(frm, open_qty) {
 			}
 		},
 		primary_action_label: __('An Lager legen')
+	});
+	
+	d.show();
+}
+
+function aus_lager_entnehmen(frm) {
+    
+	var d = new frappe.ui.Dialog({
+		fields: [
+			{'fieldname': 'break0', 'fieldtype': 'Section Break', 'description': __('Diese Funktion ist <b>nur</b> für den internen Verbrauch (Entwicklung, nachträglicher Ausschuss etc.) von Artikeln gedacht. Für alle Artikel, die zu einem Kunden gelangen, ist ein Lieferschein auszustellen!')},
+			{'fieldname': 'qty', 'fieldtype': 'Float', 'reqd': 1, 'label': __('Stückzahl'), 'default': 1.000},
+			{'fieldname': 'comment', 'fieldtype': 'Data', 'reqd': 1, 'label': __('Verwendungszweck')},
+			{'fieldname': 'user', 'fieldtype': 'Link', 'options': 'Item', 'default': frappe.user.full_name(), 'read_only': 1, 'label': __('Entnommen durch')},
+			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': cur_frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
+			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': cur_frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')},
+			
+		],
+		primary_action: function(){
+			d.hide();
+			var val = d.get_values();
+			frappe.call({
+				method: 'frappe.desk.form.save.savedocs',
+				args: {
+					doc: {
+						'doctype': 'Stock Entry',
+						'stock_entry_type': "Material Issue",
+						'from_warehouse': "Fertigerzeugnisse - ST",
+						'bemerkung_intern': val.comment,
+						'items': [{
+							'item_code': cur_frm.doc.item,
+							'qty': val.qty,
+							'batch_no': cur_frm.doc.name
+						}]
+					},
+					action: 'Submit'
+				}
+			}).then (f => {
+				cur_frm.refresh();
+			});
+		},
+		primary_action_label: __('Aus Lager entnehmen')
 	});
 	
 	d.show();
