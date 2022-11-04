@@ -1,0 +1,106 @@
+<!--
+
+Measurement Report
+
+Params:
+
+doc				  The document to base the protocol on (usually a Delivery Note)
+doc_data    Prepared data of the base document
+dn_item			The delivery note item containing the relevant list of sensor IDs
+
+-->
+
+<!-- Daten laden -->
+{% set batch_doc = frappe.get_doc("Batch", dn_item.batch_no) %}
+{% if not doc_data %}
+  {% set doc_data = {} %}
+  {{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+{% endif %}
+<!-- /Daten laden -->
+
+<!-- Header und Footer -->
+{{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Header und Footer -->
+
+<div>
+		<b><br><br>{{ _("Messprotokoll") }}</b>
+		<div style="height:2mm"></div>
+</div>
+
+
+<!-- Detailtabelle -->
+<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+	<tr>
+		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
+		<td style="width: 24%;">{{ doc.po_no or '-' }}</td>
+		<td style="width: 3%;"></td>
+		<td style="width: 24%;">{{ _("Artikel") }}</td>
+		<td style="width: 24%;">{{ dn_item.item_code }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Ihre Kundennummer") }}</td>
+		<td>{{ doc.customer or '-' }}</td>
+		<td></td>
+		<td></td>
+		<td>{{ dn_item.item_name }}</td>			
+	</tr>
+	<tr>
+		<td>{{ _("Unsere Lieferantennr.") }}</td>
+		<td>{{ doc_data.unsere_lieferantennummer or '-' }}</td>
+		<td></td>
+		<td>{{ _("Produktionscharge") }}</td>
+		<td>{{ dn_item.chargennummer }}</td>	
+	</tr>
+	<tr>
+		<td>{{ _("Lieferscheinnummer") }}</td>
+		<td>{{ doc.name }}</td>
+		<td></td>
+		<td>{{ _("Herstelldatum") }}</td>
+		<td>{{ frappe.utils.get_datetime(batch_doc.manufacturing_date).strftime('%d.%m.%Y') }}</td>
+	</tr>
+</table>
+<!-- /Detailtabelle -->
+
+<div><br></div>
+
+<!-- CSS für Messprotokoll -->
+<style type="text/css">
+#measurement_report {
+	font-size: 7.5pt !important;
+	width: 99%;
+  border-collapse: collapse !important;
+}
+
+#measurement_report th, #measurement_report td {
+    border: 0.3mm solid #aaa !important;
+    padding: 0 1.5mm !important;
+}
+</style>
+<!-- /CSS für Messprotokoll -->
+
+<!-- Messprotokoll -->
+<table id="measurement_report"><tbody><tr>
+	{% set measurands = get_measurands_for_delivery_note_item(dn_item.name) %}
+	<th>{{ _("Sensor Nr.") }}</th>
+	{% for m in measurands %}
+				<th style="text-align:center">{{ _(m.measurand) }} [{{ m.uom_symbol }}]</th>
+	{% endfor %}
+	<th style="text-align:center">{{ _("Gemessen am") }}</th>
+	<th>{{ _("Gemessen durch") }}</th>
+</tr>
+
+{% set meas_data = get_measurements_for_delivery_note_item(dn_item.name, measurands) %}
+{% for sensor in meas_data %}
+	<tr>
+		<td>{{ dn_item.chargennummer }}/{{ sensor.sensor_id }}</td>
+		<!--<td>{{ dn_item.chargennummer }}/{{ sensor.sensor_id }}</td>-->
+		{% for m in measurands %}
+			<td style="text-align:center">{{ sensor[m.measurand] }}</td>
+		{% endfor %}
+		<td style="text-align:center">{{ sensor.measured_on|join(', ') }}</td>
+		<td>{{ sensor.measured_by|join(', ') }}</td>
+	</tr>
+{% endfor %}
+
+</tbody></table>
+<!-- /Messprotokoll -->
