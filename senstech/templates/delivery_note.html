@@ -65,7 +65,7 @@
 <!-- /Abschlussblock -->
 
 
-<!-- COC-Daten laden -->
+<!-- COC-Daten laden, Messprotokolle rendern -->
 {% set chargen_master = {} %}
 {% for item in doc.items %}
 		{% if item.batch_no %}
@@ -77,9 +77,13 @@
 								{% if chargen_master.update({ item.batch_no: {'item': item.item_code, 'qty': item.qty, 'has_histo': 1 if item_doc.text_histogramm else 0 } }) %}{% endif %}
 						{% endif %}
 				{% endif %}
+				{% if item.sensor_ids_list %}
+					<div class="page-break"></div>
+					{{ frappe.render_template('templates/measurement_report.html', {'doc': doc, 'doc_data': doc_data, 'dn_item': item }) }}
+				{% endif %}
 		{% endif %}
 {% endfor %}
-<!-- /COC-Daten laden -->
+<!-- /COC-Daten laden, Messprotokolle rendern -->
 
 <!-- COCs und Histogramme rendern -->
 {% set coc_data = {} %}

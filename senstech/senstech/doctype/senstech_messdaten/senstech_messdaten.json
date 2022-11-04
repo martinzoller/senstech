@@ -29,7 +29,8 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Sensor-ID",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "measurand",
@@ -77,7 +78,7 @@
    "label": "Gesendet von Host"
   }
  ],
- "modified": "2022-01-19 10:42:40.056604",
+ "modified": "2022-11-03 17:06:33.175093",
  "modified_by": "martin.zoller@senstech.ch",
  "module": "Senstech",
  "name": "Senstech Messdaten",
