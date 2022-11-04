@@ -87,7 +87,7 @@
 
 <!-- COCs und Histogramme rendern -->
 {% set coc_data = {} %}
-{% for batch_id, batch in chargen_master.items() %}
+{% for batch_id, batch in chargen_master.items()|sort %}
 		{% if coc_data.update({ 'item': batch.item, 'batch': batch_id, 'qty': batch.qty }) %}{% endif %}
 		<div class="page-break"></div>
 		{{ frappe.render_template('templates/coc.html', {'doc': doc, 'doc_data': doc_data, 'coc_data': coc_data }) }}
