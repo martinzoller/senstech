@@ -14,7 +14,7 @@
 	<div id="footer-html" class="visible-pdf">
 		{% set letter_head = frappe.get_doc("Letter Head", doc_data.briefkopf) %}
 		{% if letter_head %}
-			{{ letter_head.footer }}
+			{{ letter_head.footer|replace('{docname}', doc.name) }}
 		{% else %}
 			<p>No letter head found. Please define a letter head under print settings and mark it as default</p>
 		{% endif %}

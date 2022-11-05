@@ -43,7 +43,9 @@ jenv = {
         "get_sensor_measurements:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_sensor_measurements",
         "get_signature_for_name:senstech.scripts.tools.get_signature_for_name",
         "get_signature_for_user_id:senstech.scripts.tools.get_signature_for_user_id",
-        "get_employee_name:senstech.scripts.tools.get_employee_name"
+        "get_employee_name:senstech.scripts.tools.get_employee_name",
+        "get_measurands_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurands_for_delivery_note_item",
+        "get_measurements_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurements_for_delivery_note_item"
 	]
 }
 
@@ -103,6 +105,14 @@ jenv = {
 # 		"on_trash": "method"
 #	}
 # }
+doc_events =  {
+    "Delivery Note": {
+        "validate": "senstech.scripts.delivery_note_tools.validate_sensor_ids",
+        "on_submit": "senstech.scripts.delivery_note_tools.assign_sensor_ids",
+        "on_cancel": "senstech.scripts.delivery_note_tools.release_sensor_ids",
+    }
+
+}
 
 # Scheduled Tasks
 # ---------------

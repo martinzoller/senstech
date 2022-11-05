@@ -10,6 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 from erpnext.stock.doctype.item.item import get_uom_conv_factor
 from senstech.scripts.tools import direct_print_doc
+from senstech.scripts.delivery_note_tools import sanitize_sensor_ids
 
 @frappe.whitelist()
 def submit_measurements(user, item, batch, sensor_id, measurands, values, units, test_results=None, print_label='False', sent_from_host='', label_printer='Zebra Flag Labels'):
@@ -86,7 +87,116 @@ def get_sensor_measurements(reference_measurement_id):
     for doc in docs:
         by_measurand[doc.measurand] = doc
     return by_measurand
+
+
+# Return a list of dicts containing measurand, uom_name and uom_symbol
+# for each measurand that has data linked with the delivery note and batch of the given delivery note item
+def get_measurands_for_delivery_note_item(delivery_note_item):
+
+    item_doc = frappe.get_doc("Delivery Note Item", delivery_note_item)
+    dn_doc = frappe.get_doc("Delivery Note", item_doc.parent)
     
+    if not item_doc.sensor_ids_list:
+        return {}
+    
+    if dn_doc.docstatus == 1:
+        # Submitted document: Look for measurements linked to the delivery note
+        measurand_condition = "batch='{batch}' AND included_in_delivery='{delivery_note}'"
+    else:
+        # Draft document: Look for sensors by ID
+        measurand_condition = "batch='{batch}' AND sensor_id IN ({sensor_ids})"
+    
+    # Assume the UOM is the same for all measurements (to be verified when fetching the actual data)
+    measurands = frappe.db.sql(("""
+        SELECT
+          md.measurand AS measurand,
+          md.uom AS uom_name,
+          uom.symbol as uom_symbol
+        FROM
+          `tabSenstech Messdaten` md LEFT JOIN `tabUOM` uom ON md.uom = uom.name
+        WHERE
+          """+measurand_condition+"""
+        GROUP BY
+          measurand
+    """).format(batch=item_doc.batch_no, delivery_note=item_doc.parent, sensor_ids=sanitize_sensor_ids(item_doc.sensor_ids_list)), as_dict=True)
+    return measurands
+
+
+# Returns a list of dicts, each containing 'sensor_id' and a key-value pair for each measurand.
+# The values are the measurement values without UOM.
+def get_measurements_for_delivery_note_item(delivery_note_item, measurands):
+    data = []
+    item_doc = frappe.get_doc("Delivery Note Item", delivery_note_item)
+    dn_doc = frappe.get_doc("Delivery Note", item_doc.parent)
+    
+    # The measurands from get_measurands_for_delivery_note_item are passed as a parameter to avoid calling the function twice
+    #measurands = get_measurands_for_delivery_note_item(delivery_note_item)
+    
+    if not item_doc.sensor_ids_list:
+        frappe.throw(_('Fehler: Lieferschein-Artikel "{item}" enthält keine Sensor-IDs').format(item=item_doc.name))
+        return
+    
+    if dn_doc.docstatus == 1:
+        # Submitted document: Look for measurements linked to the delivery note
+        measurement_query = """
+            SELECT
+              value,
+              uom,
+              creation,
+              measured_by
+            FROM
+              `tabSenstech Messdaten`
+            WHERE
+              sensor_id='{sensor}' AND
+              measurand='{measurand}' AND
+              batch='{batch}' AND
+              included_in_delivery='{delivery_note}'
+        """
+    else:
+        # Draft document: Look for latest measurements of concerned sensors
+        measurement_query = """
+            SELECT
+              md.value AS value,
+              md.uom AS uom,
+              md.creation AS creation,
+              md.measured_by AS measured_by
+            FROM
+              (SELECT MAX(creation) AS maxcreation FROM `tabSenstech Messdaten` WHERE sensor_id='{sensor}' AND measurand='{measurand}' AND batch='{batch}') AS latest_md
+              INNER JOIN `tabSenstech Messdaten` md ON maxcreation = md.creation
+            WHERE
+              sensor_id='{sensor}' AND
+              measurand='{measurand}' AND
+              batch='{batch}'
+        """
+    
+    sensor_ids = item_doc.sensor_ids_list.split(',')
+    sensor_ids.sort()
+    for sensor in sensor_ids:
+        padded_snsr = sensor.zfill(4)
+        sensor_batch_id = item_doc.chargennummer+'/'+padded_snsr;
+        cur_sensor = {'sensor_id': padded_snsr}
+        measured_on = []
+        measured_by = []
+        for m in measurands:
+            cur_value = frappe.db.sql(measurement_query.format(sensor=sensor, measurand=m.measurand, batch=item_doc.batch_no, delivery_note=item_doc.parent), as_dict=True)
+            if len(cur_value) != 1:
+                frappe.throw(_('Fehler: Kein eindeutiger Messwert für "{measurand}" hinterlegt zu Sensor {sensor} (Artikel: {item})').format(measurand=m.measurand, sensor=sensor_batch_id, item=item_doc.item_code))
+                return
+            if cur_value[0].uom != m.uom_name:
+                frappe.throw(_('Fehler: Abweichende Masseinheit für "{measurand}" bei Sensor {sensor} (Artikel: {item})').format(measurand=m.measurand, sensor=sensor_batch_id, item=item_doc.item_code))
+                return
+            creation_date = cur_value[0].creation.date().strftime('%d.%m.%Y')
+            operator = frappe.get_doc("User",cur_value[0].measured_by).full_name
+            if creation_date not in measured_on:
+                measured_on.append(creation_date)
+            if operator not in measured_by:
+                measured_by.append(operator)
+            cur_sensor[m.measurand] = cur_value[0].value
+        cur_sensor['measured_on'] = measured_on
+        cur_sensor['measured_by'] = measured_by
+        data.append(cur_sensor)
+    
+    return data
 
 class SenstechMessdaten(Document):
 
