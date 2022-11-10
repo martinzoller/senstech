@@ -17,7 +17,9 @@ frappe.ui.form.on('Supplier', {
 		
 		if(frappe.validated) {
 			var qr_iban = (frm.doc.esr_participation_number || '').replace(/\s+/g,'');
-			validate_iban(qr_iban, true);
+			if(qr_iban) {
+				validate_iban(qr_iban, true);
+			}
 		}
 	},	
 	after_save(frm) {
@@ -43,8 +45,8 @@ function validate_iban(iban, is_qr_iban) {
 			frappe.show_alert({message: __(qr_dash+"IBAN erfolgreich validiert"), indicator: 'green'}, 5);
 			if(!is_qr_iban) {
 				if(result.checkResults.bankCode) {
-					if(frm.doc.bic != result.bankData.bic) {
-						frm.doc.bic = result.bankData.bic
+					if(cur_frm.doc.bic != result.bankData.bic) {
+						cur_frm.set_value("bic", result.bankData.bic);
 						frappe.show_alert({message: __("BIC automatisch aktualisiert"), indicator: 'green'}, 5);
 					}
 					else {
