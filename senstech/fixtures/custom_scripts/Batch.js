@@ -31,7 +31,7 @@ frappe.ui.form.on('Batch', {
 	        });
 		}
 	    if (cur_frm.doc.stueckzahl <= 0) {
-	        frappe.msgprint(__("Die Anfangsstückzahl der Charge muss angegeben werden"), __("Validation"));
+	        frappe.msgprint(__("Die Maximalstückzahl der Charge muss angegeben werden"), __("Validation"));
 	        frappe.validated=false;
 	    }
 	},
@@ -135,7 +135,7 @@ frappe.ui.form.on('Batch', {
     				            })
     				        }
     				        if(entry_qty >= frm.doc.stueckzahl) {
-    				            frm.add_custom_button(__("Anfangsstückzahl erreicht"), function() {}, __("Keine Einbuchung möglich"));
+    				            frm.add_custom_button(__("Maximalstückzahl erreicht"), function() {}, __("Keine Einbuchung möglich"));
     				        }
     					    else {
         						var open_qty = frm.doc.stueckzahl - entry_qty;
@@ -154,7 +154,8 @@ frappe.ui.form.on('Batch', {
 				}
 			});
 			show_histograms(frm);
-			show_prod_details(frm);
+			//show_prod_details(frm);
+			cur_frm.set_df_property('production_details','options', 'Produktions- und Ausschussdetails werden derzeit überarbeitet und sind nicht verfügbar.');
 		}
 		else {
 			// Neues Dokument: ggf. Daten der zuvor geöffneten Charge ausblenden
@@ -193,7 +194,7 @@ function an_lager_legen(frm, open_qty) {
 				d.hide();
 				batch_quick_stock_entry(frm, d.get_values().qty);
 			} else {
-				frappe.msgprint(__("Die Summe der Lagerbuchungen übersteigt die Anfangsstückzahl"), __("Menge prüfen"));
+				frappe.msgprint(__("Die Summe der Lagerbuchungen übersteigt die Maximalstückzahl"), __("Menge prüfen"));
 			}
 		},
 		primary_action_label: __('An Lager legen')
