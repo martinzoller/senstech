@@ -459,6 +459,18 @@ def get_data():
           'type': 'doctype',
           'name': 'HR Settings',
           'label': _('Einstellungen zum Modul Personalwesen')
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'doctype': 'Salary Slip',
+          'name': 'Annual Salary Sheet',
+          'label': _('Lohnblätter')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Salary Certificate',
+          'label': _('Lohnausweis')
         }
       ]
     },
@@ -510,6 +522,38 @@ def get_data():
           'name': 'System Settings',
           'label': _('>> Einstellungen'),
           'link': 'modules/Senstech Settings'
+        }
+      ]
+    },
+    {
+      'label': _('💰 Spesen'),
+      'items': [
+        {
+          'type': 'doctype',
+          'name': 'Expense Claim',
+          'label': _('Expense Claim')
+        }
+      ]
+    },
+    {
+      'label': _('🗃️ Anlagenbuchhaltung'),
+      'items': [
+        {
+          'type': 'doctype',
+          'name': 'Asset',
+          'label': _('Asset')
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'doctype': 'Asset',
+          'name': 'Asset Summary',
+          'label': _('Asset Summary')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Asset Category',
+          'label': _('Asset Category')
         }
       ]
     }
