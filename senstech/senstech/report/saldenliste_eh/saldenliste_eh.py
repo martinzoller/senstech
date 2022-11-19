@@ -44,7 +44,7 @@ def get_data(from_date, to_date, report_type):
     # prepare query
     sql_query = """
        SELECT 
-          `raw`.`Kontonummer` AS `Kontonummer`,
+          GROUP_CONCAT(`raw`.`Kontonummer`) AS `Kontonummer`,
           `raw`.`e_h_no` AS `e_h_no`,
           `raw`.`Konto` AS `Konto`, 
           SUM(`raw`.`Anfangssaldo`) AS `Anfangssaldo`,
