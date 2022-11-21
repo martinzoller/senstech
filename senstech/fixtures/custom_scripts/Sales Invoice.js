@@ -1,6 +1,8 @@
 frappe.ui.form.on('Sales Invoice', {
     before_save(frm) {
-		fetch_templates_from_customer(frm);
+	    fetch_templates_from_customer(frm);
+	    
+	    apply_revenue_accounts(frm);
 	},
     customer(frm) {
         setTimeout(function(){
@@ -255,4 +257,26 @@ function add_cancelled_watermark(frm) {
             cur_frm.reload_doc();
         }
     });
+}
+
+function apply_revenue_accounts(frm) {
+   // apply revenue accounts
+   var items = frm.doc.items;
+   items.forEach(function (item) {
+     if (item.income_account.includes("3000")) {
+        // material
+	if (frm.doc.customer === "CU-00228") {		// IST
+            item.income_account = "3002 - Bruttoertrag IC - IST - ST"; 
+	} else if (frm.doc.customer === "CU-00205") {	// E+H
+            item.income_account = "3001 - Bruttoertrag IC - E+H - ST"; 
+	}
+     } else if (item.income_account.includes("3400")) {
+        // services
+	if (frm.doc.customer === "CU-00228") {		// IST
+            item.income_account = "3410 - Dienstleistungsertrag IST - ST"; 
+	} /* else if (frm.doc.customer === "CU-00205") { 	// E+H
+            item.income_account = "3001 - Bruttoertrag IC - E+H - ST"; 
+	} */
+     }
+   });
 }
