@@ -85,33 +85,49 @@ frappe.ui.form.on('Delivery Note Item', {
 					d.fields_dict.sensor_ids.set_value('');
 				}},
 				{'fieldname': 'qty', 'fieldtype': 'Int', 'default': current_item.qty, 'reqd': 1, 'label': __('Stückzahl')},
-				{'fieldname': 'sensor_ids', 'fieldtype': 'Text', 'reqd': 1, 'label': __('Sensor-IDs (kommagetrennt)'), 'onchange': function() {
-					var ids = d.fields_dict.sensor_ids.get_value().split(',');
-					d.fields_dict.sensor_ids.set_description(num_sensors_text+ids.length);
+				{'fieldname': 'sensor_ids', 'fieldtype': 'Text', 'reqd': 0, 'label': __('Sensor-IDs (kommagetrennt)'), 'onchange': function() {
+					var ids = d.fields_dict.sensor_ids.get_value();
+					var n_sensors = 0;
+					if(ids) {
+						n_sensors = (ids.split(',')).length
+					}
+					d.fields_dict.sensor_ids.set_description(num_sensors_text+n_sensors);
 				}},
 				{'fieldname': 'add_sensor_id', 'fieldtype': 'Small Text', 'reqd': 0, 'label': __('Sensor hinzufügen (Barcodescanner)')},
 			],
 			primary_action: function(values) {
-				var ids = values.sensor_ids.split(',');
-				if(ids.length != d.fields_dict.qty.get_value()) {
-					frappe.msgprint(__("Die Anzahl Sensor-IDs stimmt nicht mit der Stückzahl überein"),__("Fehler"));
-					return;
+				var ids = '';
+				if(values.sensor_ids) {
+					ids = values.sensor_ids.split(',');
+					if(ids.length != d.fields_dict.qty.get_value()) {
+						frappe.msgprint(__("Die Anzahl Sensor-IDs stimmt nicht mit der Stückzahl überein"),__("Fehler"));
+						return;
+					}
+					
+					var find_duplicates = arr => arr.filter((item, index) => arr.indexOf(item) !== index);
+					var duplicates = find_duplicates(ids);
+					if(duplicates.length > 0) {
+						frappe.msgprint(__("Die Liste der Sensor-IDs enthält Duplikate:")+" "+duplicates.join(','));
+						return;
+					}
+					
+					for(var i=0;i<ids.length;i++){
+						var int_id = parseInt(ids[i]);
+						if(int_id == 0 || Number.isNaN(int_id)) {
+							frappe.msgprint(__("Ungültige Sensor-ID: ")+ids[i],__("Fehler"));
+							return;
+						}
+						ids[i] = String(int_id).padStart(4,'0');
+					}
+					ids = ids.join(',');
 				}
-				
-				var find_duplicates = arr => arr.filter((item, index) => arr.indexOf(item) !== index);
-				var duplicates = find_duplicates(ids);
-				if(duplicates.length > 0) {
-					frappe.msgprint(__("Die Liste der Sensor-IDs enthält Duplikate:")+" "+duplicates.join(','));
-					return;
-				}
-				
-				ids = ids.map(n => { return String(parseInt(n)).padStart(4,'0') });
 				
 				d.hide();
-				current_item.sensor_ids_list = ids.join(',');				
+				current_item.sensor_ids_list = ids;
 				current_item.item_code = values.item_code;
 				current_item.batch_no = values.batch_no;
 				current_item.qty = values.qty;
+				frm.dirty(true);
 				frm.refresh_fields(['items']);
 			},
 			primary_action_label: __('Speichern')
@@ -126,9 +142,10 @@ frappe.ui.form.on('Delivery Note Item', {
 				if(!barcode_value) return;
 				var new_sensor_id = barcode_value.split("\n")[0];
 				if(new_sensor_id.startsWith(cur_batch+'/')){
+					var sensors_str = d.fields_dict.sensor_ids.get_value();
 					var new_sensor_number = new_sensor_id.substr(cur_batch.length + 1);
-					var conditional_comma = [',',''].includes(d.fields_dict.sensor_ids.substr(-1)) ? '' : ',';
-					d.fields_dict.sensor_ids.set_value(d.fields_dict.sensor_ids.get_value()+conditional_comma+new_sensor_number);
+					var conditional_comma = [',',''].includes(sensors_str.substr(-1)) ? '' : ',';
+					d.fields_dict.sensor_ids.set_value(sensors_str+conditional_comma+new_sensor_number);
 				}
 				else {
 					if(new_sensor_id.startsWith(cur_item)){

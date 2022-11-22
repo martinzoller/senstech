@@ -56,7 +56,7 @@ def create_single_label_pdf(label_printer, item, batch, qty, output=None):
 
 def validate_sensor_ids(doc, method):
     for item in doc.items:
-        if item.sensor_ids_list != '':
+        if item.sensor_ids_list:
             sensor_ids = item.sensor_ids_list.split(',')
             if len(sensor_ids) != item.qty:
                 frappe.throw(_('Von Artikel "{item_name}" sollen {qty} Stück der Charge {chargennummer} geliefert werden, jedoch sind {id_count} Sensor-IDs erfasst').format(item_name=item.item_name,qty=item.qty,chargennummer=item.chargennummer,id_count=len(sensor_ids)))
@@ -75,7 +75,7 @@ def validate_sensor_ids(doc, method):
 
 def assign_sensor_ids(doc, method):
     for item in doc.items:
-        if item.sensor_ids_list != '':
+        if item.sensor_ids_list:
             sensor_ids = sanitize_sensor_ids(item.sensor_ids_list)
             frappe.db.sql("""
                 UPDATE `tabSenstech Messdaten`

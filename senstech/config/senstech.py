@@ -76,11 +76,32 @@ def get_data():
         },
         {
           'type': 'report',
-          'is_query_report': True,
+          'is_query_report': False,
           'doctype': 'Sales Order',
-          'name': 'Ordered Items To Be Delivered',
-          'label': _('Ausstehende Lieferungen')
-        }
+          'name': 'Zu liefernde Serie- und Eigenprodukte MZ',
+          'label': _('Zu liefernde Serie- und Eigenprodukte')
+        },
+        {
+          'type': 'report',
+          'is_query_report': False,
+          'doctype': 'Sales Order',
+          'name': 'Offene Entwicklungs- und Kleinauftraege MZ',
+          'label': _('Offene Entwicklungs- und Kleinaufträge')
+        },
+#        {
+#          'type': 'report',
+#          'is_query_report': True,
+#          'doctype': 'Sales Order',
+#          'name': 'Ordered Items To Be Delivered',
+#          'label': _('Ausstehende Lieferungen')
+#        },
+        {
+          'type': 'report',
+          'is_query_report': False,
+          'doctype': 'Sales Order',
+          'name': 'Ueberfaellige Versaende der letzten Woche MZ',
+          'label': _('Überfällige Versände (letzte Woche)')
+        },
       ]
     },
     {
@@ -114,11 +135,6 @@ def get_data():
           'name': 'Event',
           'label': _('Meine Termine'),
           'link': 'List/Event/Calendar'
-        },
-        {
-          'type': 'doctype',
-          'name': 'Email Queue',
-          'label': _('Gesendete E-Mails')
         },
         {
           'type': 'report',
@@ -191,11 +207,21 @@ def get_data():
           'name': 'Lagerbuch MZ',
           'label': _('Lagerbuch (Buchungshistorie)')
         },
+      ]
+    },
+    {
+      'label': _('📈 Messdatenverwaltung'),
+      'items': [
+        {
+          'type': 'doctype',
+          'name': 'Senstech Messdaten',
+          'label': _('Messdaten')
+        },
         {
           'type': 'doctype',
           'name': 'Senstech Histogramm',
           'label': _('Definition Histogramme')
-        }
+        },
       ]
     },
     {
@@ -318,6 +344,28 @@ def get_data():
       ]
     },
     {
+      'label': _('🏢️ Anlagenbuchhaltung'),
+      'items': [
+        {
+          'type': 'doctype',
+          'name': 'Asset',
+          'label': _('Asset')
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'doctype': 'Asset',
+          'name': 'Asset Summary',
+          'label': _('Asset Summary')
+        },
+        {
+          'type': 'doctype',
+          'name': 'Asset Category',
+          'label': _('Asset Category')
+        }
+      ]
+    },
+    {
       'label': _('📆 Jahresabschluss'),
       'items': [
         {
@@ -352,12 +400,17 @@ def get_data():
           'doctype': 'Item',
           'name': 'Lagerliste Inventur',
           'label': _('Lagerliste Inventur')
-        }        
+        },
       ]
     },
     {
       'label': _('📊 Statistiken'),
       'items': [
+        {
+          'type': 'doctype',
+          'name': 'Report',
+          'label': _('Bericht')
+        },
         {
           'type': 'report',
           'is_query_report': True,
@@ -380,6 +433,13 @@ def get_data():
           'doctype': 'Sales Invoice',
           'name': 'Gestellte Rechnungen MZ',
           'label': _('Umsatz verrechnet detailliert'),
+        },
+        {
+          'type': 'report',
+          'is_query_report': False,
+          'doctype': 'Sales Order',
+          'name': 'Auftragseingang pro Monat MZ',
+          'label': _('Auftragseingang nach Monat'),
         },
 #        {
 #          'type': 'report',
@@ -423,7 +483,7 @@ def get_data():
       ]
     },
     {
-      'label': _('👩‍💼 Personalwesen'),
+      'label': _('👩‍💼 Personal'),
       'items': [
         {
           'type': 'doctype',
@@ -457,8 +517,8 @@ def get_data():
         },
         {
           'type': 'doctype',
-          'name': 'HR Settings',
-          'label': _('Einstellungen zum Modul Personalwesen')
+          'name': 'Expense Claim',
+          'label': _('Spesenabrechnung')
         },
         {
           'type': 'report',
@@ -525,36 +585,4 @@ def get_data():
         }
       ]
     },
-    {
-      'label': _('💰 Spesen'),
-      'items': [
-        {
-          'type': 'doctype',
-          'name': 'Expense Claim',
-          'label': _('Expense Claim')
-        }
-      ]
-    },
-    {
-      'label': _('🗃️ Anlagenbuchhaltung'),
-      'items': [
-        {
-          'type': 'doctype',
-          'name': 'Asset',
-          'label': _('Asset')
-        },
-        {
-          'type': 'report',
-          'is_query_report': True,
-          'doctype': 'Asset',
-          'name': 'Asset Summary',
-          'label': _('Asset Summary')
-        },
-        {
-          'type': 'doctype',
-          'name': 'Asset Category',
-          'label': _('Asset Category')
-        }
-      ]
-    }
   ]
