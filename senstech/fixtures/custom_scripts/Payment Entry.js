@@ -26,6 +26,9 @@ frappe.ui.form.on('Payment Entry', {
             frm.add_custom_button(__("Kurs"), function() {
                 exchange(frm);
             });
+            frm.add_custom_button(__("Miete"), function() {
+                rent(frm);
+            });
         }
     }
 });
@@ -61,6 +64,10 @@ function exchange(frm) {
     } else {
         add_deduction("6975 - realisierte Kursgewinne - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
     }
+}
+
+function rent(frm) {
+    add_deduction("6000 - Miete - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function add_deduction(account, cost_center, amount) {
