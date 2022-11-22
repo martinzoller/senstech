@@ -99,6 +99,11 @@ def get_data():
         },
         {
           'type': 'doctype',
+          'name': 'Senstech Messgroesse',
+          'label': _('Senstech Messgrösse')
+        },
+        {
+          'type': 'doctype',
           'name': 'UOM Conversion Factor',
           'label': _('Maßeinheit-Umrechnungsfaktor')
         },
@@ -131,7 +136,7 @@ def get_data():
           'type': 'doctype',
           'name': 'Senstech Berg',
           'label': _('Senstech Berg')
-        }
+        },
       ]
     },
     {
@@ -209,9 +214,24 @@ def get_data():
         },
         {
           'type': 'doctype',
+          'name': 'Email Queue',
+          'label': _('Gesendete E-Mails')
+        },        
+        {
+          'type': 'doctype',
+          'name': 'Notification',
+          'label': _('Automatische E-Mail-Benachrichtigung')
+        },        
+        {
+          'type': 'doctype',
+          'name': 'Auto Email Report',
+          'label': _('Automatischer E-Mail-Bericht')
+        },
+        {
+          'type': 'doctype',
           'name': 'Email Digest',
-          'label': _('E-Mail-Bericht')
-        }
+          'label': _('Automatischer E-Mail-Digest')
+        },
       ]
     },
     {
@@ -266,6 +286,11 @@ def get_data():
         },
         {
           'type': 'doctype',
+          'name': 'HR Settings',
+          'label': _('Einstellungen zum Modul Personalwesen')
+        },
+        {
+          'type': 'doctype',
           'name': 'ERPNextSwiss Settings',
           'label': _('ERPNextSwiss Einstellungen')
         },
@@ -273,11 +298,6 @@ def get_data():
           'type': 'doctype',
           'name': 'MailChimpConnector Settings',
           'label': _('MailChimpConnector-Einstellungen')
-        },
-        {
-          'type': 'doctype',
-          'name': 'Senstech Einstellungen',
-          'label': _('Senstech Einstellungen')
         },
         {
           'type': 'doctype',
@@ -323,7 +343,13 @@ def get_data():
           'type': 'doctype',
           'name': 'Global Search Settings',
           'label': _('Einstellungen Globale Suche')
-        }
+        },
+        {
+          'type': 'doctype',
+          'name': 'Company',
+          'label': _('Unternehmenseinstellungen Senstech AG'),
+          'route': '#Form/Company/Senstech AG'
+        },
       ]
     }
   ]
