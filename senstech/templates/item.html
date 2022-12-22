@@ -8,22 +8,34 @@
 
 {% if doc.has_variants %}
   {% set docs = frappe.get_list("Item", ['item_code', 'artikelcode_kunde', 'item_name', 'variant_of', 'is_sales_item', 'item_group' ], { 'variant_of': doc.name, 'disabled': False }) %}
+	{% set template_title = (doc.item_name.split('«')[1]).split('»')[0] if '«' in doc.item_name else doc.item_name %}
+		<table><tr><td><h1>{{ template_title }}</h1></td></tr></table>
+		<div class="page-break"></div>
+		<table><tr><td><h1 style="font-size:26pt !important">({{ docs|length }} Varianten)</h1></td></tr></table>
 {% else %}
-  {% set docs = [doc] %}
-{% endif %}
-
-{% for label in docs %}
-	<h1 style="margin-left:2.5mm">{{ label.item_name.replace(label.variant_of+'-','') if label.variant_of else label.item_name }}</h1>
-	<div>
+  {% set label = doc %}
+	{% set has_title_label = not label.variant_of %}
+	{% set label_title = label.item_name.replace(label.variant_of+'-','') if label.variant_of else label.item_name %}
+	{% set short_title = (label_title.split('«')[1]).split('»')[0] if '«' in label_title else label_title %}
+	{% if has_title_label %}
+		<table><tr><td><h1>{{ short_title }}</h1></td></tr></table>
+		<div class="page-break"></div>
+	{% endif %}
+	{% for two_each in ([1,2] if has_title_label else [2]) %}		
+		<h2>{{ label_title }}</h2>
+		<div>
 		<img src="https://data.libracore.ch/phpqrcode/api/barcode.php?f=png&s=qr&d={{ label.item_code }}&tc=fff" style="height:18mm;width:18mm;float:left">
 		<p class="oneline" style="padding-top:2.5mm">{{ label.item_code }}{{ dot + label.artikelcode_kunde if label.artikelcode_kunde else '' }}</p>
 		<p class="oneline">{{ 'VK' if label.is_sales_item else 'EK' }}/{{ label.item_group }}</p>
 		<p class="oneline">{{ batch_txt }}</p>
 		{% set attrs = frappe.get_list("Item Variant Attribute", ['idx', 'attribute_value' ], filters = { 'parent': label.item_code, 'parenttype': 'Item' }, order_by = 'idx ASC') %}
 		<p class="twolines">{% for attr in attrs %}{{ attr.attribute_value + (dot if attr.idx < attrs|length else '') }}{% endfor %}</p>
-	</div>
-	{% if label != docs[-1] %}<div class="page-break"></div>{% endif %}
-{% endfor %}
+		</div>
+		{% if two_each == 1 %}
+			<div class="page-break"></div>
+		{% endif %}
+	{% endfor %}
+{% endif %}
 
 
 <style type="text/css">
@@ -53,19 +65,47 @@
 		page-height: 32mm;
     margin-left: 0mm;
     margin-right: 1mm;
-    margin-top: 2.5mm;
+    margin-top: 1.5mm;
 		margin-bottom: 1mm;
     font-family: MyriadProCond;
     font-size: 9pt;
     line-height: 10.5pt;
 }
 
+.print-format table {
+		margin: 0;
+		padding: 0;
+		border: 0;
+		border-collapse: collapse;
+}
+
+.print-format td {
+		vertical-align: middle !important;
+		width: 55mm;
+		height: 25.5mm;
+}
+
 .print-format h1 {
+    font-family: MyriadProCond;
+    font-size: 36pt;
+    line-height: 36pt;
+    font-weight: bold;
+    margin: 0;
+		text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+		hyphens: auto; /* seems unsupported by wkhtmltopdf :( */		
+		max-width: 55mm !important;
+		max-height: 25.5mm !important;
+}
+
+.print-format h2 {
     font-family: MyriadProCond;
     font-size: 11pt;
     line-height: 11.5pt;
     font-weight: bold;
-    margin: 0;
+    margin: 0 0 0 2.5mm;
+		padding: 1mm 0 0 0;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;

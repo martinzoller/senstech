@@ -25,7 +25,7 @@ frappe.ui.form.on('Item', {
                 });
             }
 		    get_batch_info(frm);
-			frm.add_custom_button(__("Lageretikett drucken"+(cur_frm.doc.has_variants?' (alle Varianten)':'')), function() {
+			frm.add_custom_button(__((cur_frm.doc.has_variants?'Artikelbez. und Variantenzahl drucken':'"Lageretikett drucken')), function() {
 				lageretikett(cur_frm.doc);
 			});
 			if (cur_frm.doc.is_purchase_item) {
