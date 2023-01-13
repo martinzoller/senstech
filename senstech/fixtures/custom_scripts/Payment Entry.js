@@ -30,6 +30,13 @@ frappe.ui.form.on('Payment Entry', {
                 rent(frm);
             });
         }
+    },
+    unallocated_amount: function(frm) {         // mark unallocated field red if not = 0
+        if ((frm.doc.unallocated_amount) && (frm.doc.unallocated_amount !== 0)) {
+            $('div[data-fieldname="unallocated_amount"]').css("background-color", "rgba(255, 99, 71, 0.5)");
+        } else {
+            $('div[data-fieldname="unallocated_amount"]').css("background-color", "white");
+        }
     }
 });
 
