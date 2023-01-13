@@ -1,7 +1,6 @@
 frappe.ui.form.on('Sales Invoice', {
     before_save(frm) {
 	    fetch_templates_from_customer(frm);
-	    
 	    apply_revenue_accounts(frm);
 	},
     customer(frm) {
@@ -260,23 +259,38 @@ function add_cancelled_watermark(frm) {
 }
 
 function apply_revenue_accounts(frm) {
-   // apply revenue accounts
-   var items = frm.doc.items;
-   items.forEach(function (item) {
-     if (item.income_account.includes("3000")) {
-        // material
-	if (frm.doc.customer === "CU-00228") {		// IST
-            item.income_account = "3002 - Bruttoertrag IC - IST - ST"; 
-	} else if (frm.doc.customer === "CU-00205") {	// E+H
-            item.income_account = "3001 - Bruttoertrag IC - E+H - ST"; 
-	}
-     } else if (item.income_account.includes("3400")) {
-        // services
-	if (frm.doc.customer === "CU-00228") {		// IST
-            item.income_account = "3410 - Dienstleistungsertrag IST - ST"; 
-	} /* else if (frm.doc.customer === "CU-00205") { 	// E+H
-            item.income_account = "3001 - Bruttoertrag IC - E+H - ST"; 
-	} */
+    // Ertragskonten je nach Land sowie Intracompany-Status des Kunden anpassen
+    if(!frm.doc.customer) {
+        return;
+    }
+    var items = frm.doc.items;
+    items.forEach(function (item) {
+        if (item.income_account.startsWith("3000")) {
+            // Nettoertrag
+        	if (frm.doc.customer === "CU-00228") {		// IST
+                item.income_account = "3002 - Nettoertrag IC IST - ST";
+    	        ic_account_alert(item.position);
+            } else if (frm.doc.customer === "CU-00205") {	// E+H
+                item.income_account = "3003 - Nettoertrag IC E+H - ST";
+    	        ic_account_alert(item.position);
+        	} else if (frm.doc.territory != "Schweiz") {
+        	    item.income_account = "3001 - Nettoertrag Ausland - ST";
+        	}
+     } else if (item.income_account.startsWith("3400")) {
+         // Dienstleistungsertrag
+    	if (frm.doc.customer === "CU-00228") {		// IST
+            item.income_account = "3410 - Dienstleistungsertrag IC IST - ST";
+    	    ic_account_alert(item.position);
+        } else if (frm.doc.customer === "CU-00205") {	// E+H
+            item.income_account = "3411 - Dienstleistungsertrag IC E+H - ST";
+    	    ic_account_alert(item.position);
+    	} else if (frm.doc.territory != "Schweiz") {
+    	    item.income_account = "3401 - Dienstleistungsertrag Ausland - ST";
+    	}
      }
    });
+}
+
+function ic_account_alert(pos){
+    frappe.show_alert({message: 'Pos. '+pos+': Intracompany Ertragskonto gesetzt', indicator: 'green'}, 5);
 }

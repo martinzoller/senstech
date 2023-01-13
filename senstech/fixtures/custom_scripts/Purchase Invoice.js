@@ -3,6 +3,7 @@ frappe.ui.form.on('Purchase Invoice', {
 		if (!cur_frm.doc.taxes_and_charges) {
 		    fetch_taxes_and_charges_from_supplier(frm);
 		}
+		apply_expense_accounts(frm);
 	},
 	onload_post_render(frm) {
         // Feld "Nummernkreis" lässt sich nicht mit Customization verstecken
@@ -82,4 +83,38 @@ function fetch_taxes_and_charges_from_supplier(frm) {
             }
         }
     });
+}
+
+function apply_expense_accounts(frm) {
+    // Aufwandkonten je nach Intracompany-Status des Lieferanten anpassen
+    if(!frm.doc.supplier) {
+        return;
+    }
+    let items = frm.doc.items;
+    items.forEach(function (item) {
+        if (item.expense_account) {
+            if (item.expense_account.startsWith("4000")) {
+                // Aufwand für Material
+            	if (frm.doc.supplier === "SU-00248") {		// IST
+                    item.expense_account = "4010 - Warenaufwand IC IST - ST"; 
+                    exp_changed_alert(item.position);
+                } else if (frm.doc.supplier === "SU-00219") {	// E+H
+                    // derzeit kein Konto Warenaufwand E+H
+            	}
+            } else if (item.expense_account.startsWith("4400")) {
+                 // Dienstleistungsaufwand
+            	if (frm.doc.supplier === "SU-00248") {		// IST
+                    item.expense_account = "4401 - Aufwand für bezogene Dienstleistungen IC IST - ST"; 
+                    exp_changed_alert(item.position);
+                } else if (frm.doc.supplier === "SU-00219") {	// E+H
+                    item.expense_account = "4402 - Aufwand für bezogene Dienstleistungen IC E+H - ST"; 
+                    exp_changed_alert(item.position);
+            	}
+            }
+        }
+   });
+}
+
+function exp_changed_alert(pos){
+    frappe.show_alert({message: 'Pos. '+pos+': Intracompany Ertragskonto gesetzt', indicator: 'green'}, 5);
 }
