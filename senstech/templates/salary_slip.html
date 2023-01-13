@@ -21,6 +21,11 @@
 <p><br><br><br><br></p>
 <p style="font-size: 15px;  text-transform: none"><strong>Lohnabrechnung Periode {{ doc.get_formatted('start_date') }} - {{ doc.get_formatted('end_date') }} </strong></p><br />
 
+<!-- check worktime percentage -->
+{% if u.employment_degrees and u.employment_degrees|len > 0 %}
+    <p>Anstellungspensum: {{ u.employment_degrees[-1].degree }}%</p>
+{% endif %}
+
 <!-- content -->
 <table style="width: 100%;">
    <tr style="border-bottom: solid black 1px;">
