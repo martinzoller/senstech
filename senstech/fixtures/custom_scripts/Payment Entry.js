@@ -29,6 +29,9 @@ frappe.ui.form.on('Payment Entry', {
             frm.add_custom_button(__("Miete"), function() {
                 rent(frm);
             });
+            frm.add_custom_button(__("Voll zuweisen"), function() {
+                match_outstanding_amounts(frm);
+            });
         }
     },
     unallocated_amount: function(frm) {         // mark unallocated field red if not = 0
@@ -83,4 +86,11 @@ function add_deduction(account, cost_center, amount) {
     frappe.model.set_value(child.doctype, child.name, 'cost_center', cost_center);
     frappe.model.set_value(child.doctype, child.name, 'amount', amount);
     cur_frm.refresh_field('deductions');
+}
+
+function match_outstanding_amounts(frm) {
+    (cur_frm.doc.references || []).forEach(function (reference) {
+        frappe.model.set_value(reference.doctype, reference.name, 'allocated_amount', reference.outstanding_amount);
+    });
+    cur_frm.refresh_fields();
 }
