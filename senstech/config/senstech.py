@@ -395,12 +395,18 @@ def get_data():
           'label': _('Cash Flow')
         },
         {
+            "type": "report",
+            "name": "Trial Balance",
+            "doctype": "GL Entry",
+            "is_query_report": True,
+        },
+        {
           'type': 'report',
           'is_query_report': True,
           'doctype': 'Item',
           'name': 'Lagerliste Inventur',
           'label': _('Lagerliste Inventur')
-        },
+        }
       ]
     },
     {

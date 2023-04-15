@@ -86,8 +86,8 @@ $(document).ready(function() {
 			
 		}
 	});
-
-  // Observe direct children of body, which includes creation of the modal window
+    
+    // Observe direct children of body, which includes creation of the modal window
 	modalObserver.observe(document.body, { childList: true });
 
 
@@ -249,3 +249,21 @@ function get_email_draft(real_name, doc) {
 	var draft = salutation + ',<br>Im Anhang finden Sie '+(our_doc_text[doc.doctype] || 'unser Dokument')+' Nr. '+doc.name+'.<br><br>';
 	return draft;
 }
+
+// for Senstech desktop, make settings bold (we need a delay, because the content is only loaded after ready)
+window.onload = async function () {
+    await sleep(2000);
+    if (window.location.toString().includes("/desk#modules/Senstech")) {
+        var menu_items = document.getElementsByClassName("link-content");
+        for (var i = 0; i < menu_items.length; i++) {
+            if (menu_items[i].innerHTML.includes("&gt;&gt; Einstellungen")) {
+                menu_items[i].style.fontWeight = 700;
+            }
+        }
+    }
+}
+
+function sleep(milliseconds) {
+   return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+

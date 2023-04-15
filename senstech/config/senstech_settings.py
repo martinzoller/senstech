@@ -263,6 +263,10 @@ def get_data():
           'type': 'doctype',
           'name': 'Purchase Taxes and Charges Template',
           'label': _('Vorlage für Einkaufssteuern und -abgaben ')
+        },
+        {
+            "type": "doctype",
+            "name": "Accounts Settings",
         }
       ]
     },
