@@ -38,6 +38,7 @@ frappe.ui.form.on('Item', {
 		print_format_filter(frm);		
 	},
 	validate(frm) {
+		cur_frm.set_value('has_batch_no', cur_frm.doc.copy_of_has_batch_no);		
 	    var plain_description = cur_frm.doc.description.replace('<div>','').replace('</div>','').replace('<br>','');
 	    if (plain_description == '' || plain_description == '-' || plain_description == cur_frm.doc.item_code) {
 	        cur_frm.set_value('description',cur_frm.doc.item_name);
