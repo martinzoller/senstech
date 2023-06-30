@@ -21,8 +21,10 @@ frappe.ui.form.on('Sales Invoice', {
     	        frm.scroll_to_field('taxes_and_charges');
     	    }
             var count = 0;
-            var items = cur_frm.doc.items;
-            items.forEach(function(entry) {
+            frm.doc.items.forEach(function(entry) {
+				if(!entry.description || entry.description == '<div><br></div>'){
+					entry.description = entry.item_name;
+				}
                 if (entry.item_group == 'Versandkosten') {
                     count = count + 1;
                 } 

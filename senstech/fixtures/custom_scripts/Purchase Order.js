@@ -46,8 +46,20 @@ frappe.ui.form.on('Purchase Order', {
             frappe.validated=false;
 	        frm.scroll_to_field('taxes_and_charges');
 	    }
+		frm.doc.items.forEach(function(entry) {
+			if(!entry.description || entry.description == '<div><br></div>'){
+				entry.description = entry.item_name;
+			}
+		});
     },
     refresh(frm) {
+		frm.set_query("item_code", "items", function() {
+				return{
+					query: "erpnext.controllers.queries.item_query",
+					filters: {'is_purchase_item': 1, 'item_code': ['not like', 'AC-%']}
+				}
+		});
+
         if (cur_frm.doc.supplier_address && cur_frm.doc.shipping_address) {
             update_address_display(frm, ['address_display', 'shipping_address_display'], [cur_frm.doc.supplier_address, cur_frm.doc.shipping_address], true);
         } else {

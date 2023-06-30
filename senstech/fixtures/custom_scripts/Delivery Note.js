@@ -10,6 +10,11 @@ frappe.ui.form.on('Delivery Note', {
             frappe.validated=false;
 	        frm.scroll_to_field('taxes_and_charges');
 	    }
+		frm.doc.items.forEach(function(entry) {
+			if(!entry.description || entry.description == '<div><br></div>'){
+				entry.description = entry.item_name;
+			}
+		});
 	    check_item_links(frm);
         reload_contacts(frm);
     },

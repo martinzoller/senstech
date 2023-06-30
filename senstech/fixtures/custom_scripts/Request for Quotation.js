@@ -46,6 +46,11 @@ frappe.ui.form.on('Request for Quotation', {
             frappe.validated=false;
 	        frm.scroll_to_field('taxes_and_charges');
 	    }
+		frm.doc.items.forEach(function(entry) {
+			if(!entry.description || entry.description == '<div><br></div>'){
+				entry.description = entry.item_name;
+			}
+		});		
     },
     refresh(frm) {
         if (cur_frm.doc.supplier_address && cur_frm.doc.shipping_address) {
