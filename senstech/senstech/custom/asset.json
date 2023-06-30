@@ -15,8 +15,8 @@
    "doctype_or_field": "DocField",
    "field_name": "naming_series",
    "idx": 0,
-   "modified": "2022-11-19 20:47:23.489346",
-   "modified_by": "Administrator",
+   "modified": "2023-06-30 11:36:55.455896",
+   "modified_by": "martin.zoller@senstech.ch",
    "name": "Asset-naming_series-options",
    "owner": "Administrator",
    "parent": null,
@@ -24,7 +24,7 @@
    "parenttype": null,
    "property": "options",
    "property_type": "Text",
-   "value": "INV-.#####"
+   "value": "IN-.#####"
   }
  ],
  "sync_on_migrate": 1
