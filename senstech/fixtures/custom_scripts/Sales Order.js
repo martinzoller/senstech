@@ -18,12 +18,24 @@ frappe.ui.form.on('Sales Order', {
             frappe.validated=false;
 	        frm.scroll_to_field('taxes_and_charges');
 	    }
-	    var processed_count = 0;
-        var found_count = 0;
-        var items = cur_frm.doc.items;
+	    let processed_count = 0;
+        let found_count = 0;
+        let items = cur_frm.doc.items;
+		let pos_numbers = [];
         items.forEach(function(entry) {
 			if(!entry.description || entry.description == '<div><br></div>'){
 				entry.description = entry.item_name;
+			}
+			if(pos_numbers.includes(entry.position)) {
+				frappe.msgprint( __("Doppelte Positionsnummer:")+" "+entry.position, __("Validation") );
+				frappe.validated=false;
+			}
+			else if(entry.position == 0) {
+				frappe.msgprint( __("Positionsnummern müssen grösser Null sein"), __("Validation") );
+				frappe.validated=false;
+			}
+			else {
+				pos_numbers.push(entry.position);
 			}
 			if (entry.item_group) {
 			    processed_count++;

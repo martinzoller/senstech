@@ -20,10 +20,22 @@ frappe.ui.form.on('Sales Invoice', {
                 frappe.validated=false;
     	        frm.scroll_to_field('taxes_and_charges');
     	    }
-            var count = 0;
+            let count = 0;
+			let pos_numbers = [];
             frm.doc.items.forEach(function(entry) {
 				if(!entry.description || entry.description == '<div><br></div>'){
 					entry.description = entry.item_name;
+				}
+				if(pos_numbers.includes(entry.position)) {
+						frappe.msgprint( __("Doppelte Positionsnummer:")+" "+entry.position, __("Validation") );
+						frappe.validated=false;
+				}
+				else if(entry.position == 0) {
+						frappe.msgprint( __("Positionsnummern müssen grösser Null sein"), __("Validation") );
+						frappe.validated=false;
+				}
+				else {
+					pos_numbers.push(entry.position);
 				}
                 if (entry.item_group == 'Versandkosten') {
                     count = count + 1;
