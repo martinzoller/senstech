@@ -11,11 +11,7 @@ frappe.ui.form.on('Purchase Receipt', {
         jQuery('div[data-fieldname="base_in_words"]').hide();
     },
     validate(frm) {
-		if (!frm.doc.taxes_and_charges) {
-	        frappe.msgprint( __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"), __("Validation") );
-            frappe.validated=false;
-	        frm.scroll_to_field('taxes_and_charges');
-	    }
+		basic_purchasing_validations(frm);
     },
     supplier(frm) {
         if (!cur_frm.doc.taxes_and_charges) {
@@ -25,23 +21,3 @@ frappe.ui.form.on('Purchase Receipt', {
         }
     }
 });
-
-function fetch_taxes_and_charges_from_supplier(frm) {
-    if(!cur_frm.doc.supplier) {
-        return;
-    }
-    frappe.call({
-        "method": "frappe.client.get",
-        "args": {
-            "doctype": "Supplier",
-            "name": cur_frm.doc.supplier
-        },
-        "callback": function(response) {
-            var supplier = response.message;
-
-            if (supplier.taxes_and_charges) {
-                cur_frm.set_value('taxes_and_charges', supplier.taxes_and_charges);
-            }
-        }
-    });
-}

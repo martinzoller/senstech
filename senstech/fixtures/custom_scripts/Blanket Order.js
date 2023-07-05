@@ -54,22 +54,7 @@ frappe.ui.form.on('Blanket Order', {
         add_cancelled_watermark(frm);
     },
     validate(frm) {
-        var item_count = 0;
-        var versandkosten_count = 0;
-        cur_frm.doc.items.forEach(function(entry) {
-            frappe.db.get_doc("Item", entry.item_code).then(item => {
-                item_count++;
-                if (item.item_group == 'Versandkosten') {
-                    versandkosten_count++;
-                }
-                if(item_count == cur_frm.doc.items.length) {
-                    if(versandkosten_count != 1) {
-                        frappe.msgprint( __("Bitte genau einmal Lieferkonditionen oder Versandkosten hinterlegen"), __("Validation") );
-                        frappe.validated=false;
-                    }
-                }
-            });
-        });
+        basic_sales_validations(frm);
     }
 });
 
@@ -169,61 +154,6 @@ function change_customer(frm) {
                     cur_frm.set_value('payment_terms', customer.payment_terms);
                 }
             }
-        }
-    });
-}
-
-function update_address_display(frm, fields, addresses, as_list=false) {
-    if (!as_list) {
-        as_list = '';
-    }
-    frappe.call({
-        "method": "senstech.scripts.tools.update_address_display",
-        "args": {
-            "doctype": cur_frm.doctype,
-            "doc_name": cur_frm.docname,
-            "fields": fields,
-            "addresses": addresses,
-            'as_list': as_list
-        },
-        "callback": function(r) {
-            var response = r.message;
-            if (!as_list) {
-                if (response == 'updated') {
-                    cur_frm.reload_doc();
-                }
-            } else {
-                if (response.includes('updated')) {
-                    cur_frm.reload_doc();
-                }
-            }
-        }
-    });
-}
-
-function attach_pdf_print(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
-        "args": {
-            "dt": cur_frm.doctype,
-            "dn": cur_frm.docname,
-            "printformat": 'Blanket Order ST'
-        },
-        "callback": function(response) {
-            cur_frm.reload_doc();
-        }
-    });
-}
-
-function add_cancelled_watermark(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_cancelled_watermark",
-        "args": {
-            "dt": cur_frm.doctype,
-            "dn": cur_frm.docname
-        },
-        "callback": function(response) {
-            cur_frm.reload_doc();
         }
     });
 }

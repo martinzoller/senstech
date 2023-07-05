@@ -5,28 +5,7 @@ frappe.ui.form.on('Delivery Note', {
 		}
 	},
     validate(frm) {
-		if (!frm.doc.taxes_and_charges) {
-	        frappe.msgprint( __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"), __("Validation") );
-            frappe.validated=false;
-	        frm.scroll_to_field('taxes_and_charges');
-	    }
-		let pos_numbers = [];
-		frm.doc.items.forEach(function(entry) {
-			if(!entry.description || entry.description == '<div><br></div>'){
-				entry.description = entry.item_name;
-			}
-			if(pos_numbers.includes(entry.position)) {
-					frappe.msgprint( __("Doppelte Positionsnummer:")+" "+entry.position, __("Validation") );
-					frappe.validated=false;
-			}
-			else if(entry.position == 0) {
-					frappe.msgprint( __("Positionsnummern müssen grösser Null sein"), __("Validation") );
-					frappe.validated=false;
-			}
-			else {
-				pos_numbers.push(entry.position);
-			}
-		});
+		basic_common_validations(frm);
 	    check_item_links(frm);
         reload_contacts(frm);
     },
@@ -67,7 +46,7 @@ frappe.ui.form.on('Delivery Note', {
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }
-})
+});
 
 frappe.ui.form.on('Delivery Note Item', {
     item_code: function(frm) {
@@ -178,90 +157,10 @@ frappe.ui.form.on('Delivery Note Item', {
         d.show();
     },
 	items_add: function(frm, cdt, cdn) {
-      var current_item = locals[cdt][cdn];
-      var all_items = cur_frm.doc.items;
-      var row_qty = all_items.length;
-      if (row_qty == current_item.idx) {
-          var new_pos = 10;
-          if (current_item.idx != 1) {
-              var prev_idx = current_item.idx - 1;
-              all_items.forEach(function(entry) {
-                if (entry.idx == prev_idx) {
-                    new_pos = parseInt(entry.position) + 10;
-                }  
-              });
-          }
-          frappe.model.set_value(cdt, cdn, 'position', new_pos);
-      } else {
-          var new_pos = 1;
-          if (current_item.idx != 1) {
-              var prev_idx = current_item.idx - 1;
-              all_items.forEach(function(entry) {
-                if (entry.idx == prev_idx) {
-                    new_pos = parseInt(entry.position) + 1;
-                }  
-              });
-          }
-          frappe.model.set_value(cdt, cdn, 'position', new_pos);
-      }
+		set_position_number(frm, cdt, cdn);
    }
-})
+});
 
-
-function reload_contacts(frm) {
-    var contact = cur_frm.doc.contact_person;
-    cur_frm.set_value("contact_person", "");
-    cur_frm.set_value("contact_person", contact);
-}
-
-function fetch_taxes_and_charges_from_customer(frm) {
-    if(!cur_frm.doc.customer) {
-        return;
-    }
-    frappe.call({
-        "method": "frappe.client.get",
-        "args": {
-            "doctype": "Customer",
-            "name": cur_frm.doc.customer
-        },
-        "callback": function(response) {
-            var customer = response.message;
-
-            if (customer.taxes_and_charges) {
-                cur_frm.set_value('taxes_and_charges', customer.taxes_and_charges);
-            }
-        }
-    });
-}
-
-
-function update_address_display(frm, fields, addresses, as_list=false) {
-    if (!as_list) {
-        as_list = '';
-    }
-    frappe.call({
-        "method": "senstech.scripts.tools.update_address_display",
-        "args": {
-            "doctype": cur_frm.doctype,
-            "doc_name": cur_frm.docname,
-            "fields": fields,
-            "addresses": addresses,
-            'as_list': as_list
-        },
-        "callback": function(response) {
-            var response = response.message;
-            if (!as_list) {
-                if (response == 'updated') {
-                    cur_frm.reload_doc();
-                }
-            } else {
-                if (response.includes('updated')) {
-                    cur_frm.reload_doc();
-                }
-            }
-        }
-    });
-}
 
 function create_label(frm) {
     var label_printer = "Zebra 57x32"; 
@@ -288,35 +187,9 @@ function get_label_content(frm) {
         content.push([entry.item_code, entry.qty, entry.chargennummer]);
        }
     });
-    return content
+    return content;
 }
 
-function attach_pdf_print(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
-        "args": {
-            "dt": cur_frm.doctype,
-            "dn": cur_frm.docname,
-            "printformat": 'Delivery Note ST'
-        },
-        "callback": function(response) {
-            cur_frm.reload_doc();
-        }
-    });
-}
-
-function add_cancelled_watermark(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_cancelled_watermark",
-        "args": {
-            "dt": cur_frm.doctype,
-            "dn": cur_frm.docname
-        },
-        "callback": function(response) {
-            cur_frm.reload_doc();
-        }
-    });
-}
 
 // Warnung anzeigen, wenn einzelne Positionen (ausser Versandkosten) nicht mit einem Sales Order
 // verknüpft sind, obwohl grundsätzlich ein verknüpfter Sales Order existiert
