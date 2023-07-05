@@ -139,7 +139,7 @@ function basic_sales_validations(frm) {
 			// This is to avoid validation errors when creating a Sales Order from a Blanket Order
 			frappe.db.get_value('Item',entry.item_code,'item_group').then(r => {
 				processed_count++;
-				if (r.message.item_group == 'Versandkosten') {
+				if (r.message && r.message.item_group == 'Versandkosten') {
 					found_count++;
 				}
 				if(processed_count == items.length && found_count != 1) {

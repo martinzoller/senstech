@@ -1,6 +1,6 @@
 frappe.ui.form.on('Delivery Note', {
     before_save(frm) {
-		if (!cur_frm.doc.taxes_and_charges) {
+		if (!frm.doc.taxes_and_charges) {
 		    fetch_taxes_and_charges_from_customer(frm);
 		}
 	},
@@ -16,21 +16,21 @@ frappe.ui.form.on('Delivery Note', {
         jQuery('div[data-fieldname="base_in_words"]').hide();
     },
     customer(frm) {
-        if (!cur_frm.doc.taxes_and_charges) {
+        if (!frm.doc.taxes_and_charges) {
             setTimeout(function(){
                 fetch_taxes_and_charges_from_customer(frm);
             }, 1000);
         }
     },
     refresh(frm) {
-        if (cur_frm.doc.customer_address && cur_frm.doc.shipping_address_name) {
-            update_address_display(frm, ['address_display', 'shipping_address'], [cur_frm.doc.customer_address, cur_frm.doc.shipping_address_name], true);
+        if (frm.doc.customer_address && frm.doc.shipping_address_name) {
+            update_address_display(frm, ['address_display', 'shipping_address'], [frm.doc.customer_address, frm.doc.shipping_address_name], true);
         } else {
-            if (cur_frm.doc.customer_address) {
-                update_address_display(frm, 'address_display', cur_frm.doc.customer_address, false);
+            if (frm.doc.customer_address) {
+                update_address_display(frm, 'address_display', frm.doc.customer_address, false);
             }
-            if (cur_frm.doc.shipping_address_name) {
-                update_address_display(frm, 'shipping_address', cur_frm.doc.shipping_address_name, false);
+            if (frm.doc.shipping_address_name) {
+                update_address_display(frm, 'shipping_address', frm.doc.shipping_address_name, false);
             }
         }
         frm.add_custom_button(__("Label Verpackungseinheit"), function() {
@@ -38,7 +38,7 @@ frappe.ui.form.on('Delivery Note', {
         });
     },
     before_submit(frm) {
-        cur_frm.doc.submitted_by = frappe.user.name;
+        frm.doc.submitted_by = frappe.user.name;
     },
     on_submit(frm) {
         attach_pdf_print(frm);
@@ -162,6 +162,27 @@ frappe.ui.form.on('Delivery Note Item', {
 });
 
 
+function fetch_taxes_and_charges_from_customer(frm) {
+	if(!frm.doc.customer) {
+		return;
+	}
+	frappe.call({
+		"method": "frappe.client.get",
+		"args": {
+			"doctype": "Customer",
+			"name": frm.doc.customer
+		},
+		"callback": function(response) {
+			var customer = response.message;
+			
+			if(customer.taxes_and_charges) {
+				frm.set_value('taxes_and_charges', customer.taxes_and_charges);
+			}
+		}
+	});
+}
+
+
 function create_label(frm) {
     var label_printer = "Zebra 57x32"; 
     var contents = get_label_content(frm); 
@@ -180,7 +201,7 @@ function create_label(frm) {
 }
 
 function get_label_content(frm) {
-    var items = cur_frm.doc.items;
+    var items = frm.doc.items;
     var content = [];
     items.forEach(function(entry) {
        if (entry.chargennummer) {
@@ -196,7 +217,7 @@ function get_label_content(frm) {
 function check_item_links(frm) {
     var has_so_link = false;
     var unlinked_pos = -1;
-    cur_frm.doc.items.forEach(function(entry) {
+    frm.doc.items.forEach(function(entry) {
        if(entry.against_sales_order) {
            has_so_link = true;
        }
@@ -205,13 +226,13 @@ function check_item_links(frm) {
        }
     });
     if(has_so_link && unlinked_pos >= 0) {
-        if(typeof check_item_links.confirmed_dn == 'undefined' || check_item_links.confirmed_dn != cur_frm.docname) {
+        if(typeof check_item_links.confirmed_dn == 'undefined' || check_item_links.confirmed_dn != frm.docname) {
             frappe.validated = false;
             frappe.confirm( __("Warnung: Mindestens ein Artikel (Pos. "+unlinked_pos+") ist nicht mit einer Kunden-AB verknüpft. Speichern fortsetzen?"),
             () => {
                 // action to perform if Yes is selected
-                check_item_links.confirmed_dn = cur_frm.docname;
-                cur_frm.save();
+                check_item_links.confirmed_dn = frm.docname;
+                frm.save();
             },
             () => {
                 // action to perform if No is selected

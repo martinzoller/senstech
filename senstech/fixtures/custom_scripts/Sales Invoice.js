@@ -161,7 +161,7 @@ function apply_revenue_accounts(frm) {
     }
     var items = frm.doc.items;
     items.forEach(function (item) {
-        if (item.income_account.startsWith("3000")) {
+        if (item.income_account && item.income_account.startsWith("3000")) {
             // Nettoertrag
         	if (frm.doc.customer === "CU-00228") {		// IST
                 item.income_account = "3002 - Nettoertrag IC IST - ST";
@@ -172,7 +172,7 @@ function apply_revenue_accounts(frm) {
         	} else if (frm.doc.territory != "Schweiz") {
         	    item.income_account = "3001 - Nettoertrag Ausland - ST";
         	}
-     } else if (item.income_account.startsWith("3400")) {
+     } else if (item.income_account && item.income_account.startsWith("3400")) {
          // Dienstleistungsertrag
     	if (frm.doc.customer === "CU-00228") {		// IST
             item.income_account = "3410 - Dienstleistungsertrag IC IST - ST";
