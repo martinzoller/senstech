@@ -8,6 +8,15 @@ frappe.ui.form.on('Customer', {
 	        frappe.msgprint(__("Bitte eine gültige Drucksprache wählen"), __("Validation"));
 	        frappe.validated=false;
 	    }
+		if(!cur_frm.doc.eori_number) {
+			if(! ['Schweiz','Liechtenstein'].includes(cur_frm.doc.territory)) {
+				frappe.show_alert({message: "Bitte vor dem Anlegen einer Rechnung für diesen Kunden die EORI-Nummer erfassen. Diese ist für Exporte in die EU zwingend erforderlich.", indicator: 'orange'}, 10);
+			}
+		}
+		else if(!cur_frm.doc.eori_number.match(/^[A-Z]{2}[0-9]{4,15}$/)) {
+			frappe.msgprint(__("Die EORI-Nummer muss aus einem ISO-Ländercode und einer Ziffernfolge bestehen."), __("Validation"));
+			frappe.validated=false;
+		}
 	},
 	
 	territory(frm) {
