@@ -24,6 +24,7 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
         if test_results:
             test_results = json.loads(test_results)
         mdocs = []
+        overall_fail_result = False
         measured_before = frappe.db.exists('Senstech Messdaten', {'batch': batch_id, 'sensor_id': sensor_id, 'measurand': ['in', measurands]})
         for i,val in enumerate(values):
             mdoc = frappe.get_doc({
@@ -38,7 +39,9 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
               '_action': 'save'
             })
             if test_results:
-              mdoc['test_result'] = test_results[i]
+              mdoc.test_result = test_results[i]
+              if mdoc.test_result != 'PASS' and mdoc.test_result != 'NONE':
+                overall_fail_result = True
             if not frappe.db.exists("UOM", mdoc.uom):
                 mdoc.uom = frappe.db.exists("UOM", {"symbol": mdoc.uom})
             mdoc.validate()
@@ -49,7 +52,7 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
             mdoc.save()
             
         frappe.db.commit()
-        if print_label:
+        if print_label and not overall_fail_result:
             print_format = frappe.get_doc("Item", item).single_label_print_format or "Sensor Flag Label ST"
             direct_print_doc("Senstech Messdaten", mdocs[0].name, print_format, label_printer)
         if measured_before:
