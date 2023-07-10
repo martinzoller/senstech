@@ -185,3 +185,11 @@ function validation_error(field, message) {
 		frm.scroll_to_field(field);
 	}
 }
+
+function validation_require(frm, field, message) {
+	if(!frm.doc[field]) {
+		validation_error(field, message);
+		return false;
+	}
+	return true;
+}
