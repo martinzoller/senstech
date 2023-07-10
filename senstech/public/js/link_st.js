@@ -18,7 +18,6 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 			setTimeout(function() {
 				// When the field is clicked, put just the value into it (remove the field title)
 				me.set_formatted_input(me.value);
-				me.awesomplete.open();
 				
 				if(me.$input.val() && me.get_options()) {
 					let doctype = me.get_options();
@@ -78,8 +77,9 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 		// Set the field title if still available
 		if(this.frm && this.frm.doc.link_titles && value != null
 		&& this.frm.doc.link_titles[this.df.fieldname] != null
-		&& this.frm.doc.link_titles[this.df.fieldname] != value) {
-		  this.formatted_value = value + ': ' + this.frm.doc.link_titles[this.df.fieldname];			
+		&& this.frm.doc.link_titles[this.df.fieldname] != value
+		&& !this.$input.is(":focus")) {
+			this.formatted_value = value + ': ' + this.frm.doc.link_titles[this.df.fieldname];			
 		}
 		else {
 			this.formatted_value = value;
@@ -256,7 +256,6 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 						me.dropdown_loading = false;
 						if(me.select_rejected){
 							me.select_rejected = false;
-							console.log("link.js: Delayed select()");
 							me.awesomplete.select();
 						}
 					}
@@ -274,12 +273,12 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 			var value = me.$input.val();
 
 			// Lost focus: Revalidate the field value if it was changed manually
-			if(value !== me.formatted_value) {
+			if(value != me.value && value != me.formatted_value) {
 				me.parse_validate_and_set_in_model(value);
 			}
 
 			// Add back the field title if available
-			me.set_input(me.value);			
+			me.set_input(me.value);
 		});
 
 		this.$input.on("awesomplete-open", function() {
@@ -295,7 +294,6 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 
 		this.$input.on("awesomplete-select", function(e) {
 			if(me.dropdown_loading) {
-				console.log('link.js: awesomplete-select rejected');
 				me.select_rejected = true;
 				return false;
 			}
