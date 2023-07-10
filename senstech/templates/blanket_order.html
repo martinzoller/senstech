@@ -51,7 +51,7 @@
 		<td>{{ _("Lieferadresse") }}</td>
 		<td>{% if doc_data.adresse_lieferung.firma != doc_data.adresse_kunde.firma -%}
 		        {{ doc_data.adresse_lieferung.firma }}, 
-				{%- endif %} {{ doc_data.adresse_lieferung.adresse|replace("<br>", ", ") }}
+				{%- endif %} {{ doc_data.adresse_lieferung.adresse|replace(" <br>", "<br>")|replace("<br>", ", ")|trim }}
 				{%- if doc_data.adresse_lieferung.land != 'Schweiz' -%}
 				    , {{ _(doc_data.adresse_lieferung.land) }}
 				{%- endif %}

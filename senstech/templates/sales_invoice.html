@@ -71,7 +71,7 @@
 		<td>{{ _("Lieferadresse") }}</td>
 		<td>{% if doc_data.adresse_lieferung.firma != doc_data.adresse_kunde.firma -%}
 		        {{ doc_data.adresse_lieferung.firma }}, 
-				{%- endif %} {{ doc_data.adresse_lieferung.adresse|replace("<br>", ", ") }}
+				{%- endif %} {{ doc_data.adresse_lieferung.adresse|replace(" <br>", "<br>")|replace("<br>", ", ")|trim }}
 				{%- if doc_data.adresse_lieferung.land != 'Schweiz' -%}
 				    , {{ _(doc_data.adresse_lieferung.land) }}
 				{%- endif %}
@@ -99,10 +99,13 @@
 			{% endif %}
 		{% else %}
 			{% if doc.preferential_origin %}
-				{{ _("Der Ausführer der Waren, auf die sich dieses Handelspapier bezieht, erklärt, dass diese Waren, soweit nicht anders angegeben, präferenzbegünstigte schweizerische Ursprungswaren sind.") }}
+				{{ _("Der Ausführer der Waren, auf die sich dieses Handelspapier bezieht, erklärt, dass diese Waren, soweit nicht anders angegeben, präferenzbegünstigte schweizerische Ursprungswaren sind.") }}<br>
 			{% endif %}
-			{% if selbstverzollung %}
+			{% if doc.selbstverzollung %}
 				<br><b>{{ _("Selbstverzollung durch Empfänger") }}</b>
+			{% endif %}
+			{% if doc.eori_number %}
+			<br><b>{{ _("EORI-Nummer des Kunden:") }} {{ doc.eori_number }}</b>
 			{% endif %}
 			{% if doc.preferential_origin and doc.grand_total > 10000 %}
 				<br><b>{{ _("Beilage: EUR.1") }}</b>
