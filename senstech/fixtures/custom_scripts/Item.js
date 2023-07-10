@@ -44,20 +44,16 @@ frappe.ui.form.on('Item', {
 	        cur_frm.set_value('description',cur_frm.doc.item_name);
 	    }
 	    if (cur_frm.doc.is_sales_item&&cur_frm.doc.is_purchase_item) {
-	        frappe.msgprint(__("Ein Artikel darf nicht als 'Einkaufs-' wie auch 'Verkausartikel' definiert sein."), __("Validation"));
-	        frappe.validated=false;
+			validation_error('is_sales_item', __("Ein Artikel darf nicht als 'Einkaufs-' wie auch 'Verkausartikel' definiert sein."));
 	    }
 		if (cur_frm.doc.benoetigt_chargenfreigabe && !cur_frm.doc.has_batch_no) {
-	        frappe.msgprint(__("Chargenfreigabe ist nur bei aktivierter Chargennummer möglich"), __("Validation"));
-	        frappe.validated=false;
+	        validation_error('has_batch_no', __("Chargenfreigabe ist nur bei aktivierter Chargennummer möglich"));
 	    }
 	    if (['Serieprodukte OEM','Eigenprodukte'].includes(frm.doc.item_group)  && !cur_frm.doc.has_batch_no) {
-	        frappe.msgprint(__("Serie- und Eigenprodukte müssen eine Chargennummer haben"), __("Validation"));
-	        frappe.validated = false;
+	        validation_error('has_batch_no', __("Serie- und Eigenprodukte müssen eine Chargennummer haben"));
 	    }
 	    if (cur_frm.doc.qualitaetsspezifikation && cur_frm.doc.qualitaetsspezifikation != '<div><br></div>'  && !cur_frm.doc.benoetigt_chargenfreigabe) {
-	        frappe.msgprint(__("Ein COC kann nur bei freigegebenen Chargen erzeugt werden. Bitte Chargenfreigabe aktivieren oder Qualitätsspezifikation leer lassen."), __("Validation"));
-	        frappe.validated = false;
+	        validation_error('benoetigt_chargenfreigabe', __("Ein COC kann nur bei freigegebenen Chargen erzeugt werden. Bitte Chargenfreigabe aktivieren oder Qualitätsspezifikation leer lassen."));
 	    }
 	    if (frm.doc.__islocal&&frm.doc.is_purchase_item&&frm.doc.item_code=='') {
 		    get_next_purchase_item_number(frm);
@@ -65,14 +61,12 @@ frappe.ui.form.on('Item', {
 		
 		if (frm.doc.item_group) {
     		frappe.db.get_doc("Item Group", frm.doc.item_group).then( grp => {
-    		   if (frm.doc.is_purchase_item && grp.parent_item_group != 'Einkauf') {
-    		     frappe.msgprint(__("Die Artikelgruppe '"+frm.doc.item_group+"' ist nicht für Einkaufsartikel vorgesehen. Bitte eine andere Gruppe auswählen."), __("Validation"));
-    	         frappe.validated=false;
-    		   }
-    		   if (frm.doc.is_sales_item && grp.parent_item_group != 'Verkauf') {
-    		     frappe.msgprint(__("Die Artikelgruppe '"+frm.doc.item_group+"' ist nicht für Verkaufsartikel vorgesehen. Bitte eine andere Gruppe auswählen."), __("Validation"));
-    	         frappe.validated=false;
-    		   }
+				if (frm.doc.is_purchase_item && grp.parent_item_group != 'Einkauf') {
+					validation_error('item_group', __("Die Artikelgruppe '"+frm.doc.item_group+"' ist nicht für Einkaufsartikel vorgesehen. Bitte eine andere Gruppe auswählen."));
+				}
+				if (frm.doc.is_sales_item && grp.parent_item_group != 'Verkauf') {
+					validation_error('item_group', __("Die Artikelgruppe '"+frm.doc.item_group+"' ist nicht für Verkaufsartikel vorgesehen. Bitte eine andere Gruppe auswählen."));
+				}
     		});
 		}
 	},

@@ -1,12 +1,10 @@
 frappe.ui.form.on('Customer', {
 	validate(frm) {
 	    if (cur_frm.doc.territory == 'Alle Regionen') {
-	        frappe.msgprint(__("Bitte wählen Sie eine Region aus."), __("Validation"));
-	        frappe.validated=false;
+	        validation_error('territory',__("Bitte wählen Sie eine Region aus."));
 	    }
 	    if (!['de','en'].includes(cur_frm.doc.language)) {
-	        frappe.msgprint(__("Bitte eine gültige Drucksprache wählen"), __("Validation"));
-	        frappe.validated=false;
+	        validation_error('language', __("Bitte eine gültige Drucksprache wählen"));
 	    }
 		if(!cur_frm.doc.eori_number) {
 			if(! ['Schweiz','Liechtenstein'].includes(cur_frm.doc.territory)) {
@@ -14,8 +12,7 @@ frappe.ui.form.on('Customer', {
 			}
 		}
 		else if(!cur_frm.doc.eori_number.match(/^[A-Z]{2}[0-9]{4,15}$/)) {
-			frappe.msgprint(__("Die EORI-Nummer muss aus einem ISO-Ländercode und einer Ziffernfolge bestehen."), __("Validation"));
-			frappe.validated=false;
+			validation_error('eori_number', __("Die EORI-Nummer muss aus einem ISO-Ländercode und einer Ziffernfolge bestehen."));
 		}
 	},
 	

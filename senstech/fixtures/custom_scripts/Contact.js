@@ -59,38 +59,24 @@ frappe.ui.form.on('Contact', {
 	    var fkt = cur_frm.doc.funktion;
 	    cur_frm.set_value('designation', fkt);
 	    if (fkt != 'Allgemeine Nummer/Mailadresse' && fkt != '-Kontakt vom System angelegt-' && fkt != 'E-Mail-Rechnungsempfänger') {
-    	    if (!cur_frm.doc.last_name) {
-    	        frappe.msgprint(__('Nachname muss angegeben werden. Für allgemeinen Kontakt bitte "Allgemeine Nummer/Mailadresse" als Funktion auswählen.'), __("Validation"));
-    	        frappe.validated=false;
-    	        return;
-    	    }
-    	    if (!cur_frm.doc.salutation) {
-    	        frappe.msgprint(__("Anrede muss ausgewählt werden"), __("Validation"));
-    	        frappe.validated=false;
-    	        return;
-    	    }
+    	    validation_require(frm, 'last_name', __('Nachname muss angegeben werden. Für allgemeinen Kontakt bitte "Allgemeine Nummer/Mailadresse" als Funktion auswählen.')) || return;
+    	    validation_require(frm, 'salutation', __("Anrede muss ausgewählt werden")) || return;
 	    }
 	    if (fkt == 'Allgemeine Nummer/Mailadresse' || fkt == 'E-Mail-Rechnungsempfänger') {
 	        if (!['Customer','Supplier'].includes(cur_frm.doc.links[0].link_doctype) || !cur_frm.doc.links[0].link_name) {
-    	        frappe.msgprint(__("Allgemeine Kontakte und Rechnungsempfänger müssen mit einem Kunden/Lieferanten verknüpft sein"), __("Validation"));
-    	        frappe.validated=false;
+    	        validation_error('links', __("Allgemeine Kontakte und Rechnungsempfänger müssen mit einem Kunden/Lieferanten verknüpft sein"));
     	        return;	            
 	        }
 	    }
 	    if (cur_frm.doc.leadstatus && cur_frm.doc.leadstatus != '-'){
-	        if (!cur_frm.doc.leadbesitzer) {
-    	        frappe.msgprint(__("Kontakte mit Leadstatus müssen einen Besitzer haben"), __("Validation"));
-    	        frappe.validated=false;
-    	        return;
-    	    }
+			validation_require(frm, 'leadbesitzer', __("Kontakte mit Leadstatus müssen einen Besitzer haben")) || return;
     	    var status_mit_touchpoint = ["Lead (Kundenanfrage)",
 	                                     "Chance (Projektdetails bekannt)",
 	                                     "Offerte unterbreitet",
 	                                     "Qualitäts-/Optimierungsdiskussion"];
 	        if (status_mit_touchpoint.includes(cur_frm.doc.leadstatus)) {
 	            if (!cur_frm.doc.kontaktieren_bis || !is_in_future(cur_frm.doc.kontaktieren_bis)) {
-    	            frappe.msgprint(__("Bei Leads mit diesem Status muss ein Termin für den nächsten Kontakt definiert werden, welcher in der Zukunft liegt"), __("Validation"));
-    	            frappe.validated=false;
+    	            validation_error('kontaktieren_bis', __("Bei Leads mit diesem Status muss ein Termin für den nächsten Kontakt definiert werden, welcher in der Zukunft liegt"));
     	            return;
 	            }
 	        }

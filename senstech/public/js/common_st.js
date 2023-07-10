@@ -81,9 +81,7 @@ function update_address_display(frm, fields, addresses, as_list=false) {
 
 function basic_common_validations(frm) {
 	if (!frm.doc.taxes_and_charges) {
-		frappe.msgprint( __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"), __("Validation") );
-		frappe.validated=false;
-		frm.scroll_to_field('taxes_and_charges');
+		validation_error('taxes_and_charges', __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"));
 	}
 
 	// TODO: Blanket Order doesn't have a position number, but there isn't a good reason why it should not
@@ -94,12 +92,10 @@ function basic_common_validations(frm) {
 				entry.description = entry.item_name;
 			}
 			if(pos_numbers.includes(entry.position)) {
-				frappe.msgprint( __("Doppelte Positionsnummer:")+" "+entry.position, __("Validation") );
-				frappe.validated=false;
+				validation_error('items', __("Doppelte Positionsnummer:")+" "+entry.position);
 			}
 			else if(entry.position === 0) {
-				frappe.msgprint( __("Positionsnummern müssen grösser Null sein"), __("Validation") );
-				frappe.validated=false;
+				validation_error('items', __("Positionsnummern müssen grösser Null sein"));
 			}
 			pos_numbers.push(entry.position);   
 		});
@@ -115,9 +111,13 @@ function basic_purchasing_validations(frm) {
 function basic_sales_validations(frm) {
 	basic_common_validations(frm);
 	if (!frm.doc.payment_terms_template) {
-		frappe.msgprint(__("Vorlage Zahlungsbedingungen muss ausgewählt werden"), __("Validation"));
-		frappe.validated=false;
-		frm.scroll_to_field('payment_terms_template');
+		validation_error('payment_terms_template', __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
+	}
+	
+	if(! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
+		if(!frm.doc.eori_number) {
+			validation_error('customer', __('Im Kundenstamm ist keine EORI-Nummer hinterlegt')+'<br><br><a href="#Form/Customer/'+frm.doc.customer+'" target="_blank">&gt; '+__('Zum Kunden:')+' '+frm.doc.customer_name+'</a>');
+		}
 	}
 	
 	let processed_count = 0;
@@ -130,8 +130,7 @@ function basic_sales_validations(frm) {
 				found_count++;
 			}
 			if(processed_count == items.length && found_count != 1) {
-				frappe.msgprint( __("Bitte genau einmal Versandkosten/Lieferkonditionen hinterlegen"), __("Validation") );
-				frappe.validated=false;
+				validation_error('items', __("Bitte genau einmal Versandkosten/Lieferkonditionen hinterlegen"));
 			}
 		}
 		else {
@@ -143,8 +142,7 @@ function basic_sales_validations(frm) {
 					found_count++;
 				}
 				if(processed_count == items.length && found_count != 1) {
-					frappe.msgprint( __("Bitte genau einmal Versandkosten/Lieferkonditionen hinterlegen"), __("Validation") );
-					frappe.validated=false;
+					validation_error('items', __("Bitte genau einmal Versandkosten/Lieferkonditionen hinterlegen"));
 				}
 			});
 		}
@@ -177,4 +175,13 @@ function reload_contacts(frm) {
 	var contact = frm.doc.contact_person;
 	frm.set_value("contact_person", "");
 	frm.set_value("contact_person", contact);
+}
+
+
+function validation_error(field, message) {
+	frappe.msgprint(message, __("Validation") );
+	if(frappe.validated) {
+		frappe.validated = false;
+		frm.scroll_to_field(field);
+	}
 }

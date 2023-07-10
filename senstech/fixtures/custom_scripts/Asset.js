@@ -2,8 +2,7 @@ frappe.ui.form.on('Asset', {
 	before_submit(frm) {
 		// make sure assets is in an inventory naming series
 		if ((!frm.doc.name.startsWith("IK")) && (!frm.doc.name.startsWith("PC"))) {
-		    frappe.msgprint( __("Bitte die Anlage mit der Inventarnummer (Excel) benennen (Klick oben links)."), __("Validation") );
-		    frappe.validated=false;
+		    validation_error("name", __("Bitte die Anlage mit der Inventarnummer (Excel) benennen (Klick oben links)."));
 		}
 	}
 });
