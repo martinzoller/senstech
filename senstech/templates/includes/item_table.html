@@ -65,7 +65,7 @@
 								</td>
 								<td>{{ "{:,.0f}".format(item.qty * item.conversion_factor).replace(",", "'") }}&nbsp;{{ _(item.stock_uom) }}</td>
 								{% if doc.doctype == "Purchase Order" %}								
-										<td>{{ doc.get_formatted('schedule_date') }}</td>
+										<td>{{ item.get_formatted('schedule_date') }}</td>
 										<td style="text-align: right;">{{ "{:,.2f}".format(item.amount).replace(",", "'") }}&nbsp;{{ doc.currency }}</td>										
 						    {% elif doc.doctype == "Delivery Note" %}
 										<td>
