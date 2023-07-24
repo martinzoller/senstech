@@ -34,7 +34,7 @@ function check_batch_release(frm) {
 					   callback: function(response) {
 							var batch = response.message;
 							if (item.benoetigt_chargenfreigabe && !batch.freigabedatum) {
-								validation_error('items', __("Die Charge ") + entry.batch_no + __(" (Zeile #") + entry.idx + __(") ist noch nicht freigegeben."));
+								validation_error(frm, 'items', __("Die Charge ") + entry.batch_no + __(" (Zeile #") + entry.idx + __(") ist noch nicht freigegeben."));
 							}
 
 							if (entry.t_warehouse == 'Fertigerzeugnisse - ST') {
@@ -48,7 +48,7 @@ function check_batch_release(frm) {
 				                    callback: (r) => {
 				                        var open_qty = batch.stueckzahl - r.message.entry_qty
                                         if(entry.qty > open_qty) {
-            								validation_error('items', __("Die Charge ") + entry.batch_no + __(" (Zeile #") + entry.idx + __(") würde mit dieser Buchung ihre Maximalstückzahl überschreiten."));
+            								validation_error(frm, 'items', __("Die Charge ") + entry.batch_no + __(" (Zeile #") + entry.idx + __(") würde mit dieser Buchung ihre Maximalstückzahl überschreiten."));
             				            }
 								    }
 			                    });

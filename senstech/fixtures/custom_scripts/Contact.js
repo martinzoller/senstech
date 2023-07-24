@@ -40,7 +40,7 @@ frappe.ui.form.on('Contact', {
 	    }
 	    if (fkt == 'Allgemeine Nummer/Mailadresse' || fkt == 'E-Mail-Rechnungsempfänger') {
 	        if (!['Customer','Supplier'].includes(cur_frm.doc.links[0].link_doctype) || !cur_frm.doc.links[0].link_name) {
-    	        validation_error('links', __("Allgemeine Kontakte und Rechnungsempfänger müssen mit einem Kunden/Lieferanten verknüpft sein"));
+    	        validation_error(frm, 'links', __("Allgemeine Kontakte und Rechnungsempfänger müssen mit einem Kunden/Lieferanten verknüpft sein"));
     	        return;	            
 	        }
 	    }
