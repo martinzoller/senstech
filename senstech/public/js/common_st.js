@@ -193,3 +193,32 @@ function validation_require(frm, field, message) {
 	}
 	return true;
 }
+
+function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau"), button_text = __("OK")) {
+    
+    var pdf_uri = 
+		'%2Fapi%2Fmethod%2Ffrappe.utils.print_format.download_pdf%3Fdoctype%3D'
+		+encodeURIComponent(frm.doctype)
+		+'%26name%3D'
+		+encodeURIComponent(frm.docname)
+		+'%26format%3D'
+		+encodeURIComponent(frm.doctype)
+		+'%20ST%26no_letterhead%3D0';
+    var pdf_preview = new frappe.ui.Dialog({
+		title: dialog_title,
+		fields: [
+			{
+			    fieldtype: "HTML",
+			    options: '<iframe style="width: 100%;height: calc(100vh - 160px);" src="/assets/senstech/pdfjs/web/viewer.html?file='+pdf_uri+'#zoom=page-fit"></iframe>'
+			}
+		],
+		primary_action_label: button_text,
+		primary_action: function() {
+		    pdf_preview.hide();
+			callback(frm);
+		},
+		secondary_action_label: __("Abbrechen")
+	});
+	pdf_preview.show();
+	pdf_preview.$wrapper.find(".modal-dialog").css("min-width","80%");
+}

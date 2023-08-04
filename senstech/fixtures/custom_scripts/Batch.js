@@ -486,24 +486,8 @@ function charge_freigeben_schritt1(frm) {
         frappe.msgprint("Dieses Produkt hat ein Histogramm, jedoch liegen keine Messdaten vor. Chargenfreigabe nicht möglich!");
         return;    
     }
-    
-    var histo_pdf_uri = '%2Fapi%2Fmethod%2Ffrappe.utils.print_format.download_pdf%3Fdoctype%3DBatch%26name%3D'+encodeURIComponent(cur_frm.docname)+'%26format%3DBatch%20ST%26no_letterhead%3D0';
-    var histo_view = new frappe.ui.Dialog({
-		title: __("Schritt 1: Histogramm freigeben"),
-		fields: [
-			{
-			    fieldtype: "HTML",
-			    options: '<iframe style="width: 100%;height: calc(100vh - 160px);" src="/assets/senstech/pdfjs/web/viewer.html?file='+histo_pdf_uri+'#zoom=page-fit"></iframe>'
-			}
-		],
-		primary_action_label: __("Histogramm freigeben &gt;"),
-		primary_action: function() {
-		    histo_view.hide();
-			charge_freigeben_schritt2(frm, 'Schritt 2: Chargendetails bestätigen');
-		},
-		secondary_action_label: __("Abbrechen")
-	});
-	histo_view.show();
+	
+	doc_preview_dialog(frm, frm => charge_freigeben_schritt2(frm, 'Schritt 2: Chargendetails bestätigen'), __("Schritt 1: Histogramm freigeben"), __("Histogramm freigeben &gt;"));
 }
 
 function charge_freigeben_schritt2(frm, step_title) {
