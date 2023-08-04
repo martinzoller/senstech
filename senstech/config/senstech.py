@@ -81,13 +81,6 @@ def get_data():
           'name': 'Zu liefernde Serie- und Eigenprodukte MZ',
           'label': _('Zu liefernde Serie- und Eigenprodukte')
         },
-        {
-          'type': 'report',
-          'is_query_report': False,
-          'doctype': 'Sales Order',
-          'name': 'Offene Entwicklungs- und Kleinauftraege MZ',
-          'label': _('Offene Entwicklungs- und Kleinaufträge')
-        },
 #        {
 #          'type': 'report',
 #          'is_query_report': True,
@@ -151,7 +144,24 @@ def get_data():
       ]
     },
     {
-      'label': _('🏭 Artikel und Produktion'),
+      'label': _('🤓 Entwicklung'),
+      'items': [
+        {
+          'type': 'doctype',
+          'name': 'Project',
+          'label': _('Projekt')
+        },
+        {
+          'type': 'report',
+          'is_query_report': False,
+          'doctype': 'Sales Order',
+          'name': 'Offene Entwicklungs- und Kleinauftraege MZ',
+          'label': _('Offene Entwicklungs- und Kleinaufträge')
+        },
+      ]
+    },
+    {
+      'label': _('📦 Artikel und Lager'),
       'items': [
         {
           'type': 'doctype',
@@ -178,17 +188,6 @@ def get_data():
           'label': _('Artikelpreise')
         },
         {
-          'type': 'doctype',
-          'name': 'Batch',
-          'label': _('Produktionscharge')
-        },
-        {
-          'type': 'report',
-          'is_query_report': True,
-          'name': 'Produktionsplanung',
-          'label': _('Produktionsplanung')
-        },
-        {
           'type': 'page',
           'name': 'stock-balance',
           'label': _('Lagerbestandsübersicht')
@@ -199,7 +198,7 @@ def get_data():
           'doctype': 'Batch',
           'name': 'Batch-Wise Balance History',
           'label': _('Lagerbestand nach Chargen')
-        },
+        },        
         {
           'type': 'report',
           'is_query_report': True,
@@ -210,8 +209,19 @@ def get_data():
       ]
     },
     {
-      'label': _('📈 Messdatenverwaltung'),
+      'label': _('🏭 Produktion'),
       'items': [
+        {
+          'type': 'doctype',
+          'name': 'Batch',
+          'label': _('Produktionscharge')
+        },
+        {
+          'type': 'report',
+          'is_query_report': True,
+          'name': 'Produktionsplanung',
+          'label': _('Produktionsplanung')
+        },            
         {
           'type': 'doctype',
           'name': 'Senstech Messdaten',
