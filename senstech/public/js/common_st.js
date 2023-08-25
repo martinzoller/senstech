@@ -43,7 +43,7 @@ function attach_pdf_print(frm) {
         "args": {
             "dt": frm.doctype,
             "dn": frm.docname,
-            "printformat": 'Sales Order ST'
+            "printformat": frm.doctype+' ST'
         },
         "callback": function(response) {
             frm.reload_doc();

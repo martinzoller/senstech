@@ -210,8 +210,11 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 						// search_link does not support an "order by" clause, therefore sort results on client side
 						// Sorting is required to work around an Awesomplete bug: when an exact match exists, but other items
 						// containing the search text come first, it will not select the exact match. eg. if the list contains
-						// entries "Foo Bar" and "Foo" [in this order], a search for "Foo" will select "Foo Bar".
-						r.results.sort((f,g) => { return (f.value > g.value) });						
+						// entries "Foo Bar" and "Foo" [in this order], a search for "Foo" will select "Foo Bar".						
+						// 
+						// Problem: Sometimes we have special sorting requirements (e.g. for the new "Senstech Prozessschrittvariante" doctype).
+						// Therefore, for now, live with this issue and refrain from re-sorting the items!
+						/* r.results.sort((f,g) => { return (f.value > g.value) });	*/
 
 						// show filter description in awesomplete
 						if (args.filters) {
@@ -514,6 +517,9 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 	},
 	set_fetch_values: function(df, docname, value, fetch_values) {
 		var me = this;
+		if(!me.frm){
+			return;
+		}
 		if(me.frm.fetch_dict[df.fieldname]) {
 			var fl = me.frm.fetch_dict[df.fieldname].fields;
 			for(var i=0; i < fl.length; i++) {
