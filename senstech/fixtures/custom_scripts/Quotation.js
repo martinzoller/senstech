@@ -239,7 +239,7 @@ function check_not_dirty(frm) {
 }
 
 function gate1_request(frm) {
-	doc_preview_dialog(frm, gate1_dialog, __("Schritt 1: Offerte/Pflichtenheft bestätigen"), __("Weiter &gt;"));
+	doc_preview_dialog(frm, gate1_dialog, __("Schritt 1: Offerte/Pflichtenheft bestätigen"), __("Weiter &gt;"), true);
 }
 
 function gate1_clear_review(frm) {

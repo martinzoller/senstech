@@ -194,7 +194,7 @@ function validation_require(frm, field, message) {
 	return true;
 }
 
-function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau"), button_text = __("OK")) {
+function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau"), button_text = __("OK"), fullscreen = false) {
     
     var pdf_uri = 
 		'%2Fapi%2Fmethod%2Ffrappe.utils.print_format.download_pdf%3Fdoctype%3D'
@@ -215,10 +215,25 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 		primary_action_label: button_text,
 		primary_action: function() {
 		    pdf_preview.hide();
+			if(fullscreen) {
+				document.exitFullscreen();
+			}
 			callback(frm);
 		},
-		secondary_action_label: __("Abbrechen")
+		secondary_action_label: __("Abbrechen"),
+		secondary_action: function() {
+			if(fullscreen) {
+				document.exitFullscreen();
+			}
+		}
 	});
 	pdf_preview.show();
-	pdf_preview.$wrapper.find(".modal-dialog").css("min-width","80%");
+	let modal_elem = pdf_preview.$wrapper.find(".modal-dialog");
+	modal_elem.css("min-width","80%");
+	if(fullscreen) {
+		// ugly, but if we use $.when(...) to wait until the dialog is showing, the fullscreen request is denied...
+		setTimeout(function() {
+			modal_elem[0].requestFullscreen();
+		}, 500);
+	}
 }
