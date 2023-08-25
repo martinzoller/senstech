@@ -78,21 +78,24 @@ def update_address_display(doctype, doc_name, fields, addresses, as_list=False):
 
 # Autom. PDF-Anhang bei Buchen (Verkaufsdokumente)
 @frappe.whitelist()
-def add_freeze_pdf_to_dt(dt, dn, printformat, language=''):
+def add_freeze_pdf_to_dt(dt, dn, printformat, language='', filename=''):
    
     if not language:
         language = frappe.get_doc(dt, dn).language or 'de'
 
     filedata = attach_print(doctype=dt, name=dn, print_format=printformat, lang=language)
-    fpath = frappe.get_site_path('private', 'files', filedata['fname'])
+    
+    if not filename:
+        filename=filedata['fname']
+    fpath = frappe.get_site_path('private', 'files', filename)
 
     with open(fpath, "wb") as w:
         w.write(filedata['fcontent'])
 
     file_record = {
         "doctype": "File",
-        "file_url": '/private/files/{0}'.format(filedata['fname']),
-        "file_name": filedata['fname'],
+        "file_url": '/private/files/{0}'.format(filename),
+        "file_name": filename,
         "attached_to_doctype": dt,
         "attached_to_name": dn,
         "folder": 'Home/Attachments',
@@ -224,6 +227,36 @@ def transfer_item_drawings(dt, dn, items):
                     pass
     return counter
 
+
+# Hochgeladene Datei an Dokument hängen
+@frappe.whitelist()
+def attach_file_to_document(file_url, doctype, docname, field=''):
+    exists = frappe.db.exists("File",{
+        "file_url": file_url,
+        "attached_to_doctype": doctype,
+        "attached_to_name": docname,
+        "attached_to_field": field
+    });
+    if exists:
+        return True
+    else:
+        file_query = frappe.get_all(
+            "File",
+            ["name"],
+            order_by="creation desc",
+            limit_page_length=1,
+            filters={"file_url": file_url, "attached_to_doctype": ""}
+        )
+        if len(file_query)==1:
+            myfile = frappe.get_doc("File", file_query[0].name)
+            myfile.attached_to_doctype = doctype
+            myfile.attached_to_name = docname
+            myfile.attached_to_field = field
+            myfile.save()
+            frappe.db.commit()
+            return True
+        else:
+            return False
 
 # PDF-Dokument (aus Variable) über Socket Connection direkt an Zebra-Etikettendrucker senden
 def direct_print_pdf(pdf_data, printer_name):

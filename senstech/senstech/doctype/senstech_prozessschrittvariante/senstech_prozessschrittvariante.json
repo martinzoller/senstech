@@ -1,0 +1,96 @@
+{
+ "allow_rename": 1,
+ "autoname": "field:variant_name",
+ "creation": "2023-07-24 16:29:31.656663",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sortkey",
+  "processing_step",
+  "variant_name",
+  "seconds_per_sensor"
+ ],
+ "fields": [
+  {
+   "fieldname": "processing_step",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Prozessschritt",
+   "options": "Substratherstellung\nIsolationsschicht\nMetallschichten\nLaserablation\nSchutzschicht\nVereinzeln\nL\u00f6ten\nLaserschweissen\nEndkontrolle\nVerpackung",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "variant_name",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_preview": 1,
+   "in_standard_filter": 1,
+   "label": "Variantenbezeichnung",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "seconds_per_sensor",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Zeitaufwand in Sek. pro Sensor"
+  },
+  {
+   "fieldname": "sortkey",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sortierschl\u00fcssel",
+   "reqd": 1
+  }
+ ],
+ "modified": "2023-07-24 18:39:12.463991",
+ "modified_by": "Administrator",
+ "module": "Senstech",
+ "name": "Senstech Prozessschrittvariante",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Master Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "processing_step ASC, sortkey ASC",
+ "sort_order": "ASC",
+ "title_field": "variant_name"
+}

@@ -124,6 +124,7 @@
 
 <!-- lieferkonditionen -->
 {% set lieferkond = {'found': 0, 'txt': '', 'amount': 0} %}
+{% if doc_data.update({'dev_positionen': 0}) %}{% endif %}
 {% for item in doc.items %}
 		{% if doc.doctype == "Blanket Order" %}
 			<!-- Rahmenauftrag: Keine vollständigen Item-Einträge => aus Stamm ergänzen -->
@@ -132,6 +133,10 @@
 		{% endif %}
 		{% if item.item_group == 'Versandkosten' %}
 				{% if lieferkond.update({'found': 1, 'txt': item.item_name, 'amount': lieferkond.amount + item.amount}) %}{% endif %}
+		{% endif %}
+		<!-- Für Gate 1 Review -->
+		{% if item.item_code == 'GP-00001' %}
+				{% if doc_data.update({'dev_positionen': doc_data.dev_positionen + 1}) %}{% endif %}
 		{% endif %}
 {% endfor %}
 {% if doc_data.update({ 'lieferkonditionen': lieferkond }) %}{% endif %}
@@ -198,6 +203,15 @@
     margin-left: 12.5mm;
 }
 
+.item-title {
+		font-weight: bold;
+}
+
+.item-subtitle {
+		font-size: 7.5pt;
+		font-weight: bold;
+}
+
 #itemtable ul {
 		margin-bottom: 1mm;
 }
@@ -239,7 +253,7 @@
   border-collapse: collapse !important;
 }
 
-#itemtable th, #itemtable td {
+#itemtable > tbody > tr > th, #itemtable > tbody >  tr > td {
     border: 0.5px solid gray !important;
     padding: 6px !important;
 }
@@ -263,6 +277,26 @@
 
 #itemtable td.bordertop {
     border-top: 0.5px solid black !important;
+}
+
+.specsheet tr {
+		padding: 0 !important;
+		margin: 0 !important;		
+}
+
+.specsheet td {
+		padding: 0 !important;
+		padding-right: 4.0pt !important;
+		margin: 0 !important;
+}
+
+table.checklist {
+		font-size: 8.5pt;
+		margin-top: 10px;
+}
+
+table.checklist td, table.checklist th {
+		padding: 2px 4px !important;
 }
 
 #footer-table {
