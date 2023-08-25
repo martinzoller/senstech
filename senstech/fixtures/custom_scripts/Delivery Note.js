@@ -155,6 +155,9 @@ frappe.ui.form.on('Delivery Note Item', {
 		}
 		d.fields_dict.sensor_ids.set_value(current_item.sensor_ids_list); // Nicht als default, sondern im Nachhinein setzen, damit onchange triggert
         d.show();
+		setTimeout(function() {
+            d.fields_dict.add_sensor_id.set_focus(); // Barcodescanner-Feld aktivieren
+        }, 500);
     },
 	items_add: function(frm, cdt, cdn) {
 		set_position_number(frm, cdt, cdn);
