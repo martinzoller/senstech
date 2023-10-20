@@ -385,6 +385,7 @@ frappe.search.AwesomeBar = Class.extend({
 			SE: 'Stock Entry',
 			SI: 'Sales Invoice',
 			SO: 'Sales Order',
+			SR: 'Item',
 			SU: 'Supplier'
 		};
 		return (doc_prefix in dt_prefix_dict ? dt_prefix_dict[doc_prefix] : '');
