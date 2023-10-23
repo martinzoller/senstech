@@ -3,15 +3,18 @@
 		<tr>
 			<th>{{ _("Pos.") }}</th>
 			<th>{{ _("Artikel") }}</th>
-			<th>{{ _("Menge") }}</th>
-			{% if doc.doctype == "Purchase Order" %}
-					<th>{{ _("Wunschtermin") }}</th>
-					<th style="text-align: right;">{{ _("Preis") }}</th>
-			{% elif doc.doctype == "Delivery Note" %}
+			<th>{{ _("Menge") }}
+					{% if doc.doctype == "Sales Order" %}
+					  <br>{{ _("Liefertermin") }}
+					{% elif doc.doctype == "Purchase Order" %}
+						<br>{{ _("Wunschtermin") }}
+					{% endif %}
+			</th>
+			{% if doc.doctype == "Delivery Note" %}
 					<th>{{ _("Charge") }}</th>
 			{% else %}
-					<th>{{ _("Einzelpreis") }}</th>
-					<th>{{ _("Gesamtpreis") }}</th>
+					<th style="text-align: right;">{{ _("Einzelpreis") }}</th>
+					<th style="text-align: right;">{{ _("Gesamtpreis") }}</th>
 			{% endif %}
 		</tr>
 		{% set totalkontrolle = namespace(value=0) %}
@@ -80,11 +83,14 @@
 											{% if item.min_stock_qty %}{{ _("Mindestlagerbestand Senstech:") }} {{ "{:,.0f}".format(item.min_stock_qty).replace(",", "'") }}&nbsp;{{ _(item_stamm.stock_uom) }}<br>{% endif %}
 										{% endif %}
 								</td>
-								<td>{{ "{:,.0f}".format(item.qty * item.conversion_factor).replace(",", "'") }}&nbsp;{{ _(item.stock_uom) }}</td>
-								{% if doc.doctype == "Purchase Order" %}								
-										<td>{{ item.get_formatted('schedule_date') }}</td>
-										<td style="text-align: right;">{{ "{:,.2f}".format(item.amount).replace(",", "'") }}&nbsp;{{ doc.currency }}</td>										
-						    {% elif doc.doctype == "Delivery Note" %}
+								<td>{{ "{:,.0f}".format(item.qty * item.conversion_factor).replace(",", "'") }}&nbsp;{{ _(item.stock_uom) }}
+										{% if doc.doctype == "Sales Order" %}
+											<br>{{ item.get_formatted('delivery_date') }}
+										{% elif doc.doctype == "Purchase Order" %}
+											<br>{{ item.get_formatted('schedule_date') }}
+										{% endif %}
+								</td>
+						    {% if doc.doctype == "Delivery Note" %}
 										<td>
 										  {{ chargennummer or '' }}
 										</td>
