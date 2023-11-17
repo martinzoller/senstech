@@ -79,7 +79,7 @@ frappe.ui.form.on('Item', {
 		else {
 			frm.fields_dict.description.$wrapper.find('#variant_description').remove();
             if (frm.doc.variant_of) {
-                var variant_desc = '<div id="variant_description"><b>Variantenbeschreibung (erscheint oberhalb der Artikelbeschreibung)</b>';
+                let variant_desc = '<div id="variant_description"><b>Variantenbeschreibung (erscheint oberhalb der Artikelbeschreibung)</b>';
                 frappe.call({
                     'method': 'senstech.scripts.item_tools.get_item_variant_description',
                     'args': {
@@ -87,6 +87,7 @@ frappe.ui.form.on('Item', {
                     },
                     'callback': function(response) {
                         variant_desc += response.message + '</div>';
+						frm.fields_dict.description.$wrapper.find('#variant_description').remove(); // do this again within the callback to avoid double descriptions in case of double-refresh
                         frm.fields_dict.description.$wrapper.prepend(variant_desc);
                     }
                 });
