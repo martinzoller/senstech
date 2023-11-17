@@ -55,12 +55,12 @@
 												{% if supplier_details.lieferanten_artikelnummer %}{{ supplier_details.lieferanten_artikelnummer }}<br>{% endif %}
 												{% if supplier_details.lieferanten_artikelbezeichnung %}{{ supplier_details.lieferanten_artikelbezeichnung }}<br>{% endif %}
 										{% else %}
-												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
+												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name and item_stamm.kunde == doc.customer %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
 										{% endif %}										
 										<div class="item-title">{{ item_name_translated }}</div>
 										{% if item.original_item_name and item.original_item_name != item.item_name %}<div class="item-subtitle">{{ item.original_item_name }}</div>{% endif %}
 										{% if item_stamm.variant_of %}{{ get_item_variant_description(item.item_code) }}{% endif %}
-										{% if item.item_code=="GP-00001" %}
+										{% if item.item_code=="GP-00001" and item.specsheet_measurand %}
 											<table class="specsheet">
 											<tr><td>{{ _("Messgrösse") }}: </td><td>{{ item.specsheet_measurand }}</td></tr>
 											<tr><td>{{ _("Messbereich") }}: </td><td>{{ item.specsheet_range }}</td></tr>
