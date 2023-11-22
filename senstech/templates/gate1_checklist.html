@@ -1,0 +1,170 @@
+<!-- Gate 1 Review Checklist -->
+
+<!-- Load Data -->
+{% set doc_data = {'titel': "Review-Checkliste Gate 1 (Machbarkeit)"} %}
+{{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Load Data -->
+
+<!-- Header und Footer -->
+{{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Header und Footer -->
+
+<!-- Titel -->
+<b><br><br>{{ _(doc_data.titel) }}</b>
+<div><br></div>
+<!-- /Titel -->
+
+
+<!-- Detailtabelle -->
+<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+	<tr>
+		<td style="width: 16%;">{{ _("Zu Offerte") }}</td>
+		<td style="width: 28%;">{{ doc.name }} {{ _("vom") }} {{ doc.get_formatted('transaction_date') }}</td>
+		<td style="width: 3%;"></td>
+		<td style="width: 32%;">{{ _("Anzahl Entwicklungspositionen") }}</td>
+		<td style="width: 20%;">{{ doc_data.dev_positionen }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Kunde") }}</td>
+		<td>{{ doc.customer_name }}</td>
+		<td></td>
+		<td>{{ _("Gesamtsumme") }}</td>
+		<td>{{ "{:,.2f}".format(doc.grand_total).replace(",", "'") }}&nbsp;{{ doc.currency }}</td>	
+	</tr>
+	<tr>
+		<td>{{ _("Kundennummer") }}</td>
+		<td>{{ doc.party_name }}</td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+</table>
+<!-- /Detailtabelle -->
+
+<div><br></div>
+
+<!-- Abschnitt "Freigabe" -->
+<div><br></div>
+
+<table style="width: 99%; font-size: 8.5pt !important;">
+	<tr style="height: 21pt">
+		<td style="text-align: left;"><b style="font-size: 10pt">{{ _("Freigabe") }}</b></td>
+		<td style="text-align: left;"><b>{{ _("Name") }}</b><br></td>		
+		<td style="text-align: left;"><b>{{ _("Datum") }}</b><br></td>
+		<td style="text-align: center;"><b>{{ _("Unterschrift") }}</b><br></td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Gate-1-Freigabe beantragt durch:") }}</td>
+		<td style="text-align: left;">{{ doc.gate1_requested_by_name }}</td>
+		<td style="text-align: left;">{{ doc.get_formatted('gate1_requested_date') }}</td>
+		<td style="text-align: center;">
+			{% set requested_by_signature = get_signature_for_user_id(doc.gate1_requested_by_user) %}
+			{% if not requested_by_signature %}
+					<div class="errorpopup">Fehler: Unterschrift von Gate-1-Antragsteller "{{ doc.gate1_requested_by_name }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ requested_by_signature }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Gate-1-Review durchgeführt durch:")}}</td>
+		<td style="text-align: left;">{{ doc.gate1_reviewed_by_name }}</td>
+		<td style="text-align: left;">{{ doc.get_formatted('gate1_reviewed_date') }}</td>
+		<td style="text-align: center;">
+			{% set reviewed_by_signature = get_signature_for_user_id(doc.gate1_reviewed_by_user) %}
+			{% if not reviewed_by_signature %}
+					<div class="errorpopup">Fehler: Unterschrift von Gate-1-Reviewer "{{ doc.gate1_reviewed_by_name }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ reviewed_by_signature }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+</table>
+<!-- /Abschnitt "Freigabe" -->
+
+<!-- Abschnitt "Entscheid" -->
+<div>
+		<b><br>{{ _("Entscheid") }}</b>
+</div>
+<div style="margin-top: 5px">
+		{% for res in (frappe.get_meta("Quotation").get_field("gate1_review_result").options|trim).split("\n") %}
+			{% if doc.gate1_review_result == res %}☒{% else %}☐{% endif %} &nbsp; {{ res }}<br>
+		{% endfor %}
+</div>
+<!-- /Abschnitt "Entscheid" -->
+
+<!-- Abschnitt "Checkliste" -->
+<div>
+		<b><br>{{ _("Checkliste") }}</b>
+</div>
+<table class="table table-bordered checklist"><tbody>
+	<tr>
+		<th>{{ _("Zu prüfen") }}</th>
+		<th>{{ _("Ergebnis") }}</th>
+		<th>{{ _("Referenz") }}</th>
+	</tr>
+	<tr>
+		<td>{{ _("Lastenheft erstellt und mit Kunde abgeglichen?") }}</td>
+		<td>{{ doc.gate1_check_specsheet }}</td>
+		<td>{{ doc.name }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Kostenkalkulation und Angebot erstellt?	") }}</td>
+		<td>{{ doc.gate1_check_cost_calc }}</td>
+		{%if doc.gate1_upload_cost_calc %}
+			{% set file_cost_calc = frappe.get_doc("File",{"file_url": doc.gate1_upload_cost_calc}) %}
+			<td>{{ file_cost_calc.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Entwicklungsplan erstellt?") }}</td>
+		<td>{{ doc.gate1_check_development_plan }}</td>
+		{%if doc.gate1_upload_development_plan %}
+			{% set file_development_plan = frappe.get_doc("File",{"file_url": doc.gate1_upload_development_plan}) %}
+			<td>{{ file_development_plan.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Risikomanagement-Plan erstellt?") }}</td>
+		<td>{{ doc.gate1_check_risk_management }}</td>
+		{%if doc.gate1_upload_risk_management %}
+			{% set file_risk_management = frappe.get_doc("File",{"file_url": doc.gate1_upload_risk_management}) %}
+			<td>{{ file_risk_management.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Umweltverträglichkeit unproblematisch?") }}</td>
+		<td>{{ doc.gate1_check_environment }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Materialbeschaffung unproblematisch?") }}</td>
+		<td>{{ doc.gate1_check_procurement }}</td>
+		<td>-</td>
+	</tr>
+</tbody></table>
+<!-- /Abschnitt "Checkliste" -->
+
+<!-- Abschnitt "Kommentare" -->
+<div>
+		<b><br>{{ _("Kommentare und zusätzliche Referenzen") }}</b>
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Freigabeantrag:") }}
+{% if doc.gate1_requester_comments %}
+  <br>{{ doc.gate1_requester_comments }}
+{% else %}
+  {{ _("keine") }}
+{% endif %}	
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Review:") }}
+{% if doc.gate1_reviewer_comments %}
+  <br>{{ doc.gate1_reviewer_comments }}
+{% else %}
+  {{ _("keine") }}
+{% endif %}	
+</div>
+<!-- /Abschnitt "Kommentare" -->

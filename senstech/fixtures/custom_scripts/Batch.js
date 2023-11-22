@@ -6,8 +6,7 @@ frappe.ui.form.on('Batch', {
 			var item = cur_frm.doc.item;	        
 	        frappe.db.get_value('Item',item,'has_sub_batches').then(r => {
 	            if(!r.message) {
-			        frappe.msgprint(__("Fehler beim Laden des Basisartikels"), __("Validation"));
-    	            frappe.validated=false;
+			        validation_error(frm, 'item', __("Fehler beim Laden des Basisartikels"));
     	            return;
 	            }
 			    var hat_teilchargen = r.message.has_sub_batches;	            
@@ -16,12 +15,10 @@ frappe.ui.form.on('Batch', {
 			    const schema_teilcharge = /[0-9]{2}\/[0-9]{2}[A-Z]{1}/;
 
     			if(hat_teilchargen && chargennummer.match(schema_teilcharge) != chargennummer) {
-    			    frappe.msgprint(__("Bitte eine gültige Chargennummer mit Teilcharge nach Schema 'NN/YYX' angeben"), __("Validation"));
-    	            frappe.validated=false;			    
+    			    validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer mit Teilcharge nach Schema 'NN/YYX' angeben"));
     			}
     			else if(!hat_teilchargen && chargennummer.match(schema_basis) != chargennummer) {
-    			    frappe.msgprint(__("Bitte eine gültige Chargennummer nach Schema 'NN/YY' angeben"), __("Validation"));
-    	            frappe.validated=false;			    
+    			    validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer nach Schema 'NN/YY' angeben"));
     			}
 			    cur_frm.set_value('chargennummer', chargennummer);
 			    var batch_id = item + "-" + chargennummer;
@@ -31,8 +28,7 @@ frappe.ui.form.on('Batch', {
 	        });
 		}
 	    if (cur_frm.doc.stueckzahl <= 0) {
-	        frappe.msgprint(__("Die Maximalstückzahl der Charge muss angegeben werden"), __("Validation"));
-	        frappe.validated=false;
+	        validation_error(frm, 'stueckzahl', __("Die Maximalstückzahl der Charge muss angegeben werden"));
 	    }
 	},
 	refresh(frm) {
@@ -490,24 +486,8 @@ function charge_freigeben_schritt1(frm) {
         frappe.msgprint("Dieses Produkt hat ein Histogramm, jedoch liegen keine Messdaten vor. Chargenfreigabe nicht möglich!");
         return;    
     }
-    
-    var histo_pdf_uri = '%2Fapi%2Fmethod%2Ffrappe.utils.print_format.download_pdf%3Fdoctype%3DBatch%26name%3D'+encodeURIComponent(cur_frm.docname)+'%26format%3DBatch%20ST%26no_letterhead%3D0';
-    var histo_view = new frappe.ui.Dialog({
-		title: __("Schritt 1: Histogramm freigeben"),
-		fields: [
-			{
-			    fieldtype: "HTML",
-			    options: '<iframe style="width: 100%;height: calc(100vh - 160px);" src="/assets/senstech/pdfjs/web/viewer.html?file='+histo_pdf_uri+'#zoom=page-fit"></iframe>'
-			}
-		],
-		primary_action_label: __("Histogramm freigeben &gt;"),
-		primary_action: function() {
-		    histo_view.hide();
-			charge_freigeben_schritt2(frm, 'Schritt 2: Chargendetails bestätigen');
-		},
-		secondary_action_label: __("Abbrechen")
-	});
-	histo_view.show();
+	
+	doc_preview_dialog(frm, frm => charge_freigeben_schritt2(frm, 'Schritt 2: Chargendetails bestätigen'), __("Schritt 1: Histogramm freigeben"), __("Histogramm freigeben &gt;"));
 }
 
 function charge_freigeben_schritt2(frm, step_title) {

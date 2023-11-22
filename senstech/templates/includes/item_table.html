@@ -3,15 +3,18 @@
 		<tr>
 			<th>{{ _("Pos.") }}</th>
 			<th>{{ _("Artikel") }}</th>
-			<th>{{ _("Menge") }}</th>
-			{% if doc.doctype == "Purchase Order" %}
-					<th>{{ _("Wunschtermin") }}</th>
-					<th style="text-align: right;">{{ _("Preis") }}</th>
-			{% elif doc.doctype == "Delivery Note" %}
+			<th>{{ _("Menge") }}
+					{% if doc.doctype == "Sales Order" %}
+					  <br>{{ _("Liefertermin") }}
+					{% elif doc.doctype == "Purchase Order" %}
+						<br>{{ _("Wunschtermin") }}
+					{% endif %}
+			</th>
+			{% if doc.doctype == "Delivery Note" %}
 					<th>{{ _("Charge") }}</th>
 			{% else %}
-					<th>{{ _("Einzelpreis") }}</th>
-					<th>{{ _("Gesamtpreis") }}</th>
+					<th style="text-align: right;">{{ _("Einzelpreis") }}</th>
+					<th style="text-align: right;">{{ _("Gesamtpreis") }}</th>
 			{% endif %}
 		</tr>
 		{% set totalkontrolle = namespace(value=0) %}
@@ -52,10 +55,27 @@
 												{% if supplier_details.lieferanten_artikelnummer %}{{ supplier_details.lieferanten_artikelnummer }}<br>{% endif %}
 												{% if supplier_details.lieferanten_artikelbezeichnung %}{{ supplier_details.lieferanten_artikelbezeichnung }}<br>{% endif %}
 										{% else %}
-												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
+												{% if item_stamm.artikelcode_kunde and item_stamm.artikelcode_kunde != item_stamm.item_name and item_stamm.kunde == doc.customer %}{{ _("Artikelnr. Kunde:") }} {{ item_stamm.artikelcode_kunde }}{% if item_stamm.produktrevision_kunde %} {{ _("rev.") }} {{ item_stamm.produktrevision_kunde }}{% endif %}<br>{% endif %}
 										{% endif %}										
-										<b>{{ item_name_translated }}</b>
+										<div class="item-title">{{ item_name_translated }}</div>
+										{% if item.original_item_name and item.original_item_name != item.item_name %}<div class="item-subtitle">{{ item.original_item_name }}</div>{% endif %}
 										{% if item_stamm.variant_of %}{{ get_item_variant_description(item.item_code) }}{% endif %}
+										{% if item.item_code=="GP-00001" and item.specsheet_measurand %}
+											<table class="specsheet">
+											<tr><td>{{ _("Messgrösse") }}: </td><td>{{ item.specsheet_measurand }}</td></tr>
+											<tr><td>{{ _("Messbereich") }}: </td><td>{{ item.specsheet_range }}</td></tr>
+											<tr><td>{{ _("Substratherstellung") }}: </td><td>{{ item.specsheet_process_substrate }}</td></tr>
+											<tr><td>{{ _("Isolationsschicht") }}: </td><td>{{ item.specsheet_process_insulation }}</td></tr>
+											<tr><td>{{ _("Metallschichten") }}: </td><td>{{ item.specsheet_process_metal_layers }}</td></tr>
+											<tr><td>{{ _("Laserablation") }}: </td><td>{{ item.specsheet_process_laser_ablation }}</td></tr>
+											<tr><td>{{ _("Schutzschicht") }}: </td><td>{{ item.specsheet_process_protective_layer }}</td></tr>
+											<tr><td>{{ _("Vereinzeln") }}: </td><td>{{ item.specsheet_process_dicing }}</td></tr>
+											<tr><td>{{ _("Löten") }}: </td><td>{{ item.specsheet_process_soldering }}</td></tr>
+											<tr><td>{{ _("Laserschweissen") }}: </td><td>{{ item.specsheet_process_laser_welding }}</td></tr>
+											<tr><td>{{ _("Endkontrolle") }}: </td><td>{{ item.specsheet_process_final_testing }}</td></tr>
+											<tr><td>{{ _("Verpackung") }}: </td><td>{{ item.specsheet_process_packaging }}</td></tr>
+											</table>
+										{% endif %}
 										{% if item.description | replace('<div>', '') | replace('</div>', '') != item.item_name %}{{ _(item.description) }}{% endif %}
 										{% if doc_data.adresse_lieferung.land != "Schweiz" and zolltarif %}<div style="height:2mm"></div>{{ _("Zolltarifnummer") }}: {{ zolltarif }}{% endif %}
 										{% if doc.doctype == "Blanket Order" %}
@@ -63,11 +83,14 @@
 											{% if item.min_stock_qty %}{{ _("Mindestlagerbestand Senstech:") }} {{ "{:,.0f}".format(item.min_stock_qty).replace(",", "'") }}&nbsp;{{ _(item_stamm.stock_uom) }}<br>{% endif %}
 										{% endif %}
 								</td>
-								<td>{{ "{:,.0f}".format(item.qty * item.conversion_factor).replace(",", "'") }}&nbsp;{{ _(item.stock_uom) }}</td>
-								{% if doc.doctype == "Purchase Order" %}								
-										<td>{{ doc.get_formatted('schedule_date') }}</td>
-										<td style="text-align: right;">{{ "{:,.2f}".format(item.amount).replace(",", "'") }}&nbsp;{{ doc.currency }}</td>										
-						    {% elif doc.doctype == "Delivery Note" %}
+								<td>{{ "{:,.0f}".format(item.qty * item.conversion_factor).replace(",", "'") }}&nbsp;{{ _(item.stock_uom) }}
+										{% if doc.doctype == "Sales Order" %}
+											<br>{{ item.get_formatted('delivery_date') }}
+										{% elif doc.doctype == "Purchase Order" %}
+											<br>{{ item.get_formatted('schedule_date') }}
+										{% endif %}
+								</td>
+						    {% if doc.doctype == "Delivery Note" %}
 										<td>
 										  {{ chargennummer or '' }}
 										</td>

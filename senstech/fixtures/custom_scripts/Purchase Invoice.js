@@ -12,11 +12,7 @@ frappe.ui.form.on('Purchase Invoice', {
         jQuery('div[data-fieldname="base_in_words"]').hide();
     },
     validate(frm) {
-		if (!frm.doc.taxes_and_charges) {
-	        frappe.msgprint( __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"), __("Validation") );
-            frappe.validated=false;
-	        frm.scroll_to_field('taxes_and_charges');
-	    }
+		basic_purchasing_validations(frm);
     },
     refresh(frm) {
         if ((frm.doc.docstatus === 0) && (!frm.doc.is_proposed)) {
@@ -36,54 +32,10 @@ frappe.ui.form.on('Purchase Invoice', {
 
 frappe.ui.form.on('Purchase Invoice Item', {
 	items_add: function(frm, cdt, cdn) {
-      var current_item = locals[cdt][cdn];
-      var all_items = cur_frm.doc.items;
-      var row_qty = all_items.length;
-      if (row_qty == current_item.idx) {
-          var new_pos = 10;
-          if (current_item.idx != 1) {
-              var prev_idx = current_item.idx - 1;
-              all_items.forEach(function(entry) {
-                if (entry.idx == prev_idx) {
-                    new_pos = parseInt(entry.position) + 10;
-                }  
-              });
-          }
-          frappe.model.set_value(cdt, cdn, 'position', new_pos);
-      } else {
-          var new_pos = 1;
-          if (current_item.idx != 1) {
-              var prev_idx = current_item.idx - 1;
-              all_items.forEach(function(entry) {
-                if (entry.idx == prev_idx) {
-                    new_pos = parseInt(entry.position) + 1;
-                }  
-              });
-          }
-          frappe.model.set_value(cdt, cdn, 'position', new_pos);
-      }
+		set_position_number(frm, cdt, cdn);
    }
-})
+});
 
-function fetch_taxes_and_charges_from_supplier(frm) {
-    if(!cur_frm.doc.supplier) {
-        return;
-    }
-    frappe.call({
-        "method": "frappe.client.get",
-        "args": {
-            "doctype": "Supplier",
-            "name": cur_frm.doc.supplier
-        },
-        "callback": function(response) {
-            var supplier = response.message;
-
-            if (supplier.taxes_and_charges) {
-                cur_frm.set_value('taxes_and_charges', supplier.taxes_and_charges);
-            }
-        }
-    });
-}
 
 function apply_expense_accounts(frm) {
     // Aufwandkonten je nach Intracompany-Status des Lieferanten anpassen

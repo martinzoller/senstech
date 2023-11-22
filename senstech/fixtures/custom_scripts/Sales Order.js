@@ -8,45 +8,7 @@ frappe.ui.form.on('Sales Order', {
         }, 1000);
     },
     validate(frm) {
-		if (!frm.doc.payment_terms_template) {
-	        frappe.msgprint(__("Vorlage Zahlungsbedingungen muss ausgewählt werden"), __("Validation"));
-	        frappe.validated=false;
-	        frm.scroll_to_field('payment_terms_template');
-		}
-		if (!frm.doc.taxes_and_charges) {
-	        frappe.msgprint( __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"), __("Validation") );
-            frappe.validated=false;
-	        frm.scroll_to_field('taxes_and_charges');
-	    }
-	    var processed_count = 0;
-        var found_count = 0;
-        var items = cur_frm.doc.items;
-        items.forEach(function(entry) {
-			if (entry.item_group) {
-			    processed_count++;
-			    if (entry.item_group == 'Versandkosten') {
-                    found_count++;
-                }
-                if(processed_count == items.length && found_count != 1) {
-        			frappe.msgprint( __("Bitte genau einmal Versandkosten hinterlegen"), __("Validation") );
-		            frappe.validated=false;
-                }
-			}
-			else {
-				// Documents with "local" items (no item group available): Fetch item group from server
-				// This is to avoid validation errors when creating a Sales Order from a Blanket Order
-				frappe.db.get_value('Item',entry.item_code,'item_group').then(r => {
-				    processed_count++;
-                    if (r.message.item_group == 'Versandkosten') {
-                        found_count++;
-                    }
-                    if(processed_count == items.length && found_count != 1) {
-            			frappe.msgprint( __("Bitte genau einmal Versandkosten hinterlegen"), __("Validation") );
-			            frappe.validated=false;
-                    }
-				});
-			}
-		});
+		basic_sales_validations(frm);
         reload_contacts(frm);
     },
     after_save(frm) {
@@ -104,7 +66,7 @@ frappe.ui.form.on('Sales Order', {
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }
-})
+});
 
 
 frappe.ui.form.on('Sales Order Item', {
@@ -117,34 +79,11 @@ frappe.ui.form.on('Sales Order Item', {
         }, 1000);
     },
 	items_add: function(frm, cdt, cdn) {
-      var current_item = locals[cdt][cdn];
-      var all_items = cur_frm.doc.items;
-      var row_qty = all_items.length;
-      if (row_qty == current_item.idx) {
-          var new_pos = 10;
-          if (current_item.idx != 1) {
-              var prev_idx = current_item.idx - 1;
-              all_items.forEach(function(entry) {
-                if (entry.idx == prev_idx) {
-                    new_pos = parseInt(entry.position) + 10;
-                }  
-              });
-          }
-          frappe.model.set_value(cdt, cdn, 'position', new_pos);
-      } else {
-          var new_pos = 1;
-          if (current_item.idx != 1) {
-              var prev_idx = current_item.idx - 1;
-              all_items.forEach(function(entry) {
-                if (entry.idx == prev_idx) {
-                    new_pos = parseInt(entry.position) + 1;
-                }  
-              });
-          }
-          frappe.model.set_value(cdt, cdn, 'position', new_pos);
-      }
-   }
-})
+		set_position_number(frm, cdt, cdn);
+	}
+});
+
+
 
 
 function calculate_versanddatum(frm) {
@@ -193,70 +132,6 @@ function fetch_templates_from_blanket_order(frm, blanket_order) {
 					cur_frm.set_value('payment_terms_template', '');
     				cur_frm.set_value('payment_terms_template', bo.payment_terms);
     		}
-        }
-    });
-}
-
-
-function reload_contacts(frm) {
-    var contact = cur_frm.doc.contact_person;
-    cur_frm.set_value("contact_person", "");
-    cur_frm.set_value("contact_person", contact);
-}
-
-
-function update_address_display(frm, fields, addresses, as_list=false) {
-    if (!as_list) {
-        as_list = '';
-    }
-    frappe.call({
-        "method": "senstech.scripts.tools.update_address_display",
-        "args": {
-            "doctype": cur_frm.doctype,
-            "doc_name": cur_frm.docname,
-            "fields": fields,
-            "addresses": addresses,
-            'as_list': as_list
-        },
-        "callback": function(response) {
-            var response = response.message;
-            if (!as_list) {
-                if (response == 'updated') {
-                    cur_frm.reload_doc();
-                }
-            } else {
-                if (response.includes('updated')) {
-                    cur_frm.reload_doc();
-                }
-            }
-        }
-    });
-}
-
-function attach_pdf_print(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
-        "args": {
-            "dt": cur_frm.doctype,
-            "dn": cur_frm.docname,
-            "printformat": 'Sales Order ST'
-        },
-        "callback": function(response) {
-            cur_frm.reload_doc();
-        }
-    });
-}
-
-
-function add_cancelled_watermark(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_cancelled_watermark",
-        "args": {
-            "dt": cur_frm.doctype,
-            "dn": cur_frm.docname
-        },
-        "callback": function(response) {
-            cur_frm.reload_doc();
         }
     });
 }

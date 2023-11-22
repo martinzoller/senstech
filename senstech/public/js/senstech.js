@@ -1,3 +1,7 @@
+/*
+ * senstech.js: Global hacks and overrides
+ */
+
 // Always open linked documents (links with arrow icon) in new tab
 $(document).on('click','i.octicon-arrow-right',function(event){
 	event.preventDefault();

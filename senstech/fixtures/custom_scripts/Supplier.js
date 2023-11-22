@@ -7,8 +7,7 @@ frappe.ui.form.on('Supplier', {
 		var iban = (frm.doc.iban || '').replace(/\s+/g,'');		
 		if(iban) {
 			if(iban[0] == "C" && iban[1] == "H" && iban[4] == 3){
-				frappe.msgprint(__("QR-IBAN bitte im entsprechenden Feld eingeben."), __("Ungültige IBAN"));
-				frappe.validated = false;				
+				validation_error(frm, 'iban', __("QR-IBAN bitte im entsprechenden Feld eingeben."));
 			}
 			else {
 				validate_iban(iban, false);
