@@ -378,7 +378,7 @@ frappe.search.AwesomeBar = Class.extend({
 			PO: 'Purchase Order',
 			PR: 'Item',
 			PS: 'Item',
-			PT: 'Purchase Item',
+			PT: 'Item',
 			QN: 'Quotation',
 			RQ: 'Request for Quotation',
 			SA: 'Item',
