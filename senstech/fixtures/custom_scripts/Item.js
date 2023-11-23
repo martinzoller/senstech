@@ -126,13 +126,13 @@ frappe.ui.form.on('Item', {
 		if(item_grp.startsWith('Serieprodukte') && !frm.doc.kunde) {
 			validation_error(frm, 'kunde', __("Bei kundenspezifischen Serieprodukten muss der betreffende Kunde ausgewählt werden"));
 		}
-		if(item_grp == 'Eigenprodukte' && !frm.doc.variant_of && !frm.doc.has_variants) {
-			validation_error(frm, 'has_variants', __("Unter 'Eigenprodukte' sind nur Artikelvorlagen und -varianten erlaubt"));
+		if(item_grp.startsWith('Eigenprodukte') && !frm.doc.variant_of && !frm.doc.has_variants) {
+			validation_error(frm, 'has_variants', __("In den Artikelgruppen für Eigenprodukte sind nur Artikelvorlagen und -varianten erlaubt"));
 		}		
-		if(item_grp != 'Eigenprodukte' && (frm.doc.variant_of ||frm.doc.has_variants)) {
+		if(!item_grp.startsWith('Eigenprodukte') && (frm.doc.variant_of ||frm.doc.has_variants)) {
 			validation_error(frm, 'has_variants', __("Artikelvorlagen und -varianten sind nur bei Eigenprodukten erlaubt"));
 		}
-		if(item_grp == 'Eigenprodukte' && !frm.doc.single_label_print_format) {
+		if(item_grp.startsWith('Eigenprodukte') && !frm.doc.single_label_print_format) {
 			validation_error(frm, 'single_label_print_format', __("Bei Eigenprodukten bitte ein Druckformat für die Verpackung von  Einzelsensoren auswählen"));
 		}
 		if(item_grp != 'Infrastruktur' && frm.doc.is_fixed_asset) {
@@ -176,7 +176,7 @@ frappe.ui.form.on('Item', {
 					validation_error(frm, 'item_code', __('Der Artikelcode der meisten Einkaufsartikel muss dem Schema "PT-#####" entsprechen'));
 				}
 			}
-			else if(item_grp == 'Eigenprodukte') {
+			else if(item_grp.startsWith('Eigenprodukte')) {
 				// Eigenprodukte: Der Variantencode wird derzeit nicht mit den Attributen abgeglichen, da er in der Regel ohnehin automatisch erzeugt wird
 				const eigenprod_template_regex = /^[A-Z]{2}-011-[0-9]{2}00$/;
 				const eigenprod_variant_regex = /^[A-Z]{2}-011-[0-9]{2}00(-[A-Z0-9]+)*$/;
@@ -224,7 +224,7 @@ frappe.ui.form.on('Item', {
 			if(frm.doc.manufactured_from) {
 				frappe.db.get_doc("Item", frm.doc.manufactured_from).then(manuf_from => {
 					let prev_grp = manuf_from.item_group;
-					if(['Halbfabrikate','Eigenprodukte','Serieprodukte kundenspezifisch mit Chargenfreigabe','Serieprodukte kundenspezifisch ohne Chargenfreigabe'].includes(item_grp)) {
+					if(['Halbfabrikate','Eigenprodukte mit Chargenfreigabe','Eigenprodukte ohne Chargenfreigabe','Serieprodukte kundenspezifisch mit Chargenfreigabe','Serieprodukte kundenspezifisch ohne Chargenfreigabe'].includes(item_grp)) {
 						if(!['Sensorsubstrate poliert','Halbfabrikate'].includes(prev_grp)) {
 							validation_error(frm, 'manufactured_from', __("Halbfabrikate und Endprodukte können nur aus Halbfabrikaten oder polierten Sensorsubstraten hergestellt werden"));
 						}
@@ -268,7 +268,7 @@ frappe.ui.form.on('Item', {
 			frm.set_value('is_purchase_item', parent_grp == "Einkauf");
 			
 			// Varianten
-			if(item_grp != 'Eigenprodukte') {
+			if(!item_grp.startsWith('Eigenprodukte')) {
 				frm.set_value('has_variants', false);
 			}
 			
@@ -298,7 +298,7 @@ frappe.ui.form.on('Item', {
 					// alle anderen Einkaufsartikel (Infrastruktur-Unterhalt, Dienstleistungen, Rohmaterial, Verbrauchsmaterial)
 					set_new_generic_item_code(frm, 'PT');
 				}
-				else if(item_grp == 'Eigenprodukte') {
+				else if(item_grp.startsWith('Eigenprodukte')) {
 					// Eigenprodukte: Nur Artikelvorlagen werden manuell angelegt
 					if(frm.doc.variant_of) {
 						frm.set_value('item_code', 'Artikelvariante muss aus Vorlage angelegt werden');
@@ -618,7 +618,7 @@ function set_new_own_item_code(frm, prefix) {
 	frappe.call({
     	'method': 'senstech.scripts.item_tools.get_next_item_code_part',
 		'args': {
-			'item_group_filter': 'Eigenprodukte',			
+			'item_group_filter': 'Eigenprodukte%',			
 			'ic_filter_string': '-011-',
 			'ic_filter_startpos': 2,
 			'ic_part_startpos': 7,
@@ -640,7 +640,7 @@ function get_customer_project_numbers(frm, callback, customer_id='CU-00011') {
 	frappe.call({
     	'method': 'senstech.scripts.item_tools.get_filtered_list_of_item_code_parts',
 		'args': {
-			'item_group_filter': (cust_str=='-011-'?'Eigenprodukte':'Serieprodukte%'),
+			'item_group_filter': (cust_str=='-011-'?'Eigenprodukte%':'Serieprodukte%'),
 			'ic_filter_string': cust_str,
 			'ic_filter_startpos': 2,
 			'ic_part_startpos': 7,
