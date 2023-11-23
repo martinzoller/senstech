@@ -79,11 +79,9 @@ frappe.ui.form.on('Quotation', {
 			validation_error(frm, 'pp_number', __("Die Projektvorschlagsnr. muss dem Schema PP-##### entsprechen."))
 		}
 		
-		let gp00001_found = false;
 		frm.doc.items.forEach(entry => {
 			// Validierung Pflichtenheft bei Entwicklungsprojekten
 			if(entry.item_code == 'GP-00001') {
-				gp00001_found = true;
 				let pos_prefix = __("Pos. {0}: ",[entry.position]);
 				if(
 					!entry.specsheet_measurand ||
@@ -106,7 +104,7 @@ frappe.ui.form.on('Quotation', {
 		});
 		
 		// Falls GP-00001 gefunden wurde, Beschreibungstext abfragen und auch noch validieren
-		if(gp00001_found) {
+		if(frm.doc.items.some(i => i.item_code == 'GP-00001')) {
 			frappe.db.get_value("Item",['item_code','=','GP-00001'],"description").then(r => {
 				if(r.message) {
 					let default_desc = r.message[1];
@@ -228,7 +226,7 @@ function set_specsheet_queries(frm) {
 }
 
 function doc_has_dev_items(frm) {
-	return frm.doc.items.some(e => e.item_group == 'Dienstleistungen Entwicklung');
+	return frm.doc.items.some(e => e.item_group == 'Entwicklung nach PZ-2000');
 }
 
 function check_not_dirty(frm) {

@@ -9,6 +9,21 @@ frappe.ui.form.on('Sales Order', {
     },
     validate(frm) {
 		basic_sales_validations(frm);
+		frm.doc.items.forEach(entry => {
+			// Entwicklungsauftrag: Offertenreferenz prüfen
+			if(entry.item_code == 'GP-00001') {
+				let pos_prefix = __("Pos. {0}: ",[entry.position]);
+				if(!entry.prevdoc_docname) {
+					validation_error(frm, 'items', pos_prefix+__("Die AB für Entwicklungsaufträge muss aus der jeweiligen Offerte erzeugt werden."));
+				} else {
+					frappe.db.get_value("Quotation", entry.prevdoc_docname, "gate1_review_result").then(r => {
+						if(r.message != "Gate 1 erreicht") {
+							validation_error(frm, 'items', pos_prefix+__("Die verknüpfte Offerte ist nicht freigegeben."));
+						}
+					});
+				}
+			}
+		});
         reload_contacts(frm);
     },
     after_save(frm) {

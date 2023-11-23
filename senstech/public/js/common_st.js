@@ -124,6 +124,9 @@ function basic_sales_validations(frm) {
 	let found_count = 0;
 	let items = frm.doc.items;
 	items.forEach(function(entry) {
+		if (frm.doctype != 'Quotation' && entry.item_code == 'GP-00003') {
+			validation_error(frm, 'items', __("Der generische Nullserie-Artikel GP-00003 darf nur für Offerten verwendet werden. Zum Bestellzeitpunkt ist ein spezifischer Artikel anzulegen. Bevor dieser ausgeliefert wird, muss die Nullserie-Freigabe (Gate 2) vorliegen."))
+		}
 		if (entry.item_group) {
 			processed_count++;
 			if (entry.item_group == 'Versandkosten') {
@@ -147,6 +150,9 @@ function basic_sales_validations(frm) {
 			});
 		}
 	});
+	if(!frm.doc.project && frm.doctype != 'Quotation' && frm.doc.items.some(i => i.item_group == 'Entwicklung nach PZ-2000')) {
+		validation_error(frm, 'project', __("Allen Verkaufsdokumenten mit Entwicklungspositionen muss ein Projekt zugewiesen sein"));
+	}
 }
 
 
