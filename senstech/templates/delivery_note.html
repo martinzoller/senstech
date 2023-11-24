@@ -30,8 +30,13 @@
 		<td>{{ _("Kontakt") }}</td>
 		<td>{{ doc_data.kontakt }}</td>
 		<td></td>
-		<td>{{ _("Rahmenauftrag") }}</td>
-		<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>		
+		 {% if doc.project %}<!-- Entwicklungsprojekte haben kaum einen Rahmenauftrag, daher Projektnr. an dessen Stelle anzeigen -->
+			<td>{{ _("Projektnummer") }}</td>
+			<td>{{ doc.project }}</td>
+	 {% else %}
+			<td>{{ _("Rahmenauftrag") }}</td>
+			<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>
+		{% endif %}
 	</tr>
 	<tr>
 		<td>{{ _("Ihre Kundennummer") }}</td>

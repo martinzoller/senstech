@@ -35,8 +35,13 @@
 		<td style="width: 24%;">{{ doc.get_formatted('posting_date') }}</td>
 	</tr>
 	<tr>
-		<td>{{ _("Rahmenauftrag") }}</td>
-		<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>	    
+		 {% if doc.project %}<!-- Entwicklungsprojekte haben kaum einen Rahmenauftrag, daher Projektnr. an dessen Stelle anzeigen -->
+				<td>{{ _("Projektnummer") }}</td>
+				<td>{{ doc.project }}</td>
+		 {% else %}
+				<td>{{ _("Rahmenauftrag") }}</td>
+				<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>
+			{% endif %}   
 		<td></td>
 		{% if doc.due_date != doc.posting_date %}
 		  <td>{{ _("Zahlbar bis") }}</td>
