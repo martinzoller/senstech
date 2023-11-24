@@ -110,8 +110,12 @@ doc_events =  {
         "validate": "senstech.scripts.delivery_note_tools.validate_sensor_ids",
         "on_submit": "senstech.scripts.delivery_note_tools.assign_sensor_ids",
         "on_cancel": "senstech.scripts.delivery_note_tools.release_sensor_ids",
-    }
+    },
 
+    "Sales Order": {
+        "on_submit": "senstech.scripts.sales_order_tools.create_dev_batches",
+        "on_cancel": "senstech.scripts.sales_order_tools.delete_dev_batches",
+    },
 }
 
 # Scheduled Tasks
