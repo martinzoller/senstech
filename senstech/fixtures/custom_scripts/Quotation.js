@@ -75,8 +75,13 @@ frappe.ui.form.on('Quotation', {
     validate(frm) {
 		basic_sales_validations(frm);
 		
-		if(! new RegExp(`^PP-[0-9]{5}$`).test(frm.doc.pp_number)) {
-			validation_error(frm, 'pp_number', __("Die Projektvorschlagsnr. muss dem Schema PP-##### entsprechen."))
+		if(frm.doc.pp_number) {
+			if(! new RegExp(`^PP-[0-9]{5}$`).test(frm.doc.pp_number)) {
+				validation_error(frm, 'pp_number', __("Die Projektvorschlagsnr. muss dem Schema PP-##### entsprechen."))
+			}
+		}
+		else if(frm.doc.items.some(e => ['Entwicklung nach PZ-2000','Kleinaufträge nach PZ-2002'].includes(e.item_group))) {
+			validation_error(frm, 'pp_number', __("Bei Entwicklungsprojekten und Kleinaufträgen muss eine Projektvorschlagsnummer angegeben werden."))
 		}
 		
 		frm.doc.items.forEach(entry => {
