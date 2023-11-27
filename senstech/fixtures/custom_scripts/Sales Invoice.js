@@ -2,6 +2,7 @@ frappe.ui.form.on('Sales Invoice', {
     before_save(frm) {
 	    fetch_templates_from_customer(frm);
 	    apply_revenue_accounts(frm);
+		update_customer_data(frm);
 	},
     customer(frm) {
         setTimeout(function(){

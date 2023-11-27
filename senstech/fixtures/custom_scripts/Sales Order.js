@@ -1,6 +1,7 @@
 frappe.ui.form.on('Sales Order', {
     before_save(frm) {
 	    fetch_templates_from_customer(frm);
+		update_customer_data(frm);
 	},
     customer(frm) {
         setTimeout(function(){

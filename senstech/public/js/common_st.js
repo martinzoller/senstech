@@ -156,6 +156,17 @@ function basic_sales_validations(frm) {
 }
 
 
+function update_customer_data(frm) {
+	frappe.db.get_doc("Customer", frm.doc.customer).then(cust => {
+		if(cust && !cust.payment_terms) {
+			frappe.db.set_value("Customer", frm.doc.customer, "payment_terms", frm.doc.payment_terms_template).then(r => {
+				frappe.show_alert({message: __('Zahlungsbedingungen im Kundenstamm gespeichert:')+' '+frm.doc.payment_terms_template, indicator: 'green'}, 5);
+			});
+		}
+	});	
+}
+
+
 function fetch_taxes_and_charges_from_supplier(frm) {
 	if(!frm.doc.supplier) {
 		return;
