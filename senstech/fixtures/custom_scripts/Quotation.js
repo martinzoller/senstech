@@ -19,8 +19,6 @@ frappe.ui.form.on('Quotation', {
             }
         }
 		
-		set_specsheet_queries(frm);
-		
 		if (!frm.doc.__islocal && frm.doc.docstatus == 0) {
 			if(frm.doc.gate1_requested_date) {
 				// Dokument schreibgeschützt, sobald Freigabe beantragt
@@ -66,6 +64,9 @@ frappe.ui.form.on('Quotation', {
 			}
 		}
     },
+	onload(frm) {
+		set_specsheet_queries(frm);
+	},	
 	onload_post_render(frm) {
         // Feld "Nummernkreis" lässt sich nicht mit Customization verstecken
         jQuery('div[data-fieldname="naming_series"]').hide();

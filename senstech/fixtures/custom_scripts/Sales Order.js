@@ -66,6 +66,9 @@ frappe.ui.form.on('Sales Order', {
             }
         }
     },
+	onload(frm) {
+		project_query(frm);
+	},
 	onload_post_render(frm) {
         // Feld "Nummernkreis" lässt sich nicht mit Customization verstecken
         jQuery('div[data-fieldname="naming_series"]').hide();

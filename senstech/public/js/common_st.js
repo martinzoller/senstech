@@ -243,3 +243,11 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 		}, 500);
 	}
 }
+
+function project_query(frm) {
+	frm.set_query('project', () => {
+		return {
+			filters: { project_type: 'Extern' }
+		};
+	});
+};

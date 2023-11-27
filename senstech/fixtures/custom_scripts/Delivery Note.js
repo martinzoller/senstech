@@ -9,6 +9,9 @@ frappe.ui.form.on('Delivery Note', {
 	    check_item_links(frm);
         reload_contacts(frm);
     },
+	onload(frm) {
+		project_query(frm);
+	},
 	onload_post_render(frm) {
         // Feld "Nummernkreis" lässt sich nicht mit Customization verstecken
         jQuery('div[data-fieldname="naming_series"]').hide();
