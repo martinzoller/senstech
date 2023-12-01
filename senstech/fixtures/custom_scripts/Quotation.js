@@ -19,12 +19,13 @@ frappe.ui.form.on('Quotation', {
             }
         }
 		
+		// Offertenfreigabe
 		if (!frm.doc.__islocal && frm.doc.docstatus == 0) {
 			if(frm.doc.gate1_requested_date) {
 				// Dokument schreibgeschützt, sobald Freigabe beantragt
 				frm.set_read_only();
 				
-				// Review bereits abgeschlossen (vermutlich negativ, sonst wäre docstatus>1)
+				// Review bereits abgeschlossen, jedoch Fehler beim Buchen aufgetreten
 				if(frm.doc.gate1_reviewed_date) {
 					if(frappe.perm.has_perm("Quotation", 1, "write")) {
 						frm.add_custom_button(__("Gate-1-Review wiederholen"), function() {
@@ -34,7 +35,7 @@ frappe.ui.form.on('Quotation', {
 							}
 						});
 						frm.add_custom_button(__("Freigabeantrag löschen"), function() {
-							check_not_dirty(frm) &&	gate1_withdraw_request(frm, true);
+							check_not_dirty(frm) &&	gate1_withdraw_request(frm);
 						});
 					}
 					else {
@@ -62,6 +63,11 @@ frappe.ui.form.on('Quotation', {
 					gate1_request(frm);
 				});
 			}
+		}
+		
+		// Abändern von Dokumenten: Antrags- und Reviewdaten löschen, Checkliste belassen
+		if(frm.doc.__islocal && frm.doc.gate1_requested_date) {
+			gate1_clear_request(frm, false);
 		}
     },
 	onload(frm) {
@@ -129,7 +135,7 @@ frappe.ui.form.on('Quotation', {
         reload_contacts(frm);
     },
     before_submit(frm) {
-		if(frm.doc.gate1_review_result != "Gate 1 erreicht" || !frm.doc.gate1_reviewed_date){
+		if(!frm.doc.gate1_reviewed_date){
 			if(doc_has_dev_items(frm)) {
 				validation_error(frm, 'bemerkung_intern', __("Offerten mit Entwicklungsdienstleistungen benötigen eine Freigabe. Bitte zuerst einen Freigabeantrag stellen."))
 			}
@@ -254,31 +260,38 @@ function gate1_clear_review(frm) {
 	frm.set_value('gate1_reviewed_date', '');
 }
 
-function gate1_withdraw_request(frm, clear_review=false){
+function gate1_withdraw_request(frm){
 	frappe.confirm(__("Der Antrag muss danach erneut ausgefüllt werden. Wirklich löschen?"), () => {
-		// Checklistendaten leeren
-		// Upload-Felder vorsichtshalber sein lassen
+		gate1_clear_request(frm, true);
+	});
+}
+
+function gate1_clear_request(frm, clear_checklist){
+	
+	// Antragsdaten leeren
+	frm.set_value('gate1_requester_comments', '');
+	frm.set_value('gate1_requested_by_user', '');
+	frm.set_value('gate1_requested_by_name', '');
+	frm.set_value('gate1_requested_date', '');
+	
+	// ggf. vorhandene Review-Daten leeren
+	gate1_clear_review(frm);
+	
+	if(clear_checklist) {
+		// Checklistendaten und Kommentare leeren
+		// Upload-Felder vorsichtshalber sein lassen		
 		frm.set_value('gate1_check_specsheet', '');
 		frm.set_value('gate1_check_development_plan', '');
 		frm.set_value('gate1_check_risk_management', '');
 		frm.set_value('gate1_check_environment', '');
+		frm.set_value('gate1_comment_environment', '');
 		frm.set_value('gate1_check_procurement', '');
+		frm.set_value('gate1_comment_procurement', '');
 		frm.set_value('gate1_check_cost_calc', '');
-		
-		// Antragsdaten leeren
-		frm.set_value('gate1_requester_comments', '');
-		frm.set_value('gate1_requested_by_user', '');
-		frm.set_value('gate1_requested_by_name', '');
-		frm.set_value('gate1_requested_date', '');
-		
-		// ggf. Review-Daten leeren
-		if(clear_review) {
-			gate1_clear_review(frm);
-		}
-			   
-		frm.save().then(r => {
-			frm.reload_doc();
-		});
+	}
+	
+	frm.save().then(r => {
+		frm.reload_doc();
 	});
 }
 
@@ -300,68 +313,116 @@ function gate1_dialog(frm) {
 			{
 				label: __('Lastenheft erstellt und mit Kunde abgeglichen?'),
 				fieldname: 'gate1_check_specsheet',
+				default: frm.doc.gate1_check_specsheet,				
 				fieldtype: 'Select',
 				options: ['Ja','Nein'],
+				read_only: is_review,				
 			},
 			{
 				label: __('Kostenkalkulation und Angebot erstellt?'),
 				fieldname: 'gate1_check_cost_calc',
-				default: frm.doc.gate1_upload_cost_calc?'Ja':'',
+				default: frm.doc.gate1_check_cost_calc,
 				fieldtype: 'Select',
 				options: ['Ja','Nein'],
+				read_only: is_review,				
 			},
 			{
 				label: __('Kostenkalkulation'),
 				fieldname: 'gate1_upload_cost_calc',
-				default: frm.doc.gate1_upload_cost_calc,
-				fieldtype: 'Attach',
+				default: upload_field_default(frm.doc.gate1_upload_cost_calc, is_review),
+				fieldtype: is_review?'Data':'Attach',
 				depends_on: doc => doc.gate1_check_cost_calc == 'Ja',
+				read_only: is_review,				
 			},
 			{
 				label: __('Entwicklungsplan erstellt?'),
 				fieldname: 'gate1_check_development_plan',
-				/* Bei Review nur dann "abhäkeln", wenn Datei bereits vorhanden */
-				/* (ansonsten soll Reviewer den Bedarf unabhängig beurteilen) */
-				default: frm.doc.gate1_upload_development_plan?'Ja':'',
+				default: frm.doc.gate1_check_development_plan,
 				fieldtype: 'Select',
 				options: ['Ja','Nein','Nicht benötigt'],
+				read_only: is_review,				
 			},
 			{
 				label: __('Entwicklungsplan'),
 				fieldname: 'gate1_upload_development_plan',
-				default: frm.doc.gate1_upload_development_plan,
-				fieldtype: 'Attach',
+				default: upload_field_default(frm.doc.gate1_upload_development_plan, is_review),
+				fieldtype: is_review?'Data':'Attach',
 				depends_on: doc => doc.gate1_check_development_plan == 'Ja',
+				read_only: is_review,				
 			},
 			{
 				label: __('Risikomanagement-Plan erstellt?'),
+				description: __('Bei Medizinprodukten nach ISO 13485 obligatorisch'),
 				fieldname: 'gate1_check_risk_management',
-				default: frm.doc.gate1_upload_risk_management?'Ja':'',
+				default: frm.doc.gate1_check_risk_management,
 				fieldtype: 'Select',
 				options: ['Ja','Nein','Nicht benötigt'],
+				read_only: is_review,				
 			},
 			{
 				label: __('Risikomanagement-Plan'),
 				fieldname: 'gate1_upload_risk_management',
-				default: frm.doc.gate1_upload_risk_management,
-				fieldtype: 'Attach',
+				default: upload_field_default(frm.doc.gate1_upload_risk_management, is_review),
+				fieldtype: is_review?'Data':'Attach',
 				depends_on: doc => doc.gate1_check_risk_management == 'Ja',
+				read_only: is_review,
 			},
 			{
-				label: __('Umweltverträglichkeit unproblematisch?'),
+				label: __('Umweltverträglichkeit: Produkt und Herstellprozesse frei von RoHS/REACH gelisteten oder anderweitig problematischen Substanzen?'),
 				fieldname: 'gate1_check_environment',
+				default: frm.doc.gate1_check_environment,
 				fieldtype: 'Select',
-				options: ['Ja','Nein'],
+				options: ['Ja','Ja, mit Vorbehalt','Nein'],
+				read_only: is_review,
 			},
 			{
-				label: __('Materialbeschaffung unproblematisch?'),
-				fieldname: 'gate1_check_procurement',
-				fieldtype: 'Select',
-				options: ['Ja','Nein'],
+				label: __('Kommentar zur Umweltverträglichkeit'),
+				description: __('Problematische Substanzen aufführen und Ansatz zu deren gefahrloser Verwendung im spezifischen Anwendungsfall skizzieren'),
+				fieldname: 'gate1_comment_environment',
+				default: frm.doc.gate1_comment_environment,
+				fieldtype: 'Text Editor',
+				depends_on: doc => doc.gate1_check_environment == 'Ja, mit Vorbehalt',
+				read_only: is_review,
 			},
+			{
+				label: __('Belegdokument zur Umweltverträglichkeit'),
+				description: __('Optionaler Beleg für die Diskussion der möglichen Umweltprobleme mit dem Kunden und/oder für die Existenz einer gangbaren Lösung'),
+				fieldname: 'gate1_upload_environment',
+				default: upload_field_default(frm.doc.gate1_upload_environment, is_review),
+				fieldtype: is_review?'Data':'Attach',
+				depends_on: doc => doc.gate1_check_environment == 'Ja, mit Vorbehalt',
+				read_only: is_review,
+			},
+			{
+				label: __('Alle Rohmaterialien ohne Probleme beschaffbar?'),
+				fieldname: 'gate1_check_procurement',
+				default: frm.doc.gate1_check_procurement,
+				fieldtype: 'Select',
+				options: ['Ja','Ja, mit Vorbehalt','Nein'],
+				read_only: is_review,
+			},
+			{
+				label: __('Kommentar zur Materialbeschaffung'),
+				description: __('Beschaffungsprobleme aufführen und gefundene Lösungen/Alternativen darlegen'),
+				fieldname: 'gate1_comment_procurement',
+				default: frm.doc.gate1_comment_procurement,
+				fieldtype: 'Text Editor',
+				depends_on: doc => doc.gate1_check_procurement == 'Ja, mit Vorbehalt',
+				read_only: is_review,
+			},			
+			{
+				label: __('Belegdokument zu Beschaffungsproblemen'),
+				description: __('Optionaler Beleg für die Diskussion der Beschaffungsprobleme mit dem Kunden und/oder für die Existenz einer gangbaren Lösung'),
+				fieldname: 'gate1_upload_procurement',
+				default: upload_field_default(frm.doc.gate1_upload_procurement, is_review),
+				fieldtype: is_review?'Data':'Attach',
+				depends_on: doc => doc.gate1_check_procurement == 'Ja, mit Vorbehalt',
+				read_only: is_review
+			},			
 			{
 				label: __('Kommentare und Referenzen zum Freigabeantrag (optional)'),
 				fieldname: 'gate1_requester_comments',
+				default: frm.doc.gate1_requester_comments,
 				fieldtype: 'Text Editor',
 				read_only: is_review,
 			},
@@ -431,9 +492,13 @@ function gate1_dialog(frm) {
 				) && (
 					(vals.gate1_check_risk_management == 'Ja' && vals.gate1_upload_risk_management) ||
 					vals.gate1_check_risk_management == 'Nicht benötigt'
-				) &&
-				vals.gate1_check_environment == 'Ja' &&
-				vals.gate1_check_procurement == 'Ja'
+				) && (
+					(vals.gate1_check_environment == 'Ja, mit Vorbehalt' && !text_field_empty(vals.gate1_comment_environment)) ||
+					vals.gate1_check_environment == 'Ja'
+				) && (
+					(vals.gate1_check_procurement == 'Ja, mit Vorbehalt' && !text_field_empty(vals.gate1_comment_procurement)) ||
+					vals.gate1_check_procurement == 'Ja'
+				)
 			);
 			
 			if(!is_checklist_filled) {
@@ -441,7 +506,7 @@ function gate1_dialog(frm) {
 				return;
 			}
 			if(!is_review && !is_checklist_complete) {
-				frappe.msgprint(__("Für einen Freigabeantrag muss die Dokumentation zur Entwicklungsphase 0 vollständig sein. Eine Freigabe mit Vorbehalten ist nicht vorgesehen."),__("Checkliste unvollständig"));
+				frappe.msgprint(__("Für einen Freigabeantrag muss die Dokumentation zur Entwicklungsphase 0 vollständig sein. Vorbehalte bei Umweltverträglichkeit oder Beschaffbarkeit sind zu erläutern und allfällige Lösungsansätze mit Dokumenten zu belegen."),__("Checkliste unvollständig"));
 				return;
 			} else if(is_review && !is_checklist_complete && vals.gate1_review_result != 'Gate 1 nicht erreicht') {
 				frappe.msgprint(__("Wenn die Dokumentation noch lückenhaft ist, bitte das Ergebnis 'Gate 1 nicht erreicht' auswählen."),__("Checkliste unvollständig"));
@@ -452,27 +517,34 @@ function gate1_dialog(frm) {
 
 			
 			// Formulardaten übernehmen
-			let save_fields = [
-				'gate1_check_specsheet',
-				'gate1_check_development_plan',
-				'gate1_upload_development_plan',
-				'gate1_check_risk_management',
-				'gate1_upload_risk_management',
-				'gate1_check_environment',
-				'gate1_check_procurement',
-				'gate1_check_cost_calc',
-				'gate1_upload_cost_calc'
-			];
 			
+			let save_fields = [];
 			if(is_review) {
-				save_fields.push('gate1_reviewed_date');
-				save_fields.push('gate1_reviewer_comments');
-				save_fields.push('gate1_review_result');
+				save_fields = [
+					'gate1_reviewed_date',
+					'gate1_reviewer_comments',
+					'gate1_review_result'
+				];
 				frm.set_value('gate1_reviewed_by_user', frappe.user.name);
 				frm.set_value('gate1_reviewed_by_name', frappe.session.user_fullname);
 			} else {
-				save_fields.push('gate1_requested_date');
-				save_fields.push('gate1_requester_comments');
+				save_fields = [
+					'gate1_check_specsheet',
+					'gate1_check_cost_calc',
+					'gate1_upload_cost_calc',
+					'gate1_check_development_plan',
+					'gate1_upload_development_plan',
+					'gate1_check_risk_management',
+					'gate1_upload_risk_management',
+					'gate1_check_environment',
+					'gate1_comment_environment',
+					'gate1_upload_environment',
+					'gate1_check_procurement',
+					'gate1_comment_procurement',
+					'gate1_upload_procurement',
+					'gate1_requested_date',
+					'gate1_requester_comments',
+				];
 				frm.set_value('gate1_requested_by_user', frappe.user.name);
 				frm.set_value('gate1_requested_by_name', frappe.session.user_fullname);
 			}
@@ -488,7 +560,9 @@ function gate1_dialog(frm) {
 				let attach_fields = [
 					'gate1_upload_development_plan',
 					'gate1_upload_risk_management',
-					'gate1_upload_cost_calc'
+					'gate1_upload_cost_calc',
+					'gate1_upload_environment',
+					'gate1_upload_procurement',
 				];
 				attach_fields = attach_fields.filter(fld => vals[fld]);
 				
@@ -518,8 +592,8 @@ function gate1_dialog(frm) {
 				Promise.all(attach_done).then(f => {
 					frm.reload_doc();
 
-					if(frm.doc.gate1_review_result == "Gate 1 erreicht" && frm.doc.gate1_reviewed_date) {
-						// Automatisch buchen
+					if(frm.doc.gate1_reviewed_date) {
+						// Nach Review automatisch buchen (unabhängig vom Ergebnis!)
 						frappe.validated = true;
 						frm.script_manager.trigger("before_submit").then(function() {
 							if(frappe.validated) {
@@ -553,4 +627,8 @@ function attach_pdf_with_gate1(frm) {
             attach_pdf_print(frm);
         }
     });
+}
+
+function upload_field_default(value, is_review) {
+	return is_review?'<a href="'+value+'" target="_blank">'+value+'</a>':value;
 }
