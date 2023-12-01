@@ -117,7 +117,7 @@ frappe.ui.form.on('Item', {
 		if (frm.doc.benoetigt_chargenfreigabe && !frm.doc.has_batch_no) {
 	        validation_error(frm, 'has_batch_no', __("Chargenfreigabe ist nur bei aktivierter Chargennummer möglich"));
 	    }
-	    if (frm.doc.qualitaetsspezifikation && frm.doc.qualitaetsspezifikation != '<div><br></div>'  && !frm.doc.benoetigt_chargenfreigabe) {
+	    if (!text_field_empty(frm.doc.qualitaetsspezifikation)  && !frm.doc.benoetigt_chargenfreigabe) {
 	        validation_error(frm, 'benoetigt_chargenfreigabe', __("Ein COC kann nur bei freigegebenen Chargen erzeugt werden. Bitte Chargenfreigabe aktivieren oder Qualitätsspezifikation leer lassen."));
 	    }
 		if (['Verkauf','Einkauf','Intern'].includes(item_grp)) {

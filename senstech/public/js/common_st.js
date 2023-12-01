@@ -88,7 +88,7 @@ function basic_common_validations(frm) {
 	if(! ["Blanket Order", "Purchase Receipt"].includes(frm.doctype)) {
 		let pos_numbers = [];
 		frm.doc.items.forEach(function(entry) {
-			if(!entry.description || entry.description == '<div><br></div>'){
+			if(text_field_empty(entry.description)){
 				entry.description = entry.item_name;
 			}
 			if(pos_numbers.includes(entry.position)) {
@@ -262,3 +262,7 @@ function project_query(frm) {
 		};
 	});
 };
+
+function text_field_empty(val) {
+	return !val || val == '<div><br></div>';
+}

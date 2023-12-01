@@ -75,7 +75,7 @@
 {% for item in doc.items %}
 		{% if item.batch_no %}
 				{% set item_doc = frappe.get_doc("Item", item.item_code) %}
-				{% if item_doc.qualitaetsspezifikation and item_doc.qualitaetsspezifikation != '<div><br></div>' %}
+				{% if not text_field_empty(item_doc.qualitaetsspezifikation) %}
 						{% if chargen_master[item.batch_no] %}
 								{% if chargen_master[item.batch_no].update({'qty': chargen_master[item.batch_no].qty + item.qty}) %}{% endif %}
 						{% else %}

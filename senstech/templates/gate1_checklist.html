@@ -154,14 +154,14 @@
 		<b><br>{{ _("Kommentare und zusätzliche Referenzen") }}</b>
 </div>
 <div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Freigabeantrag:") }}
-{% if doc.gate1_requester_comments and doc.gate1_requester_comments != "<div><br></div>" %}
+{% if not text_field_empty(doc.gate1_requester_comments) %}
   <br>{{ doc.gate1_requester_comments }}
 {% else %}
   {{ _("keine") }}
 {% endif %}	
 </div>
 <div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Review:") }}
-{% if doc.gate1_reviewer_comments and doc.gate1_reviewer_comments != "<div><br></div>" %}
+{% if not text_field_empty(doc.gate1_reviewer_comments) %}
   <br>{{ doc.gate1_reviewer_comments }}
 {% else %}
   {{ _("keine") }}

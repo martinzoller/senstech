@@ -45,7 +45,8 @@ jenv = {
         "get_signature_for_user_id:senstech.scripts.tools.get_signature_for_user_id",
         "get_employee_name:senstech.scripts.tools.get_employee_name",
         "get_measurands_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurands_for_delivery_note_item",
-        "get_measurements_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurements_for_delivery_note_item"
+        "get_measurements_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurements_for_delivery_note_item",
+        "text_field_empty:senstech.scripts.tools.text_field_empty"
 	]
 }
 
