@@ -71,7 +71,7 @@
 <!-- /Abschlussblock -->
 
 <!-- Wasserzeichen "Freigabe nicht erteilt" -->
-{% if  doc.docstatus > 0 and doc.gate1_review_result != "Gate 1 erreicht" %}
+{% if  doc.docstatus > 0 and doc.gate1_reviewed_date and doc.gate1_review_result != "Gate 1 erreicht" %}
 <div class="wz-draft"><p>{{ _("Freigabe nicht erteilt") }}</p></div>
 {% endif %}
 <!-- /Wasserzeichen "Freigabe nicht erteilt" -->
