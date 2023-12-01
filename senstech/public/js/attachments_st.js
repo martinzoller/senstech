@@ -83,7 +83,7 @@ frappe.ui.form.Attachments = Class.extend({
 				return false
 			});
 
-		if(!frappe.model.can_write(this.frm.doctype, this.frm.name)) {
+		if(!frappe.model.can_write(this.frm.doctype, this.frm.name) || cur_frm.doc.docstatus > 0) {
 			$close.remove();
 		}
 	},
