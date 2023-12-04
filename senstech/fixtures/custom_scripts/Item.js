@@ -187,13 +187,14 @@ frappe.ui.form.on('Item', {
 					validation_error(frm, 'item_code', __('Der Artikelcode von Eigenproduktvarianten muss dem Schema "XX-011-nn00-Axxx-Byyy-Czzz-...." entsprechen'));
 				}
 			}
-			else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert'].includes(item_grp)) {
+			else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
 				// Halbfabrikate:   HF-kkk-nnxx, wobei kkk die Kundennr. ist
 				// Sensorsubstrate poliert:  PS-kkk-nnxx
 				// Sensorsubstrate isoliert: IS-kkk-nnxx
-				const intermediate_goods_regex = new RegExp('^${item_code_prefix_from_group(item_grp)}-[0-9]{3}-[0-9]{4}$');
+				// Wiederkehrende Lohnfertigung: LF-kkk-nnxx
+				let intermediate_goods_regex = new RegExp(`^${item_code_prefix_from_group(item_grp)}-[0-9]{3}-[0-9]{4}$`);
 				if(!intermediate_goods_regex.test(item_code)) {
-					validation_error(frm, 'item_code', __('Der Artikelcode von Sensorsubstraten und Halbfabrikaten muss dem Schema "HF|PS|IS-kkk-ppnn" entsprechen'));
+					validation_error(frm, 'item_code', __('Der Artikelcode von Sensorsubstraten, Halbfabrikaten und Lohnfertigungsartikeln muss dem Schema "HF|PS|IS|LF-kkk-ppnn" entsprechen'));
 				}
 				let item_code_customer = item_code.substr(3,3);
 				// Bei Kundencode 011 den Kunden nicht validieren, damit Eigenprodukte optional einen Kunden und eine Kunden-ArtNr haben können (= IST SAP-Nr.)
@@ -202,7 +203,7 @@ frappe.ui.form.on('Item', {
 				}
 				let intermediate_goods_index = item_code.substr(9,2);
 				if(intermediate_goods_index == 0) {
-					validation_error(frm, 'item_code', __("Der Substrat- oder Halbfabrikatsindex 'nn' im Namensschema XX-kkk-ppnn muss mindestens 1 sein"));
+					validation_error(frm, 'item_code', __("Der Artikelindex 'nn' im Namensschema XX-kkk-ppnn muss mindestens 1 sein"));
 				}
 			}
 			else if(item_grp.startsWith('Serieprodukte')) {
@@ -234,9 +235,9 @@ frappe.ui.form.on('Item', {
 							validation_error(frm, 'manufactured_from', __("Isolierte Sensorsubstrate können nur aus polierten Sensorsubstraten hergestellt werden"));
 						}
 					}
-					else if(item_grp == 'Sensorsubstrate poliert') {
+					else if(['Sensorsubstrate poliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
 						if(!prev_grp.startsWith('Rohmaterial')) {
-							validation_error(frm, 'manufactured_from', __("Polierte Sensorsubstrate können nur aus Rohmaterial hergestellt werden"));
+							validation_error(frm, 'manufactured_from', __("Polierte Sensorsubstrate und Lohnfertigungsartikel können nur aus Rohmaterial hergestellt werden"));
 						}
 					}
 					else {
@@ -333,7 +334,7 @@ frappe.ui.form.on('Item', {
 						eigenprod_popup.show();
 					}
 				}
-				else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert'].includes(item_grp)) {
+				else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
 					let ic_prefix = item_code_prefix_from_group(item_grp);
 					// Callback-Fkt zum Aktualisieren der Projektnummer-Liste, weiter unten mehrfach gebraucht
 					let project_no_callback = function(p_nums) {
@@ -346,7 +347,7 @@ frappe.ui.form.on('Item', {
 						int_prod_popup.set_df_property('project_no', 'options', p_nums);
 					}
 					let int_prod_popup = new frappe.ui.Dialog({
-						'title': (item_grp == 'Halbfabrikate' ? __('Halbfabrikat anlegen') : __('Sensorsubstrat anlegen')),
+						'title': __(item_type_from_group(item_grp)+' anlegen'),
 						'fields': [
 							{
 								'fieldname': 'item_group',
@@ -357,7 +358,8 @@ frappe.ui.form.on('Item', {
 								'fieldname': 'end_product_type',
 								'fieldtype': 'Select',
 								'label': __('Art der Endprodukte'),
-								/*'default': item_code[6]=='-'?(item_code.substr(3,3)=='011'?'own':'custom'):'',*/
+								'depends_on': f => (item_grp != 'Wiederkehrende Lohnfertigung (PZ-2002)'),
+								'default': item_grp == 'Wiederkehrende Lohnfertigung (PZ-2002)'?'custom':'',
 								'options': [
 									{ 'value': 'custom', 'label': __('Kundenspezifische Produkte') },
 									{ 'value': 'own', 'label': __('Eigenprodukte') },
@@ -415,7 +417,7 @@ frappe.ui.form.on('Item', {
 												// Kunde im Artikel auch setzen
 												// Umgekehrt ist es der Einfachheit halber nicht verknüpft (bei nachträglicher Änderung des Kunden muss Artikelcode von Hand angepasst werden)
 												// Beim Speichern wird jedoch Kundennr. im Artikelcode mit Kundennr. des Artikels abgeglichen
-												frm.set_value('customer', val.customer);
+												frm.set_value('kunde', val.customer);
 											}
 										} else {
 											frappe.msgprint(__("Fehler beim Ermitteln des nächsten freien Artikelcodes"), __("Artikelcode-Auswahl"));
@@ -505,7 +507,7 @@ frappe.ui.form.on('Item', {
 								ser_prod_popup.hide();
 								let new_item_code = 'PR-'+val.customer.substr(5,3)+'-'+val.project_no+'00-'+val.spec_revision+'-'+val.type_index;
 								frm.set_value('item_code', new_item_code);
-								frm.set_value('customer', val.customer);
+								frm.set_value('kunde', val.customer);
 								manufactured_from_filter(frm, val.customer, val.project_no);
 							} else {
 								frappe.msgprint(__("Bitte alle Felder ausfüllen"), __("Angaben unvollständig"));
@@ -790,6 +792,12 @@ function validate_item_code_customer(frm, item_code_customer) {
 
 // Artikelcode-Präfix aus Artikelgruppe erzeugen
 function item_code_prefix_from_group(item_group) {
-	const ic_prefixes = {'Halbfabrikate': 'HF', 'Sensorsubstrate poliert': 'PS', 'Sensorsubstrate isoliert': 'IS'};
+	const ic_prefixes = {'Halbfabrikate': 'HF', 'Sensorsubstrate poliert': 'PS', 'Sensorsubstrate isoliert': 'IS', 'Wiederkehrende Lohnfertigung (PZ-2002)': 'LF'};
 	return ic_prefixes[item_group];
+}
+
+// Artikeltyp (für UI-Titel) aus Artikelgruppe erzeugen
+function item_type_from_group(item_group) {
+	const item_types = {'Halbfabrikate': 'Halbfabrikat', 'Sensorsubstrate poliert': 'Poliertes Sensorsubstrat', 'Sensorsubstrate isoliert': 'Isoliertes Sensorsubstrat', 'Wiederkehrende Lohnfertigung (PZ-2002)': 'Lohnfertigungsartikel'};
+	return item_types[item_group];
 }
