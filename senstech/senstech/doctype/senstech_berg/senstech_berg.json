@@ -1,4 +1,7 @@
 {
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:bergname",
  "creation": "2021-03-02 16:20:54.204221",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -8,15 +11,16 @@
   "meeresh\u00f6he",
   "kanton",
   "landeskoordinaten",
-  "artikel",
-  "bezeichnung"
+  "bezeichnung",
+  "project"
  ],
  "fields": [
   {
    "fieldname": "bergname",
    "fieldtype": "Data",
    "label": "Bergname",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "meeresh\u00f6he",
@@ -36,20 +40,21 @@
    "label": "Landeskoordinaten"
   },
   {
-   "fieldname": "artikel",
-   "fieldtype": "Link",
-   "label": "Artikel",
-   "options": "Item"
-  },
-  {
    "fieldname": "bezeichnung",
    "fieldtype": "Data",
    "label": "Bezeichnung",
    "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Projekt",
+   "options": "Project",
+   "unique": 1
   }
  ],
- "modified": "2021-03-12 13:29:46.120735",
- "modified_by": "Administrator",
+ "modified": "2023-12-06 10:50:03.266670",
+ "modified_by": "martin.zoller@senstech.ch",
  "module": "Senstech",
  "name": "Senstech Berg",
  "owner": "martin.zoller@senstech.ch",
@@ -70,6 +75,6 @@
  "search_fields": "bergname",
  "sort_field": "modified",
  "sort_order": "DESC",
- "title_field": "bezeichnung",
+ "title_field": "bergname",
  "track_changes": 1
 }
