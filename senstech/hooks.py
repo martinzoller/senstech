@@ -117,6 +117,14 @@ doc_events =  {
         "on_submit": "senstech.scripts.sales_order_tools.create_dev_batches",
         "on_cancel": "senstech.scripts.sales_order_tools.delete_dev_batches",
     },
+    
+    "Project": {
+        "on_update": "senstech.scripts.project_tools.register_mountain",
+        "on_trash": "senstech.scripts.project_tools.deregister_mountain",
+    },
+    "Item": {
+        "validate": "senstech.scripts.item_tools.validate_item"
+    }
 }
 
 # Scheduled Tasks
