@@ -220,7 +220,7 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 		+encodeURIComponent(frm.docname)
 		+'%26format%3D'
 		+encodeURIComponent(frm.doctype)
-		+'%20ST%26no_letterhead%3D0';
+		+'%20ST%26no_letterhead%3D0%26_lang%3D'+(frm.doc.language || "de");
     var pdf_preview = new frappe.ui.Dialog({
 		title: dialog_title,
 		fields: [
