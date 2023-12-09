@@ -1,6 +1,6 @@
 <div>
 		<b><br><br>{{ _(doc_data.titel) }} {{ doc.name }}</b>
-		{% if doc.terms_above and doc.terms_above != '<div><br></div>' %}
+		{% if not text_field_empty(doc.terms_above) %}
 		<div style="height:2mm"></div>{{ _(doc.terms_above) }}
 		{% endif %}
 		<div><br></div>

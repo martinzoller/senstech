@@ -303,3 +303,6 @@ def get_signature_for_name(employee_name):
 
 def get_employee_name(user_id):
     return frappe.get_doc("Employee", {"user_id": user_id}).employee_name
+
+def text_field_empty(val):
+    return (not val) or val == '<div><br></div>'

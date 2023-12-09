@@ -134,6 +134,11 @@ def get_data():
         },
         {
           'type': 'doctype',
+          'name': 'Senstech Prozessschrittvariante',
+          'label': _('Senstech Prozessschrittvariante')
+        },
+        {
+          'type': 'doctype',
           'name': 'Senstech Berg',
           'label': _('Senstech Berg')
         },

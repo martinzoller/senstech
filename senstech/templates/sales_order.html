@@ -48,8 +48,13 @@
 		<td>{% if doc.payment_terms_template %}{{ _(doc.payment_terms_template) }}{% else %}-{% endif %}</td>
 	</tr>
 	<tr>
-		<td>{{ _("Rahmenauftrag") }}</td>
-		<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>
+	 {% if doc.project %}<!-- Entwicklungsprojekte haben kaum einen Rahmenauftrag, daher Projektnr. an dessen Stelle anzeigen -->
+			<td>{{ _("Projektnummer") }}</td>
+			<td>{{ doc.project }}</td>
+	 {% else %}
+			<td>{{ _("Rahmenauftrag") }}</td>
+			<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>
+		{% endif %}
 		<td></td>
 		<td>{{ _("Geschäftsbedingungen") }}</td>
 		<td>{{ _("Siehe senstech.ch/agb") }}</td>

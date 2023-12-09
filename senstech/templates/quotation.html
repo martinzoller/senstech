@@ -69,3 +69,9 @@
 {{ frappe.render_template('templates/includes/closing.html', {'doc': doc, 'doc_data': doc_data}) }}
 </div>
 <!-- /Abschlussblock -->
+
+<!-- Wasserzeichen "Freigabe nicht erteilt" -->
+{% if  doc.docstatus > 0 and doc.gate1_reviewed_date and doc.gate1_review_result != "Gate 1 erreicht" %}
+<div class="wz-draft"><p>{{ _("Freigabe nicht erteilt") }}</p></div>
+{% endif %}
+<!-- /Wasserzeichen "Freigabe nicht erteilt" -->

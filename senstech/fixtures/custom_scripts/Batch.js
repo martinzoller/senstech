@@ -476,7 +476,7 @@ function charge_freigeben(frm) {
 }
 
 function charge_freigeben_schritt1(frm) {    
-    if(!cur_frm.doc.histogramm_text || cur_frm.doc.histogramm_text=='<div><br></div>') {
+    if(text_field_empty(cur_frm.doc.histogramm_text)) {
         // Kein Histogramm zum Freigeben
         charge_freigeben_schritt2(frm, 'Produktionscharge freigeben');
         return;

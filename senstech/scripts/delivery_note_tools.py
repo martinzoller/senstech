@@ -53,7 +53,7 @@ def create_single_label_pdf(label_printer, item, batch, qty, output=None):
     label_html = frappe.render_template("senstech/templates/delivery_note_packing_unit_label.html", {"item": item, "batch": batch, "qty": qty})
     return frappe.utils.pdf.get_pdf(label_html, options, output)
     
-
+# called by doc_events hook when Delivery Note is validated
 def validate_sensor_ids(doc, method):
     for item in doc.items:
         if item.sensor_ids_list:
@@ -72,7 +72,7 @@ def validate_sensor_ids(doc, method):
                     frappe.throw(_('Sensor Nr. {chargennummer}/{sensor_id} von Artikel "{item_name}" ist bereits in Lieferschein {dn_id} enthalten').format(chargennummer=item.chargennummer,sensor_id=sensor_id,item_name=item.item_name,dn_id=dn_id))
                     return
 
-
+# called by doc_events hook when Delivery Note is submitted
 def assign_sensor_ids(doc, method):
     for item in doc.items:
         if item.sensor_ids_list:
@@ -99,6 +99,7 @@ def assign_sensor_ids(doc, method):
             # This is done by first selecting these records by MAX(creation), then finding their names by matching each field from the GROUP BY clause.
             # The resulting list of names is then passed to the UPDATE query.
 
+# called by doc_events hook when Delivery Note is cancelled
 def release_sensor_ids(doc, method):
     frappe.db.sql("""
         UPDATE `tabSenstech Messdaten`

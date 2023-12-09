@@ -2,6 +2,7 @@ frappe.ui.form.on('Sales Invoice', {
     before_save(frm) {
 	    fetch_templates_from_customer(frm);
 	    apply_revenue_accounts(frm);
+		update_customer_data(frm);
 	},
     customer(frm) {
         setTimeout(function(){
@@ -34,6 +35,9 @@ frappe.ui.form.on('Sales Invoice', {
             });
         }
     },
+	onload(frm) {
+		project_query(frm);
+	},
 	onload_post_render(frm) {
         // Feld "Nummernkreis" lässt sich nicht mit Customization verstecken
         jQuery('div[data-fieldname="naming_series"]').hide();

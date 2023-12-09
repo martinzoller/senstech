@@ -8,6 +8,7 @@
 import frappe
 from frappe import _
 from frappe.utils.data import today, add_days
+from senstech.scripts.project_tools import get_next_project_id
 
 @frappe.whitelist()
 def get_item_variant_description(item):
@@ -83,6 +84,42 @@ def get_filtered_list_of_item_code_parts(ic_filter_string, ic_filter_startpos, i
             ret_value.append(line[0])
         return ret_value
 
+# Return a dictionary (2-digit project no => project or item name) of all projects that exist for the given customer, either as Project doctype or as Items with a project number within the Item Code.
+def get_project_list(customer_id):
+    next_id = int(get_next_project_id(customer_id)[7:9])
+    proj_list = {}
+    short_customer_id = customer_id[5:8]
+    
+    # For each existing project, find the mountain name or another appropriate description
+    for pn in range(1,next_id):
+        pn_string = ("0{pn}".format(pn=pn))[-2:]
+        proj_details = frappe.db.sql("""SELECT `project_title`,`mountain_name` FROM `tabProject` WHERE `project_name` = 'EP-{cust}-{proj}'""".format(cust=short_customer_id, proj=pn_string), as_dict=True)
+        title = _("Unbekannt")
+        if len(proj_details)>0:
+            title = proj_details[0].mountain_name or proj_details[0].project_title
+        else:
+            # Priorize:
+            # 1. Active over disabled items
+            # 2. Item templates over other items
+            # 3. Items with highest specification index (Rxx)
+            # 4. Items with lowest type index (Txx)
+            item_details = frappe.db.sql("""SELECT `item_name`,`mountain_name` FROM `tabItem` WHERE SUBSTR(`item_code`,1,3) != 'LF-' AND SUBSTR(`item_code`,3,7) = '-{cust}-{proj}' 
+                                            ORDER BY disabled ASC, has_variants DESC, SUBSTR(`item_code`,13,3) DESC, SUBSTR(`item_code`,17,3) ASC LIMIT 1; """.format(cust=short_customer_id, proj=pn_string), as_dict=True)
+            if len(item_details)>0:
+                title = item_details[0].mountain_name or item_details[0].item_name
+        proj_list[pn_string] = title
+    return proj_list
+
+
+# Return the project list from get_project_list(), but formatted as value/label pairs for a Frappe form field
+@frappe.whitelist()
+def get_project_list_for_select_field(customer_id):
+    proj_list = get_project_list(customer_id)
+    select_list = []
+    for num, title in sorted(proj_list.items()):
+        select_list.append({'value': num, 'label': num+' - '+title})
+    return select_list
+
 # Return the next free value in a series at a given position of the item code, with another part of the item code held constant, and optionally filtered by item group
 @frappe.whitelist()
 def get_next_item_code_part(ic_filter_string, ic_filter_startpos, ic_part_startpos, ic_part_length, item_group_filter=''):
@@ -113,3 +150,15 @@ def nachbestellung(item, supplier, qty, taxes):
     }).insert()
 
     return purchase_order.name
+
+# Called by doc_events hook when Item is validated
+def validate_item(doc, method):
+    # Make sure the mountain is not used elsewhere
+    if doc.mountain_name:
+        proj = frappe.db.get_value("Senstech Berg", doc.mountain_name, "project")
+        if proj and proj != 'EP-'+doc.item_code[3:9]:
+            frappe.throw(_("Der Bergname {0} wird schon für das Projekt {1} verwendet").format(doc.mountain_name, proj));
+        else:
+            mtn_item = frappe.get_doc("Item", {'mountain_name': doc.mountain_name})
+            if mtn_item and mtn_item.item_code[3:9] != doc.item_code[3:9]:
+                frappe.throw(_("Der Bergname {0} wird schon für Artikel {1} verwendet, der zu einem anderen Projekt gehört").format(doc.mountain_name, mtn_item.item_code));

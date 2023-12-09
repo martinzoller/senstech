@@ -1,6 +1,7 @@
 frappe.ui.form.on('Sales Order', {
     before_save(frm) {
 	    fetch_templates_from_customer(frm);
+		update_customer_data(frm);
 	},
     customer(frm) {
         setTimeout(function(){
@@ -9,6 +10,21 @@ frappe.ui.form.on('Sales Order', {
     },
     validate(frm) {
 		basic_sales_validations(frm);
+		frm.doc.items.forEach(entry => {
+			// Entwicklungsauftrag: Offertenreferenz prüfen
+			if(entry.item_code == 'GP-00001') {
+				let pos_prefix = __("Pos. {0}: ",[entry.position]);
+				if(!entry.prevdoc_docname) {
+					validation_error(frm, 'items', pos_prefix+__("Die AB für Entwicklungsaufträge muss aus der jeweiligen Offerte erzeugt werden."));
+				} else {
+					frappe.db.get_value("Quotation", entry.prevdoc_docname, "gate1_review_result").then(r => {
+						if(!r.message || r.message.gate1_review_result != "Gate 1 erreicht") {
+							validation_error(frm, 'items', pos_prefix+__("Die verknüpfte Offerte ist nicht freigegeben."));
+						}
+					});
+				}
+			}
+		});
         reload_contacts(frm);
     },
     after_save(frm) {
@@ -51,6 +67,9 @@ frappe.ui.form.on('Sales Order', {
             }
         }
     },
+	onload(frm) {
+		project_query(frm);
+	},
 	onload_post_render(frm) {
         // Feld "Nummernkreis" lässt sich nicht mit Customization verstecken
         jQuery('div[data-fieldname="naming_series"]').hide();
@@ -62,6 +81,12 @@ frappe.ui.form.on('Sales Order', {
     },
     on_submit(frm) {
         attach_pdf_print(frm);
+		// Chargen werden serverseitig angelegt und hier nur abgefragt
+		frappe.db.get_list("Batch", { fields: ['batch_id'], filters: { batch_id: ['LIKE', cur_frm.docname+"-P%A"] }}).then(res => {
+			res.forEach(row => {
+				frappe.show_alert({message: __("Produktionscharge für Entwicklungsauftrag wurde automatisch angelegt:")+' <a href="#Form/Batch/'+row.batch_id+'">'+row.batch_id+'</a>', indicator: 'green'}, 10);
+			});
+		});
     },
     after_cancel(frm) {
         add_cancelled_watermark(frm);

@@ -16,7 +16,7 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/senstech/css/senstech.css"
-app_include_js = [ "/assets/senstech/js/senstech.js", "/assets/senstech/js/common_st.js", "/assets/senstech/js/awesome_bar_st.js", "/assets/senstech/js/link_st.js" ]
+app_include_js = [ "/assets/senstech/js/senstech.js", "/assets/senstech/js/common_st.js", "/assets/senstech/js/awesome_bar_st.js", "/assets/senstech/js/link_st.js", "/assets/senstech/js/attachments_st.js" ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/senstech/css/senstech.css"
@@ -45,7 +45,8 @@ jenv = {
         "get_signature_for_user_id:senstech.scripts.tools.get_signature_for_user_id",
         "get_employee_name:senstech.scripts.tools.get_employee_name",
         "get_measurands_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurands_for_delivery_note_item",
-        "get_measurements_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurements_for_delivery_note_item"
+        "get_measurements_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurements_for_delivery_note_item",
+        "text_field_empty:senstech.scripts.tools.text_field_empty"
 	]
 }
 
@@ -110,8 +111,20 @@ doc_events =  {
         "validate": "senstech.scripts.delivery_note_tools.validate_sensor_ids",
         "on_submit": "senstech.scripts.delivery_note_tools.assign_sensor_ids",
         "on_cancel": "senstech.scripts.delivery_note_tools.release_sensor_ids",
-    }
+    },
 
+    "Sales Order": {
+        "on_submit": "senstech.scripts.sales_order_tools.create_dev_batches",
+        "on_cancel": "senstech.scripts.sales_order_tools.delete_dev_batches",
+    },
+    
+    "Project": {
+        "on_update": "senstech.scripts.project_tools.register_mountain",
+        "on_trash": "senstech.scripts.project_tools.deregister_mountain",
+    },
+    "Item": {
+        "validate": "senstech.scripts.item_tools.validate_item"
+    }
 }
 
 # Scheduled Tasks

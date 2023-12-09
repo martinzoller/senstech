@@ -88,7 +88,7 @@ function basic_common_validations(frm) {
 	if(! ["Blanket Order", "Purchase Receipt"].includes(frm.doctype)) {
 		let pos_numbers = [];
 		frm.doc.items.forEach(function(entry) {
-			if(!entry.description || entry.description == '<div><br></div>'){
+			if(text_field_empty(entry.description)){
 				entry.description = entry.item_name;
 			}
 			if(pos_numbers.includes(entry.position)) {
@@ -124,6 +124,9 @@ function basic_sales_validations(frm) {
 	let found_count = 0;
 	let items = frm.doc.items;
 	items.forEach(function(entry) {
+		if (frm.doctype != 'Quotation' && entry.item_code == 'GP-00003') {
+			validation_error(frm, 'items', __("Der generische Nullserie-Artikel GP-00003 darf nur für Offerten verwendet werden. Zum Bestellzeitpunkt ist ein spezifischer Artikel anzulegen. Bevor dieser ausgeliefert wird, muss die Nullserie-Freigabe (Gate 2) vorliegen."))
+		}
 		if (entry.item_group) {
 			processed_count++;
 			if (entry.item_group == 'Versandkosten') {
@@ -147,6 +150,20 @@ function basic_sales_validations(frm) {
 			});
 		}
 	});
+	if(!frm.doc.project && frm.doctype != 'Quotation' && frm.doc.items.some(i => i.item_group == 'Entwicklung nach PZ-2000')) {
+		validation_error(frm, 'project', __("Allen Verkaufsdokumenten mit Entwicklungspositionen muss ein Projekt zugewiesen sein"));
+	}
+}
+
+
+function update_customer_data(frm) {
+	frappe.db.get_doc("Customer", frm.doc.customer).then(cust => {
+		if(cust && !cust.payment_terms) {
+			frappe.db.set_value("Customer", frm.doc.customer, "payment_terms", frm.doc.payment_terms_template).then(r => {
+				frappe.show_alert({message: __('Zahlungsbedingungen im Kundenstamm gespeichert:')+' '+frm.doc.payment_terms_template, indicator: 'green'}, 5);
+			});
+		}
+	});	
 }
 
 
@@ -203,7 +220,7 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 		+encodeURIComponent(frm.docname)
 		+'%26format%3D'
 		+encodeURIComponent(frm.doctype)
-		+'%20ST%26no_letterhead%3D0';
+		+'%20ST%26no_letterhead%3D0%26_lang%3D'+(frm.doc.language || "de");
     var pdf_preview = new frappe.ui.Dialog({
 		title: dialog_title,
 		fields: [
@@ -236,4 +253,16 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 			modal_elem[0].requestFullscreen();
 		}, 500);
 	}
+}
+
+function project_query(frm) {
+	frm.set_query('project', () => {
+		return {
+			filters: { project_type: 'Extern' }
+		};
+	});
+};
+
+function text_field_empty(val) {
+	return !val || val == '<div><br></div>';
 }

@@ -117,7 +117,7 @@ frappe.ui.form.on('Item', {
 		if (frm.doc.benoetigt_chargenfreigabe && !frm.doc.has_batch_no) {
 	        validation_error(frm, 'has_batch_no', __("Chargenfreigabe ist nur bei aktivierter Chargennummer möglich"));
 	    }
-	    if (frm.doc.qualitaetsspezifikation && frm.doc.qualitaetsspezifikation != '<div><br></div>'  && !frm.doc.benoetigt_chargenfreigabe) {
+	    if (!text_field_empty(frm.doc.qualitaetsspezifikation)  && !frm.doc.benoetigt_chargenfreigabe) {
 	        validation_error(frm, 'benoetigt_chargenfreigabe', __("Ein COC kann nur bei freigegebenen Chargen erzeugt werden. Bitte Chargenfreigabe aktivieren oder Qualitätsspezifikation leer lassen."));
 	    }
 		if (['Verkauf','Einkauf','Intern'].includes(item_grp)) {
@@ -126,13 +126,13 @@ frappe.ui.form.on('Item', {
 		if(item_grp.startsWith('Serieprodukte') && !frm.doc.kunde) {
 			validation_error(frm, 'kunde', __("Bei kundenspezifischen Serieprodukten muss der betreffende Kunde ausgewählt werden"));
 		}
-		if(item_grp == 'Eigenprodukte' && !frm.doc.variant_of && !frm.doc.has_variants) {
-			validation_error(frm, 'has_variants', __("Unter 'Eigenprodukte' sind nur Artikelvorlagen und -varianten erlaubt"));
+		if(item_grp.startsWith('Eigenprodukte') && !frm.doc.variant_of && !frm.doc.has_variants) {
+			validation_error(frm, 'has_variants', __("In den Artikelgruppen für Eigenprodukte sind nur Artikelvorlagen und -varianten erlaubt"));
 		}		
-		if(item_grp != 'Eigenprodukte' && (frm.doc.variant_of ||frm.doc.has_variants)) {
+		if(!item_grp.startsWith('Eigenprodukte') && (frm.doc.variant_of ||frm.doc.has_variants)) {
 			validation_error(frm, 'has_variants', __("Artikelvorlagen und -varianten sind nur bei Eigenprodukten erlaubt"));
 		}
-		if(item_grp == 'Eigenprodukte' && !frm.doc.single_label_print_format) {
+		if(item_grp.startsWith('Eigenprodukte') && !frm.doc.single_label_print_format) {
 			validation_error(frm, 'single_label_print_format', __("Bei Eigenprodukten bitte ein Druckformat für die Verpackung von  Einzelsensoren auswählen"));
 		}
 		if(item_grp != 'Infrastruktur' && frm.doc.is_fixed_asset) {
@@ -176,7 +176,7 @@ frappe.ui.form.on('Item', {
 					validation_error(frm, 'item_code', __('Der Artikelcode der meisten Einkaufsartikel muss dem Schema "PT-#####" entsprechen'));
 				}
 			}
-			else if(item_grp == 'Eigenprodukte') {
+			else if(item_grp.startsWith('Eigenprodukte')) {
 				// Eigenprodukte: Der Variantencode wird derzeit nicht mit den Attributen abgeglichen, da er in der Regel ohnehin automatisch erzeugt wird
 				const eigenprod_template_regex = /^[A-Z]{2}-011-[0-9]{2}00$/;
 				const eigenprod_variant_regex = /^[A-Z]{2}-011-[0-9]{2}00(-[A-Z0-9]+)*$/;
@@ -187,13 +187,14 @@ frappe.ui.form.on('Item', {
 					validation_error(frm, 'item_code', __('Der Artikelcode von Eigenproduktvarianten muss dem Schema "XX-011-nn00-Axxx-Byyy-Czzz-...." entsprechen'));
 				}
 			}
-			else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert'].includes(item_grp)) {
+			else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
 				// Halbfabrikate:   HF-kkk-nnxx, wobei kkk die Kundennr. ist
 				// Sensorsubstrate poliert:  PS-kkk-nnxx
 				// Sensorsubstrate isoliert: IS-kkk-nnxx
-				const intermediate_goods_regex = new RegExp('^${item_code_prefix_from_group(item_grp)}-[0-9]{3}-[0-9]{4}$');
+				// Wiederkehrende Lohnfertigung: LF-kkk-nnxx
+				let intermediate_goods_regex = new RegExp(`^${item_code_prefix_from_group(item_grp)}-[0-9]{3}-[0-9]{4}$`);
 				if(!intermediate_goods_regex.test(item_code)) {
-					validation_error(frm, 'item_code', __('Der Artikelcode von Sensorsubstraten und Halbfabrikaten muss dem Schema "HF|PS|IS-kkk-ppnn" entsprechen'));
+					validation_error(frm, 'item_code', __('Der Artikelcode von Sensorsubstraten, Halbfabrikaten und Lohnfertigungsartikeln muss dem Schema "HF|PS|IS|LF-kkk-ppnn" entsprechen'));
 				}
 				let item_code_customer = item_code.substr(3,3);
 				// Bei Kundencode 011 den Kunden nicht validieren, damit Eigenprodukte optional einen Kunden und eine Kunden-ArtNr haben können (= IST SAP-Nr.)
@@ -202,7 +203,7 @@ frappe.ui.form.on('Item', {
 				}
 				let intermediate_goods_index = item_code.substr(9,2);
 				if(intermediate_goods_index == 0) {
-					validation_error(frm, 'item_code', __("Der Substrat- oder Halbfabrikatsindex 'nn' im Namensschema XX-kkk-ppnn muss mindestens 1 sein"));
+					validation_error(frm, 'item_code', __("Der Artikelindex 'nn' im Namensschema XX-kkk-ppnn muss mindestens 1 sein"));
 				}
 			}
 			else if(item_grp.startsWith('Serieprodukte')) {
@@ -210,7 +211,7 @@ frappe.ui.form.on('Item', {
 				if(!series_prod_regex.test(item_code)) {
 					validation_error(frm, 'item_code', __('Der Artikelcode von Serieprodukten muss dem Schema "PR-kkk-nn00-Rxx-Tyy" entsprechen'));
 				}
-				validate_item_code_customer(frm, item_code.substr(3,3));				
+				validate_item_code_customer(frm, item_code.substr(3,3));	
 			}
 			else {
 				// alle anderen Verkaufsartikel (Entwicklung, Kleinaufträge, Versandkosten, Gebühren und Abgaben, Geräte und Komponenten, Immobilienvermietung, übrige Dienstleistungen)
@@ -224,7 +225,7 @@ frappe.ui.form.on('Item', {
 			if(frm.doc.manufactured_from) {
 				frappe.db.get_doc("Item", frm.doc.manufactured_from).then(manuf_from => {
 					let prev_grp = manuf_from.item_group;
-					if(['Halbfabrikate','Eigenprodukte','Serieprodukte kundenspezifisch mit Chargenfreigabe','Serieprodukte kundenspezifisch ohne Chargenfreigabe'].includes(item_grp)) {
+					if(['Halbfabrikate','Eigenprodukte mit Chargenfreigabe','Eigenprodukte ohne Chargenfreigabe','Serieprodukte kundenspezifisch mit Chargenfreigabe','Serieprodukte kundenspezifisch ohne Chargenfreigabe'].includes(item_grp)) {
 						if(!['Sensorsubstrate poliert','Halbfabrikate'].includes(prev_grp)) {
 							validation_error(frm, 'manufactured_from', __("Halbfabrikate und Endprodukte können nur aus Halbfabrikaten oder polierten Sensorsubstraten hergestellt werden"));
 						}
@@ -234,9 +235,9 @@ frappe.ui.form.on('Item', {
 							validation_error(frm, 'manufactured_from', __("Isolierte Sensorsubstrate können nur aus polierten Sensorsubstraten hergestellt werden"));
 						}
 					}
-					else if(item_grp == 'Sensorsubstrate poliert') {
+					else if(['Sensorsubstrate poliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
 						if(!prev_grp.startsWith('Rohmaterial')) {
-							validation_error(frm, 'manufactured_from', __("Polierte Sensorsubstrate können nur aus Rohmaterial hergestellt werden"));
+							validation_error(frm, 'manufactured_from', __("Polierte Sensorsubstrate und Lohnfertigungsartikel können nur aus Rohmaterial hergestellt werden"));
 						}
 					}
 					else {
@@ -268,7 +269,7 @@ frappe.ui.form.on('Item', {
 			frm.set_value('is_purchase_item', parent_grp == "Einkauf");
 			
 			// Varianten
-			if(item_grp != 'Eigenprodukte') {
+			if(!item_grp.startsWith('Eigenprodukte')) {
 				frm.set_value('has_variants', false);
 			}
 			
@@ -298,7 +299,7 @@ frappe.ui.form.on('Item', {
 					// alle anderen Einkaufsartikel (Infrastruktur-Unterhalt, Dienstleistungen, Rohmaterial, Verbrauchsmaterial)
 					set_new_generic_item_code(frm, 'PT');
 				}
-				else if(item_grp == 'Eigenprodukte') {
+				else if(item_grp.startsWith('Eigenprodukte')) {
 					// Eigenprodukte: Nur Artikelvorlagen werden manuell angelegt
 					if(frm.doc.variant_of) {
 						frm.set_value('item_code', 'Artikelvariante muss aus Vorlage angelegt werden');
@@ -333,20 +334,10 @@ frappe.ui.form.on('Item', {
 						eigenprod_popup.show();
 					}
 				}
-				else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert'].includes(item_grp)) {
+				else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
 					let ic_prefix = item_code_prefix_from_group(item_grp);
-					// Callback-Fkt zum Aktualisieren der Projektnummer-Liste, weiter unten mehrfach gebraucht
-					let project_no_callback = function(p_nums) {
-						let next_no = "01";
-						if(p_nums.length > 0) {
-							next_no = String(parseInt(p_nums[p_nums.length-1])+1).padStart(2,'0');
-						}
-						// TODO: tendenziell noch Loop einbauen, um das gesamte Präfix in jeder Auswahloption einzufügen, dh. statt 01, 02, 03 sollte man wählen aus HF-102-01nn, HF-102,02nn, usw.
-						p_nums.push({ 'value': next_no, 'label': next_no+' '+__("(neu)") });
-						int_prod_popup.set_df_property('project_no', 'options', p_nums);
-					}
 					let int_prod_popup = new frappe.ui.Dialog({
-						'title': (item_grp == 'Halbfabrikate' ? __('Halbfabrikat anlegen') : __('Sensorsubstrat anlegen')),
+						'title': __(item_type_from_group(item_grp)+' anlegen'),
 						'fields': [
 							{
 								'fieldname': 'item_group',
@@ -357,14 +348,17 @@ frappe.ui.form.on('Item', {
 								'fieldname': 'end_product_type',
 								'fieldtype': 'Select',
 								'label': __('Art der Endprodukte'),
-								/*'default': item_code[6]=='-'?(item_code.substr(3,3)=='011'?'own':'custom'):'',*/
+								'depends_on': f => (item_grp != 'Wiederkehrende Lohnfertigung (PZ-2002)'),
+								'default': item_grp == 'Wiederkehrende Lohnfertigung (PZ-2002)'?'custom':'',
 								'options': [
 									{ 'value': 'custom', 'label': __('Kundenspezifische Produkte') },
 									{ 'value': 'own', 'label': __('Eigenprodukte') },
 								],
 								'change': e => {
 									if(int_prod_popup.fields_dict.end_product_type.value == 'own') {
-										get_customer_project_numbers(frm, project_no_callback, 'CU-00011');
+										get_customer_projects(frm, proj_list => {
+											int_prod_popup.set_df_property('project_no', 'options', proj_list);
+										}, 'CU-00011');
 									} else {
 										// Kundenspezifisch: Liste erst bei Kundenauswahl füllen
 										int_prod_popup.set_df_property('project_no', 'options', []);
@@ -380,7 +374,9 @@ frappe.ui.form.on('Item', {
 								'label': __('Kunde'),
 								'depends_on': doc => doc.end_product_type == 'custom',
 								'change': e => {
-									get_customer_project_numbers(frm, project_no_callback, int_prod_popup.fields_dict.customer.value);
+									get_customer_projects(frm, proj_list => {
+										int_prod_popup.set_df_property('project_no', 'options', proj_list);
+									}, int_prod_popup.fields_dict.customer.value);
 								}
 							},
 							{
@@ -396,8 +392,9 @@ frappe.ui.form.on('Item', {
 							let val = int_prod_popup.get_values();
 							if ((val.end_product_type == 'own' || val.customer) && val.project_no) {
 								int_prod_popup.hide();
-								let cust_str = '-'+(val.end_product_type == 'own' ? '011' : val.customer.substr(5,3))+'-';
-								let base_item_code = ic_prefix+cust_str+val.project_no;
+								let cust_proj = (val.end_product_type == 'own' ? '011' : val.customer.substr(5,3))+'-'+val.project_no;
+								let base_item_code = ic_prefix+'-'+cust_proj;
+								find_and_set_mountain(frm, cust_proj);
 								frappe.call({
 									'method': 'senstech.scripts.item_tools.get_next_item_code_part',
 									'args': {
@@ -415,7 +412,7 @@ frappe.ui.form.on('Item', {
 												// Kunde im Artikel auch setzen
 												// Umgekehrt ist es der Einfachheit halber nicht verknüpft (bei nachträglicher Änderung des Kunden muss Artikelcode von Hand angepasst werden)
 												// Beim Speichern wird jedoch Kundennr. im Artikelcode mit Kundennr. des Artikels abgeglichen
-												frm.set_value('customer', val.customer);
+												frm.set_value('kunde', val.customer);
 											}
 										} else {
 											frappe.msgprint(__("Fehler beim Ermitteln des nächsten freien Artikelcodes"), __("Artikelcode-Auswahl"));
@@ -447,13 +444,8 @@ frappe.ui.form.on('Item', {
 								/*'default': frm.doc.customer,*/
 								'label': __('Kunde'),
 								'change': e => {
-									get_customer_project_numbers(frm, p_nums => {
-										let next_no = "01";
-										if(p_nums.length > 0) {
-											next_no = String(parseInt(p_nums[p_nums.length-1])+1).padStart(2,'0');
-										}
-										p_nums.push({ 'value': next_no, 'label': next_no+' '+__("(neu)") });
-										ser_prod_popup.set_df_property('project_no', 'options', p_nums);
+									get_customer_projects(frm, proj_list => {
+										ser_prod_popup.set_df_property('project_no', 'options', proj_list);
 									}, ser_prod_popup.fields_dict.customer.value);
 								}
 							},
@@ -503,10 +495,12 @@ frappe.ui.form.on('Item', {
 							let val = ser_prod_popup.get_values();
 							if (val.customer && val.project_no && val.spec_revision && val.type_index) {
 								ser_prod_popup.hide();
-								let new_item_code = 'PR-'+val.customer.substr(5,3)+'-'+val.project_no+'00-'+val.spec_revision+'-'+val.type_index;
+								let cust_proj = val.customer.substr(5,3)+'-'+val.project_no;
+								let new_item_code = 'PR-'+cust_proj+'00-'+val.spec_revision+'-'+val.type_index;
 								frm.set_value('item_code', new_item_code);
-								frm.set_value('customer', val.customer);
+								frm.set_value('kunde', val.customer);
 								manufactured_from_filter(frm, val.customer, val.project_no);
+								find_and_set_mountain(frm, cust_proj);
 							} else {
 								frappe.msgprint(__("Bitte alle Felder ausfüllen"), __("Angaben unvollständig"));
 							}
@@ -548,11 +542,20 @@ frappe.ui.form.on('Item', {
 	        frm.set_value('description','')
 	    }	    
 	},
+	mountain_name(frm) {
+		if(frm.doc.item_code && frm.doc.mountain_name && !frm.doc.item_name) {
+			if(frm.doc.item_group.startsWith('Serieprodukte')) {
+				let type_index = parseInt(frm.doc.item_code.substr(17,2));
+				let type_str = (type_index > 1 ? ' '+type_index : '');
+				frm.set_value('item_name','OEM-Sensor «'+frm.doc.mountain_name+type_str+'»');
+			}
+		}
+	},
 	after_save(frm) {
         if (frm.doc.description == frm.doc.item_name) {
             frm.set_value('description','');
         }
-    }
+    },
 });
 
 frappe.ui.form.on('Item Default', {
@@ -618,7 +621,7 @@ function set_new_own_item_code(frm, prefix) {
 	frappe.call({
     	'method': 'senstech.scripts.item_tools.get_next_item_code_part',
 		'args': {
-			'item_group_filter': 'Eigenprodukte',			
+			'item_group_filter': 'Eigenprodukte%',			
 			'ic_filter_string': '-011-',
 			'ic_filter_startpos': 2,
 			'ic_part_startpos': 7,
@@ -634,20 +637,22 @@ function set_new_own_item_code(frm, prefix) {
     });
 }
 
-// Bestehende Projektnummern eines Kunden (oder intern) als Liste abrufen
-function get_customer_project_numbers(frm, callback, customer_id='CU-00011') {
-	let cust_str = '-'+customer_id.substr(5,3)+'-';
+// Bestehende Projektnummern und -namen eines Kunden (oder intern) als Liste abrufen und eine Option "neues Projekt" hinzufügen
+function get_customer_projects(frm, callback, customer_id='CU-00011') {
 	frappe.call({
-    	'method': 'senstech.scripts.item_tools.get_filtered_list_of_item_code_parts',
+    	'method': 'senstech.scripts.item_tools.get_project_list_for_select_field',
 		'args': {
-			'item_group_filter': (cust_str=='-011-'?'Eigenprodukte':'Serieprodukte%'),
-			'ic_filter_string': cust_str,
-			'ic_filter_startpos': 2,
-			'ic_part_startpos': 7,
-			'ic_part_length': 2
+			'customer_id': customer_id,
 		},
     	'callback': function(response) {
-            callback(response.message);
+			let projects = response.message;
+			let next_no = "01";
+			if(projects.length > 0) {
+				let last_proj = projects[projects.length - 1].value;
+				next_no = String(parseInt(last_proj)+1).padStart(2,'0');
+			}
+			projects.push({ 'value': next_no, 'label': next_no+' - '+__("Neues Projekt") });
+            callback(projects);
         }
     });
 }
@@ -790,6 +795,28 @@ function validate_item_code_customer(frm, item_code_customer) {
 
 // Artikelcode-Präfix aus Artikelgruppe erzeugen
 function item_code_prefix_from_group(item_group) {
-	const ic_prefixes = {'Halbfabrikate': 'HF', 'Sensorsubstrate poliert': 'PS', 'Sensorsubstrate isoliert': 'IS'};
+	const ic_prefixes = {'Halbfabrikate': 'HF', 'Sensorsubstrate poliert': 'PS', 'Sensorsubstrate isoliert': 'IS', 'Wiederkehrende Lohnfertigung (PZ-2002)': 'LF'};
 	return ic_prefixes[item_group];
+}
+
+// Artikeltyp (für UI-Titel) aus Artikelgruppe erzeugen
+function item_type_from_group(item_group) {
+	const item_types = {'Halbfabrikate': 'Halbfabrikat', 'Sensorsubstrate poliert': 'Poliertes Sensorsubstrat', 'Sensorsubstrate isoliert': 'Isoliertes Sensorsubstrat', 'Wiederkehrende Lohnfertigung (PZ-2002)': 'Lohnfertigungsartikel'};
+	return item_types[item_group];
+}
+
+// ggf. schon verwendeten Bergnamen zur gewählten Kunden-/Projektnr. finden und zuweisen
+function find_and_set_mountain(frm, cust_proj) {
+	frappe.db.get_list("Senstech Berg", {filters: {project: ['=','EP-'+cust_proj]}, limit: 1, as_list: true}).then(f => {
+		if(f.length > 0) {
+			frm.set_value('mountain_name', f[0][0]);
+		}
+		else {
+			frappe.db.get_list("Item", {fields: ['mountain_name'], filters: {item_code: ['LIKE','__-'+cust_proj+'%']}, limit: 1, as_list: true}).then(g => {
+				if(g.length > 0) {
+					frm.set_value('mountain_name',g[0][0]);
+				}
+			});
+		}
+	});
 }
