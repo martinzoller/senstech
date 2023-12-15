@@ -142,13 +142,6 @@ frappe.ui.form.on('Quotation', {
 		}
         frm.doc.submitted_by = frappe.user.name;
     },
-    on_submit(frm) {
-		if(frm.doc.gate1_reviewed_date) {
-			attach_pdf_with_gate1(frm);
-		} else {
-			attach_pdf_print(frm);
-		}
-    },
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }
@@ -612,21 +605,6 @@ function gate1_dialog(frm) {
 	});
 	gate1_checklist.show();
 
-}
-
-function attach_pdf_with_gate1(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
-        "args": {
-            "dt": frm.doctype,
-            "dn": frm.docname,
-            "printformat": 'Gate 1 Checklist ST',
-			"filename": frm.docname+'-Gate1.pdf'
-        },
-        "callback": function(response) {
-            attach_pdf_print(frm);
-        }
-    });
 }
 
 function upload_field_default(value, is_review) {

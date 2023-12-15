@@ -80,7 +80,6 @@ frappe.ui.form.on('Sales Order', {
         cur_frm.doc.submitted_by = frappe.user.name;
     },
     on_submit(frm) {
-        attach_pdf_print(frm);
 		// Chargen werden serverseitig angelegt und hier nur abgefragt
 		frappe.db.get_list("Batch", { fields: ['batch_id'], filters: { batch_id: ['LIKE', cur_frm.docname+"-P%A"] }}).then(res => {
 			res.forEach(row => {

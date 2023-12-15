@@ -47,9 +47,6 @@ frappe.ui.form.on('Blanket Order', {
 	customer(frm) {
         change_customer(frm);
 	},
-    on_submit(frm) {
-        attach_pdf_print(frm);
-    },
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     },

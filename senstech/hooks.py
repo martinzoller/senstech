@@ -107,23 +107,36 @@ jenv = {
 #	}
 # }
 doc_events =  {
+    "Request for Quotation": {
+        "on_submit": "senstech.scripts.tools.attach_pdf_hook",
+    },
+    "Purchase Order": {
+        "on_submit": "senstech.scripts.tools.attach_pdf_hook",
+    },
+    "Quotation": {
+        "on_submit": "senstech.scripts.tools.attach_pdf_hook",
+    },
     "Delivery Note": {
         "validate": "senstech.scripts.delivery_note_tools.validate_sensor_ids",
-        "on_submit": "senstech.scripts.delivery_note_tools.assign_sensor_ids",
+        "on_submit": ["senstech.scripts.delivery_note_tools.assign_sensor_ids","senstech.scripts.tools.attach_pdf_hook"],
         "on_cancel": "senstech.scripts.delivery_note_tools.release_sensor_ids",
     },
-
     "Sales Order": {
-        "on_submit": "senstech.scripts.sales_order_tools.create_dev_batches",
+        "on_submit": ["senstech.scripts.sales_order_tools.create_dev_batches","senstech.scripts.tools.attach_pdf_hook"],
         "on_cancel": "senstech.scripts.sales_order_tools.delete_dev_batches",
     },
-    
+    "Blanket Order": {
+        "on_submit": "senstech.scripts.tools.attach_pdf_hook",
+    },
+    "Sales Invoice": {
+        "on_submit": "senstech.scripts.tools.attach_pdf_hook",
+    },
     "Project": {
         "on_update": "senstech.scripts.project_tools.register_mountain",
         "on_trash": "senstech.scripts.project_tools.deregister_mountain",
     },
     "Item": {
-        "validate": "senstech.scripts.item_tools.validate_item"
+        "validate": "senstech.scripts.item_tools.validate_item",
     }
 }
 

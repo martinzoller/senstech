@@ -37,20 +37,6 @@ function add_cancelled_watermark(frm) {
     });
 }
 
-function attach_pdf_print(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
-        "args": {
-            "dt": frm.doctype,
-            "dn": frm.docname,
-            "printformat": frm.doctype+' ST'
-        },
-        "callback": function(response) {
-            frm.reload_doc();
-        }
-    });
-}
-
 function update_address_display(frm, fields, addresses, as_list=false) {
     if (!as_list) {
         as_list = '';
