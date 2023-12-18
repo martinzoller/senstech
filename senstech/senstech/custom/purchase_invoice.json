@@ -86,7 +86,7 @@
    "modified_by": "Administrator",
    "name": "Purchase Invoice-payment_type",
    "no_copy": 0,
-   "options": "IBAN\nESR\nSEPA",
+   "options": "IBAN\nESR\nSEPA\nLSV",
    "owner": "Administrator",
    "parent": null,
    "parentfield": null,

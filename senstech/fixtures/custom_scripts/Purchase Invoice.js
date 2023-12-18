@@ -1,9 +1,15 @@
 frappe.ui.form.on('Purchase Invoice', {
     before_save(frm) {
-		if (!cur_frm.doc.taxes_and_charges) {
+		if (!frm.doc.taxes_and_charges) {
 		    fetch_taxes_and_charges_from_supplier(frm);
 		}
 		apply_expense_accounts(frm);
+	},
+	before_submit(frm) {
+		// LSV-Zahlungen nie in den Zahlungsvorschlag nehmen
+		if(frm.doc.payment_type == 'LSV') {
+			frm.set_value('is_proposed', 1);
+		}		
 	},
 	onload_post_render(frm) {
         // Feld "Nummernkreis" lässt sich nicht mit Customization verstecken
@@ -17,17 +23,22 @@ frappe.ui.form.on('Purchase Invoice', {
     refresh(frm) {
         if ((frm.doc.docstatus === 0) && (!frm.doc.is_proposed)) {
             frm.add_custom_button(__("nicht in Zahlvorschlag"), function() {
-                cur_frm.set_value("is_proposed", 1);
+                frm.set_value("is_proposed", 1);
             });
         }
+		payment_type_changed(frm);
     },
     supplier(frm) {
-        if (!cur_frm.doc.taxes_and_charges) {
+        if (!frm.doc.taxes_and_charges) {
             setTimeout(function(){
                 fetch_taxes_and_charges_from_supplier(frm);
             }, 1000);
         }
-    }
+		payment_type_changed(frm);
+    },
+	payment_type(frm) {
+		payment_type_changed(frm);
+	}
 });
 
 frappe.ui.form.on('Purchase Invoice Item', {
@@ -69,4 +80,10 @@ function apply_expense_accounts(frm) {
 
 function exp_changed_alert(pos){
     frappe.show_alert({message: 'Pos. '+pos+': Intracompany Ertragskonto gesetzt', indicator: 'green'}, 5);
+}
+
+function payment_type_changed(frm) {
+	if (frm.doc.payment_type === "LSV") {
+		locals.iban = "LSV"; // Prevent validation error (empty IBAN) when LSV is selected
+	}	
 }
