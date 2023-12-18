@@ -149,6 +149,10 @@ function fetch_templates_from_customer(frm) {
 }
 
 frappe.ui.form.on('Sales Invoice Item', {
+    item_code(frm, cdt, cdn) {
+		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
+        frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");
+    },	
 	items_add: function(frm, cdt, cdn) {
 		set_position_number(frm, cdt, cdn);
    }
