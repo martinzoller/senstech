@@ -695,11 +695,13 @@ function get_type_index_numbers(frm, callback, customer_id, project_no) {
 }
 
 function print_format_filter(frm) {
-	frm.set_query('single_label_print_format', () => {
+	let filter_func = function() {
         return {
             filters: { doc_type: 'Senstech Messdaten' }
         };
-    });	
+	};
+	frm.set_query('single_label_print_format', filter_func);	
+	frm.set_query('flag_label_print_format', filter_func);		
 }
 
 function manufactured_from_filter(frm, customer_id, project_no_str) {
