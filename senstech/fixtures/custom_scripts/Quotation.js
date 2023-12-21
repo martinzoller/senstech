@@ -60,7 +60,7 @@ frappe.ui.form.on('Quotation', {
 				}
 			} else if(doc_has_dev_items(frm) && frappe.perm.has_perm("Quotation", 0, "write")) {
 				frm.add_custom_button(__("Freigabe beantragen"), function() {
-					gate1_request(frm);
+					check_not_dirty(frm) &&	gate1_request(frm);
 				});
 			}
 		}
@@ -299,6 +299,11 @@ function gate1_dialog(frm) {
 	let requester_name = frappe.session.user_fullname;
 	let requested_date = 'Today';
 	if(is_review) {
+		// Hier nochmals prüfen - in Sonderfällen bleibt der Button "Freigabeantrag" nach Speichern sichtbar und löst dann direkt die Freigabe aus
+		if(!frappe.perm.has_perm("Quotation", 1, "write") || frm.doc.gate1_requested_by_user == frappe.user.name) {
+			frappe.msgprint(__("Freigabe muss durch anderen Nutzer als der Antrag erfolgen und dieser muss entsprechende Berechtigung haben"),__("Zugriff verweigert"));
+				return;
+		}
 		action_text = __("Review abschliessen");
 		requester_uid = frm.doc.gate1_requested_by_user;
 		requester_name = frm.doc.gate1_requested_by_name;
