@@ -16,7 +16,7 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 app_include_css = "/assets/senstech/css/senstech.css"
-app_include_js = [ "/assets/senstech/js/senstech.js", "/assets/senstech/js/common_st.js", "/assets/senstech/js/awesome_bar_st.js", "/assets/senstech/js/link_st.js", "/assets/senstech/js/attachments_st.js" ]
+app_include_js = [ "/assets/senstech/js/senstech.js", "/assets/senstech/js/common_st.js", "/assets/senstech/js/awesome_bar_st.js", "/assets/senstech/js/link_st.js", "/assets/senstech/js/attachments_st.js", "/assets/senstech/js/form_st.js" ]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/senstech/css/senstech.css"

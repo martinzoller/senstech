@@ -197,7 +197,7 @@ function validation_require(frm, field, message) {
 	return true;
 }
 
-function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau"), button_text = __("OK"), fullscreen = false) {
+function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau"), button_text = __("OK"), fullscreen = false, cancel_callback = false) {
     
     var pdf_uri = 
 		'%2Fapi%2Fmethod%2Ffrappe.utils.print_format.download_pdf%3Fdoctype%3D'
@@ -228,6 +228,7 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 			if(fullscreen) {
 				document.exitFullscreen();
 			}
+			cancel_callback && cancel_callback(frm);
 		}
 	});
 	pdf_preview.show();
