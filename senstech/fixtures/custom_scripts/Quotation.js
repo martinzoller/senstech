@@ -60,7 +60,7 @@ frappe.ui.form.on('Quotation', {
 				}
 			} else if(doc_has_dev_items(frm) && frappe.perm.has_perm("Quotation", 0, "write")) {
 				frm.add_custom_button(__("Freigabe beantragen"), function() {
-					gate1_request(frm);
+					check_not_dirty(frm) &&	gate1_request(frm);
 				});
 			}
 		}
@@ -142,19 +142,16 @@ frappe.ui.form.on('Quotation', {
 		}
         frm.doc.submitted_by = frappe.user.name;
     },
-    on_submit(frm) {
-		if(frm.doc.gate1_reviewed_date) {
-			attach_pdf_with_gate1(frm);
-		} else {
-			attach_pdf_print(frm);
-		}
-    },
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }
 });
 
 frappe.ui.form.on('Quotation Item', {
+    item_code(frm, cdt, cdn) {
+		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
+        frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");
+    },
 	items_add: function(frm, cdt, cdn) {
 		set_position_number(frm, cdt, cdn);
    }
@@ -302,6 +299,11 @@ function gate1_dialog(frm) {
 	let requester_name = frappe.session.user_fullname;
 	let requested_date = 'Today';
 	if(is_review) {
+		// Hier nochmals prüfen - in Sonderfällen bleibt der Button "Freigabeantrag" nach Speichern sichtbar und löst dann direkt die Freigabe aus
+		if(!frappe.perm.has_perm("Quotation", 1, "write") || frm.doc.gate1_requested_by_user == frappe.user.name) {
+			frappe.msgprint(__("Freigabe muss durch anderen Nutzer als der Antrag erfolgen und dieser muss entsprechende Berechtigung haben"),__("Zugriff verweigert"));
+				return;
+		}
 		action_text = __("Review abschliessen");
 		requester_uid = frm.doc.gate1_requested_by_user;
 		requester_name = frm.doc.gate1_requested_by_name;
@@ -612,21 +614,6 @@ function gate1_dialog(frm) {
 	});
 	gate1_checklist.show();
 
-}
-
-function attach_pdf_with_gate1(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
-        "args": {
-            "dt": frm.doctype,
-            "dn": frm.docname,
-            "printformat": 'Gate 1 Checklist ST',
-			"filename": frm.docname+'-Gate1.pdf'
-        },
-        "callback": function(response) {
-            attach_pdf_print(frm);
-        }
-    });
 }
 
 function upload_field_default(value, is_review) {

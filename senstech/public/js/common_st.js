@@ -37,20 +37,6 @@ function add_cancelled_watermark(frm) {
     });
 }
 
-function attach_pdf_print(frm) {
-    frappe.call({
-        "method": "senstech.scripts.tools.add_freeze_pdf_to_dt",
-        "args": {
-            "dt": frm.doctype,
-            "dn": frm.docname,
-            "printformat": frm.doctype+' ST'
-        },
-        "callback": function(response) {
-            frm.reload_doc();
-        }
-    });
-}
-
 function update_address_display(frm, fields, addresses, as_list=false) {
     if (!as_list) {
         as_list = '';
@@ -110,8 +96,9 @@ function basic_purchasing_validations(frm) {
 
 function basic_sales_validations(frm) {
 	basic_common_validations(frm);
-	if (!frm.doc.payment_terms_template) {
-		validation_error(frm, 'payment_terms_template', __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
+	let payment_terms_field = (frm.doctype=='Blanket Order'?'payment_terms':'payment_terms_template');
+	if (!frm.doc[payment_terms_field]) {
+		validation_error(frm, payment_terms_field, __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
 	}
 	
 	if(! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
@@ -211,7 +198,7 @@ function validation_require(frm, field, message) {
 	return true;
 }
 
-function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau"), button_text = __("OK"), fullscreen = false) {
+function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau"), button_text = __("OK"), fullscreen = false, cancel_callback = false) {
     
     var pdf_uri = 
 		'%2Fapi%2Fmethod%2Ffrappe.utils.print_format.download_pdf%3Fdoctype%3D'
@@ -242,6 +229,7 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 			if(fullscreen) {
 				document.exitFullscreen();
 			}
+			cancel_callback && cancel_callback(frm);
 		}
 	});
 	pdf_preview.show();

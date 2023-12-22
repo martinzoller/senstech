@@ -80,7 +80,6 @@ frappe.ui.form.on('Sales Order', {
         cur_frm.doc.submitted_by = frappe.user.name;
     },
     on_submit(frm) {
-        attach_pdf_print(frm);
 		// Chargen werden serverseitig angelegt und hier nur abgefragt
 		frappe.db.get_list("Batch", { fields: ['batch_id'], filters: { batch_id: ['LIKE', cur_frm.docname+"-P%A"] }}).then(res => {
 			res.forEach(row => {
@@ -96,6 +95,8 @@ frappe.ui.form.on('Sales Order', {
 
 frappe.ui.form.on('Sales Order Item', {
     item_code: function(frm, cdt, cdn) {
+		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
+        frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");		
         var current_item = locals[cdt][cdn];
         setTimeout(function(){
             if(current_item.blanket_order) {

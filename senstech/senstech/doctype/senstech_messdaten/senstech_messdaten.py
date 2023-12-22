@@ -12,8 +12,13 @@ from erpnext.stock.doctype.item.item import get_uom_conv_factor
 from senstech.scripts.tools import direct_print_doc
 from senstech.scripts.delivery_note_tools import sanitize_sensor_ids
 
+# Called by Vee programs to submit sensor data
+# The 'label_printer' argument is no longer in use since we now support printing two labels on two different printers
+# TODO: Label printer names are hardcoded for now - an appropriate abstraction will have to be found once we need more than one measuring station
+#       (eg. add a table field to Print Format with fields "host" and "label_printer" - thereby defining which printer should be used for a given {measuring_station, print_format} pair)
+#       (other approach: add a "Senstech Messstation" doctype which has a hostname and two fields for label printers - one for rectangle labels and one for flag labels)
 @frappe.whitelist()
-def submit_measurements(user, item, batch, sensor_id, measurands, values, units, test_results=None, print_label='False', sent_from_host='', label_printer='Zebra Flag Labels'):
+def submit_measurements(user, item, batch, sensor_id, measurands, values, units, test_results=None, print_label='False', sent_from_host='', label_printer='dummy argument'):
     try:
         batch_id = frappe.db.exists('Batch', {'item': item, 'chargennummer':batch})
         user_id = frappe.db.get_value('User', {'full_name':user}, 'name')
@@ -50,11 +55,10 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
             mdocs.append(mdoc)
         for mdoc in mdocs:
             mdoc.save()
-            
         frappe.db.commit()
+        
         if print_label and not overall_fail_result:
-            print_format = frappe.get_doc("Item", item).single_label_print_format or "Sensor Flag Label ST"
-            direct_print_doc("Senstech Messdaten", mdocs[0].name, print_format, label_printer)
+            print_single_sensor_labels(mdocs[0].name)
         if measured_before:
             return 'measured_before' # If sensor has been measured before, Vee will show a warning, but the data is saved anyway
         else:
@@ -66,6 +70,24 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
             return(e.message)
         else:
             return(e)
+
+# Triggered by submit_measurements() as well as a JS button to manually reprint labels.
+# Given the ID of a "Senstech Messdaten" doc, will print the appropriate single-sensor labels defined for the Item in question,
+# using the referenced sensor's most recent measurement data.
+@frappe.whitelist()
+def print_single_sensor_labels(measurement_id):
+    data_doc = frappe.get_doc("Senstech Messdaten", measurement_id)
+    batch_doc = frappe.get_doc("Batch", data_doc.batch)
+    item_doc = frappe.get_doc("Item", batch_doc.item)
+    rectangle_pf = item_doc.single_label_print_format
+    flag_pf = item_doc.flag_label_print_format
+    if (not rectangle_pf) and (not flag_pf):
+        rectangle_pf = "Sensor Rectangle Label ST"
+    if rectangle_pf:
+        direct_print_doc("Senstech Messdaten", measurement_id, rectangle_pf, "Zebra Rectangle Labels")
+    if flag_pf:
+        direct_print_doc("Senstech Messdaten", measurement_id, flag_pf, "Zebra Flag Labels")
+
 
 # Read the batch and sensor ID from a given measurement dataset,
 # and return this sensor's most recent measurement for each available measurand

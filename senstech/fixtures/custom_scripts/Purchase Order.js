@@ -65,9 +65,6 @@ frappe.ui.form.on('Purchase Order', {
     before_submit(frm) {
         cur_frm.doc.submitted_by = frappe.user.name;
     },
-    on_submit(frm) {
-        attach_pdf_print(frm);
-    },
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }

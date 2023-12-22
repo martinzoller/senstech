@@ -220,7 +220,7 @@
    "columns": 0,
    "creation": "2023-07-24 14:12:36.960053",
    "default": null,
-   "depends_on": "",
+   "depends_on": "eval:doc.item_code=='GP-00001'",
    "description": null,
    "docstatus": 0,
    "dt": "Quotation Item",

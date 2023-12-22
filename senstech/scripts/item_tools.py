@@ -159,6 +159,9 @@ def validate_item(doc, method):
         if proj and proj != 'EP-'+doc.item_code[3:9]:
             frappe.throw(_("Der Bergname {0} wird schon für das Projekt {1} verwendet").format(doc.mountain_name, proj));
         else:
-            mtn_item = frappe.get_doc("Item", {'mountain_name': doc.mountain_name})
-            if mtn_item and mtn_item.item_code[3:9] != doc.item_code[3:9]:
-                frappe.throw(_("Der Bergname {0} wird schon für Artikel {1} verwendet, der zu einem anderen Projekt gehört").format(doc.mountain_name, mtn_item.item_code));
+            try:
+                mtn_item = frappe.get_doc("Item", {'mountain_name': doc.mountain_name})
+                if mtn_item and mtn_item.item_code[3:9] != doc.item_code[3:9]:
+                    frappe.throw(_("Der Bergname {0} wird schon für Artikel {1} verwendet, der zu einem anderen Projekt gehört").format(doc.mountain_name, mtn_item.item_code));
+            except DoesNotExistError:
+                pass

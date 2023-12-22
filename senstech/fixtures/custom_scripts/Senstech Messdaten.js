@@ -1,19 +1,16 @@
 frappe.ui.form.on('Senstech Messdaten', {
 	refresh(frm) {
-			frm.add_custom_button(__("Flaggenetikett drucken"), function() {
-				flag_label(cur_frm.doc);
+			frm.add_custom_button(__("Einzelsensor-Labels drucken"), function() {
+				print_labels(frm);
 			});
 	}
 })
 
-function flag_label(data_doc) {
+function print_labels(frm) {
 	frappe.call({
-    	'method': 'senstech.scripts.tools.direct_print_doc',
+    	'method': 'senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.print_single_sensor_labels',
     	'args': {
-			'doctype': 'Senstech Messdaten',
-    		'name': data_doc.name,
-			'print_format': 'Sensor Flag Label ST',
-			'printer_name': 'Zebra Flag Labels'
+    		'measurement_id': frm.doc.name,
     	},
 		'callback': function(response) {
 		}

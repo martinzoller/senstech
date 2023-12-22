@@ -11,6 +11,7 @@ from frappe.contacts.doctype.address.address import get_address_display
 import json, socket, os, six
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import tempfile
+import erpnextswiss.erpnextswiss.attach_pdf
 
 
 # Bestimmtes Druckformat eines Dokumentes direkt auf Zebra-Etikettendrucker ausgeben
@@ -76,40 +77,42 @@ def update_address_display(doctype, doc_name, fields, addresses, as_list=False):
             return 'no address'
 
 
-# Autom. PDF-Anhang bei Buchen (Verkaufsdokumente)
+# Create PDF attachment via JS (used by senstech.js to recreate missing attachments)
 @frappe.whitelist()
-def add_freeze_pdf_to_dt(dt, dn, printformat, language='', filename=''):
-   
-    if not language:
-        language = frappe.get_doc(dt, dn).language or 'de'
-
-    filedata = attach_print(doctype=dt, name=dn, print_format=printformat, lang=language)
-    
-    if not filename:
-        filename=filedata['fname']
-    fpath = frappe.get_site_path('private', 'files', filename)
-
-    with open(fpath, "wb") as w:
-        w.write(filedata['fcontent'])
-
-    file_record = {
-        "doctype": "File",
-        "file_url": '/private/files/{0}'.format(filename),
-        "file_name": filename,
-        "attached_to_doctype": dt,
-        "attached_to_name": dn,
-        "folder": 'Home/Attachments',
-        "file_size": 0,
-        "is_private": 1
+def add_freeze_pdf_to_dt(dt, dn, printformat, language=''):
+    doc = frappe.get_doc(dt, dn)
+    fallback_language = frappe.db.get_single_value("System Settings", "language") or "de"
+    args = {
+        "doctype": dt,
+        "name": dn,
+        "title": getattr(doc, "title", doc.name),
+        "print_format": printformat,
+        "lang": language or fallback_language,
     }
-    if not frappe.db.exists(file_record):
-        f = frappe.get_doc(file_record)
-        f.flags.ignore_permissions = True
-        f.insert()
-        frappe.db.commit()
+    erpnextswiss.erpnextswiss.attach_pdf.execute(**args)
 
-    return
 
+# Called by doc_events hook when purchasing or sales docs are submitted
+def attach_pdf_hook(doc, event=None):
+    fallback_language = frappe.db.get_single_value("System Settings", "language") or "de"
+    args = {
+        "doctype": doc.doctype,
+        "name": doc.name,
+        "title": getattr(doc, "title", doc.name),
+        "lang": getattr(doc, "language", fallback_language),
+    }
+    erpnextswiss.erpnextswiss.attach_pdf.execute(**args)
+    # QN: Create Gate1 checklist as separate document
+    if doc.doctype == 'Quotation' and event == 'on_submit' and doc.gate1_reviewed_date:
+        erpnextswiss.erpnextswiss.attach_pdf.execute(
+            doctype = doc.doctype,
+            name = doc.name,
+            title = "Gate 1 Checklist",
+            lang = "de",
+            print_format = "Gate 1 Checklist ST",
+            file_name = doc.name+"-Gate1.pdf"
+        )
+    
 
 # Wasserzeichen "Abgebrochen" bei Dok-Abbruch (Verkaufsdokumente)
 @frappe.whitelist()
