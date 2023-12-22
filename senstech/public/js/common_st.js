@@ -96,8 +96,9 @@ function basic_purchasing_validations(frm) {
 
 function basic_sales_validations(frm) {
 	basic_common_validations(frm);
-	if (!frm.doc.payment_terms_template) {
-		validation_error(frm, 'payment_terms_template', __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
+	let payment_terms_field = (frm.doctype=='Blanket Order'?'payment_terms':'payment_terms_template');
+	if (!frm.doc[payment_terms_field]) {
+		validation_error(frm, payment_terms_field, __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
 	}
 	
 	if(! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
