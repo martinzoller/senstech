@@ -49,10 +49,10 @@ frappe.ui.form.on('Customer', {
 	},
 	
 	after_save(frm) {
-        var bezeichnung = cur_frm.doc.customer_name + " (" + cur_frm.doc.name + ")";
-        if(cur_frm.doc.bezeichnung != bezeichnung) {
-            cur_frm.set_value('bezeichnung', bezeichnung);
-            cur_frm.save();
+        var bezeichnung = frm.doc.customer_name + " (" + frm.doc.name + ")";
+        if(frm.doc.bezeichnung != bezeichnung) {
+            frm.set_value('bezeichnung', bezeichnung);
+            frm.save();
 		}
 	}
 });

@@ -13,6 +13,30 @@
 {{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
 <!-- /Header und Footer -->
 
+
+<!-- Steuernr. über Adresse -->
+{% if doc.tax_id or doc.eori_number %}
+<div style="padding-top: 0px;">
+	<table style="width: 100%; margin-bottom: 6pt;">
+		<tbody>
+		{% if doc.tax_id %}
+			<tr>
+				<td style="width:58%;"></td>
+				<td style="font-size: 8.5pt !important;">{{ _("Steuernummer:") }} {{ doc.tax_id }}</td>
+			</tr>
+		{% endif %}
+		{% if doc.eori_number %}
+			<tr>
+				<td style="width:58%;"></td>
+				<td style="font-size: 8.5pt !important;">{{ _("EORI-Nummer:") }} {{ doc.eori_number }}</td>
+			</tr>		
+		{% endif %}
+		</tbody>
+	</table>
+</div>
+{% endif %}
+<!-- /Steuernr. über Adresse -->
+
 <!-- Adresse -->
 {{ frappe.render_template('templates/includes/address.html', {'adresse': doc_data.adresse_kunde}) }}
 <!-- /Adresse -->
@@ -108,9 +132,6 @@
 			{% endif %}
 			{% if doc.selbstverzollung %}
 				<br><b>{{ _("Selbstverzollung durch Empfänger") }}</b>
-			{% endif %}
-			{% if doc.eori_number %}
-			<br><b>{{ _("EORI-Nummer des Kunden:") }} {{ doc.eori_number }}</b>
 			{% endif %}
 			{% if doc.preferential_origin and doc.grand_total > 10000 %}
 				<br><b>{{ _("Beilage: EUR.1") }}</b>
