@@ -7,3 +7,9 @@
 #
 import frappe
 from frappe import _
+from erpnext.selling.doctype.quotation.quotation import _make_sales_order
+
+# Allow creating Sales Order for expired Quotation
+@frappe.whitelist()
+def make_sales_order_ignore_validity(source_name, target_doc=None):
+	return _make_sales_order(source_name, target_doc)
