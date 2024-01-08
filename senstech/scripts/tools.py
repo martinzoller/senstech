@@ -7,11 +7,12 @@
 #
 import frappe
 from frappe import _, attach_print
-from frappe.contacts.doctype.address.address import get_address_display
+from frappe.contacts.doctype.address.address import get_address_display, address_query
 import json, socket, os, six
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import tempfile
 import erpnextswiss.erpnextswiss.attach_pdf
+import requests
 
 
 # Bestimmtes Druckformat eines Dokumentes direkt auf Zebra-Etikettendrucker ausgeben
@@ -309,3 +310,84 @@ def get_employee_name(user_id):
 
 def text_field_empty(val):
     return (not val) or val == '<div><br></div>'
+
+# Search for a D-U-N-S number on DnB's website
+# (needs to be done from server side due to CORS headers)
+# Example result: 
+# {'companyAddress': 'An der Schilde 3',
+#  'companyRegion': 'Badow',
+#  'companyZipCode': '19209',
+#  'duns': '343973149',
+#  'primaryName': 'ASDF Holding GmbH'}
+@frappe.whitelist()
+def get_duns(search_term, country, street='', city=''):
+
+    # Default user agent seems to be rejected, so use a common one instead
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.1',
+    }
+    
+    country_doc = frappe.get_doc("Country", country);
+    if not country_doc.code:
+        return False
+    country_code = country_doc.code.upper()
+    
+    params = {
+        'countryCode': country_code,
+        'location': city,
+        'searchTerm': search_term,
+        'streetAddress': street,
+    }
+    try:
+        response = requests.get('https://www.dnb.com/apps/dnb/servlets/cleanseMatchServlet', params=params, headers=headers)
+        if response.ok:
+            json = response.json()
+            if 'companies' in json:
+                first_res = json['companies'][0]
+                return first_res
+            else:
+                return False
+        else:
+            return False
+    except requests.exceptions.RequestException as e:
+        frappe.msgprint(_("DUNS-Abfrage fehlgeschlagen"), alert=True, indicator='red')
+        return False
+
+
+# Check if the address in a DUNS record already exists and add it to customer/supplier if necessary
+def check_duns_address(duns, country, ref_doc):
+    duns_rec = get_duns(duns, country)
+    if duns_rec and duns_rec['duns'] == duns:
+        # Check if we already have this address on file
+        # (TODO: Find a better way to check for NULL in filters below)
+        filters= { "link_doctype": ref_doc.doctype,
+                   "link_name": ref_doc.name,
+                   "(abweichender_firmennamen": "'' OR abweichender_firmennamen IS NULL)",
+                   "address_line1": frappe.db.escape(duns_rec['companyAddress']),
+                   "(address_line2": "'' OR address_line2 IS NULL)",
+                   "(address_line3": "'' OR address_line3 IS NULL)",
+                   "pincode": frappe.db.escape(duns_rec['companyZipCode']),
+                   "city": frappe.db.escape(duns_rec['companyRegion']),
+                   "country": frappe.db.escape(country),
+                 }
+        q=address_query(filters=filters,start=0,page_len=1,doctype="Address",searchfield="",txt="")
+        if len(q)==0:
+            # No matching address: First clear any existing (differing) "DUNS" address
+            filters= { "link_doctype": ref_doc.doctype,
+                       "link_name": ref_doc.name,
+                       "address_type": "'DUNS'",
+                     }
+            q=address_query(filters=filters,start=0,page_len=1,doctype="Address",searchfield="",txt="")
+            if len(q)>0:
+                frappe.delete_doc("Address", q[0][0])
+            # Then create one and tag it as "DUNS"-type address
+            duns_addr = frappe.new_doc("Address")
+            duns_addr.address_line1 = duns_rec['companyAddress']
+            duns_addr.pincode = duns_rec['companyZipCode']
+            duns_addr.city = duns_rec['companyRegion']
+            duns_addr.country = country
+            duns_addr.address_type = "DUNS"
+            duns_addr.append('links', dict(link_doctype=ref_doc.doctype, link_name=ref_doc.name))
+            duns_addr.save()
+            frappe.db.commit()
+            frappe.msgprint(_("Adresse gemäss DUNS-Eintrag angelegt"), alert=True, indicator='green')
