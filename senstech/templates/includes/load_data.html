@@ -7,12 +7,12 @@
 {% if doc_data.update({ 'briefkopf': bk }) %}{% endif %}
 
 <!-- user_id -->
-{% if doc.docstatus == 0 %}
+{% if doc.gate1_requested_by_user %}
+		{% set user_id = doc.gate1_requested_by_user %}
+{% elif doc.docstatus == 0 %}
     {% set user_id = doc.owner %}
 {% else %}
-		{% if doc.gate1_requested_by_user %}
-        {% set user_id = doc.gate1_requested_by_user %}
-    {% elif doc.submitted_by %}
+    {% if doc.submitted_by %}
         {% set user_id = doc.submitted_by %}
     {% else %}
         {% set user_id = doc.modified_by %}
