@@ -617,6 +617,9 @@ frappe.ui.form.Form = class FrappeForm {
 			if(true /*['Quotation','Sales Order','...'].includes(this.doctype)*/){
 				frappe.validated = true;
 				me.script_manager.trigger("before_submit").then(function() {
+					if(!frappe.validated) {
+						return me.handle_save_fail(btn, on_error);
+					}
 					doc_preview_dialog(me, do_submit_func, __("Bitte Dokumentvorschau kontrollieren: {0}", [me.docname]), __("Bestätigen und buchen &gt;"), true, () => me.handle_save_fail(btn, on_error));
 				});
 			} else {
