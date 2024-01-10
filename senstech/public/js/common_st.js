@@ -101,7 +101,7 @@ function basic_sales_validations(frm) {
 		validation_error(frm, payment_terms_field, __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
 	}
 	
-	if(!frm.doc.eori_number && ! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
+	if(!frm.doc.eori_number && frm.doc.territory != "Schweiz" && ! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
 		frappe.db.get_value("Territory", frm.doc.territory, "parent_territory").then(r => {
 			if(r.message && r.message.parent_territory == 'Europa') {
 				if(frm.doctype == 'Sales Invoice') {

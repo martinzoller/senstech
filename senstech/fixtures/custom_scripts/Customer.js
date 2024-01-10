@@ -9,7 +9,7 @@ frappe.ui.form.on('Customer', {
 	    if (!['de','en'].includes(frm.doc.language)) {
 	        validation_error(frm, 'language', __("Bitte eine gültige Drucksprache wählen"));
 	    }
-		if(!frm.doc.eori_number) {
+		if(!frm.doc.eori_number && frm.doc.territory != "Schweiz") {
 			frappe.db.get_value("Territory", frm.doc.territory, "parent_territory").then(r => {
 				if(r.message && r.message.parent_territory == 'Europa') {
 					frappe.show_alert({message: "Bitte vor dem Anlegen einer Rechnung für diesen Kunden die EORI-Nummer erfassen. Diese ist für Exporte in die EU zwingend erforderlich.", indicator: 'orange'}, 10);
