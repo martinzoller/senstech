@@ -66,8 +66,8 @@ function update_address_display(frm, fields, addresses, as_list=false) {
 }
 
 function basic_common_validations(frm) {
-	if (!frm.doc.taxes_and_charges) {
-		validation_error(frm, 'taxes_and_charges', __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"));
+	if (!frm.doc.taxes_and_charges && frm.doctype != "Request for Quotation") {
+		validation_error(frm, 'taxes_and_charges', __("Bitte Vorlage für Steuern und Abgaben hinterlegen"));
 	}
 
 	// TODO: Blanket Order doesn't have a position number, but there isn't a good reason why it should not
