@@ -19,6 +19,18 @@ frappe.ui.form.on('Quotation', {
             }
         }
 		
+		// Bestelloption auch bei abgelaufenen Offerten
+		if(frm.doc.docstatus == 1 && !(['Lost', 'Ordered']).includes(frm.doc.status)) {
+			if(frm.doc.valid_till && frappe.datetime.get_diff(frm.doc.valid_till, frappe.datetime.get_today()) < 0) {
+				frm.add_custom_button(__('Sales Order'), function() {
+					frappe.model.open_mapped_doc({
+						method: "senstech.scripts.quotation_tools.make_sales_order_ignore_validity",
+						frm: frm
+					});
+				}, __('Create'));
+			}
+		}
+		
 		// Offertenfreigabe
 		if (!frm.doc.__islocal && frm.doc.docstatus == 0) {
 			if(frm.doc.gate1_requested_date) {

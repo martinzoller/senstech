@@ -66,8 +66,8 @@ function update_address_display(frm, fields, addresses, as_list=false) {
 }
 
 function basic_common_validations(frm) {
-	if (!frm.doc.taxes_and_charges) {
-		validation_error(frm, 'taxes_and_charges', __("Bitte Vorlage für Verkaufssteuern und -abgaben hinterlegen"));
+	if (!frm.doc.taxes_and_charges && frm.doctype != "Request for Quotation") {
+		validation_error(frm, 'taxes_and_charges', __("Bitte Vorlage für Steuern und Abgaben hinterlegen"));
 	}
 
 	// TODO: Blanket Order doesn't have a position number, but there isn't a good reason why it should not
@@ -101,10 +101,16 @@ function basic_sales_validations(frm) {
 		validation_error(frm, payment_terms_field, __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
 	}
 	
-	if(! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
-		if(!frm.doc.eori_number) {
-			validation_error(frm, 'customer', __('Im Kundenstamm ist keine EORI-Nummer hinterlegt')+'<br><br><a href="#Form/Customer/'+frm.doc.customer+'" target="_blank">&gt; '+__('Zum Kunden:')+' '+frm.doc.customer_name+'</a>');
-		}
+	if(!frm.doc.eori_number && frm.doc.territory != "Schweiz" && ! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
+		frappe.db.get_value("Territory", frm.doc.territory, "parent_territory").then(r => {
+			if(r.message && r.message.parent_territory == 'Europa') {
+				if(frm.doctype == 'Sales Invoice') {
+					validation_error(frm, 'customer', __('Im Kundenstamm ist keine EORI-Nummer hinterlegt. Für den Versand an EU-Kunden ist diese zwingend erforderlich.')+'<br><br><a href="#Form/Customer/'+frm.doc.customer+'" target="_blank">&gt; '+__('Zum Kunden:')+' '+frm.doc.customer_name+'</a>');
+				} else {
+					frappe.show_alert({message: __('Im Kundenstamm ist keine EORI-Nummer hinterlegt. Bitte diese beim Kunden anfordern, damit eine Rechnung erstellt werden kann!')+'<br><br><a href="#Form/Customer/'+frm.doc.customer+'" target="_blank">&gt; '+__('Zum Kunden:')+' '+frm.doc.customer_name+'</a>', indicator: 'orange'}, 30);
+				}
+			}
+		});
 	}
 	
 	let processed_count = 0;

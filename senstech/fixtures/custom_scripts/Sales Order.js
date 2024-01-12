@@ -150,13 +150,10 @@ function fetch_templates_from_blanket_order(frm, blanket_order) {
 
     frappe.db.get_doc("Blanket Order", blanket_order).then(bo => {
         if(bo) {
-    		if(bo.taxes_and_charges) {
-					cur_frm.set_value('taxes_and_charges', '');
-    				cur_frm.set_value('taxes_and_charges', bo.taxes_and_charges);
-    		}
     		if(bo.payment_terms) {
 					cur_frm.set_value('payment_terms_template', '');
     				cur_frm.set_value('payment_terms_template', bo.payment_terms);
+					frappe.show_alert({message: __("Zahlungsbedingungen aus Rahmenauftrag übernommen:")+' '+bo.payment_terms, indicator: 'green'}, 10);
     		}
         }
     });

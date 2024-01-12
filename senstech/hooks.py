@@ -137,7 +137,13 @@ doc_events =  {
     },
     "Item": {
         "validate": "senstech.scripts.item_tools.validate_item",
-    }
+    },
+    "Supplier": {
+        "on_update": "senstech.scripts.supplier_tools.check_supplier_duns_address"
+    },
+    "Customer": {
+        "on_update": "senstech.scripts.customer_tools.check_customer_duns_address"
+    },
 }
 
 # Scheduled Tasks

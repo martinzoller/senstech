@@ -75,7 +75,7 @@ frappe.ui.form.ControlLink = frappe.ui.form.ControlData.extend({
 		}
 
 		// Set the field title if still available
-		if(this.frm && this.frm.doc.link_titles && value != null
+		if(this.frm && this.$input && this.frm.doc.link_titles && value != null
 		&& this.frm.doc.link_titles[this.df.fieldname] != null
 		&& this.frm.doc.link_titles[this.df.fieldname] != value
 		&& !this.$input.is(":focus")) {
