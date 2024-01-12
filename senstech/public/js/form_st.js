@@ -612,9 +612,9 @@ frappe.ui.form.Form = class FrappeForm {
 				}, btn, () => me.handle_save_fail(btn, on_error), resolve);
 			};
 			
-			// Senstech mod: Show preview pop-up for docs with auto PDF attachment (currently all docs)
+			// Senstech mod: Show preview pop-up for all signed documents
 			// 				 If the preview is shown, trigger before_submit directly, otherwise show the confirmation prompt first
-			if(true /*['Quotation','Sales Order','...'].includes(this.doctype)*/){
+			if(['Quotation','Sales Order','Blanket Order','Sales Invoice','Delivery Note','Purchase Order','Request for Quotation'].includes(this.doctype)){
 				frappe.validated = true;
 				me.script_manager.trigger("before_submit").then(function() {
 					if(!frappe.validated) {
