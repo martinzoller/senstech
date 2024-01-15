@@ -13,15 +13,13 @@ frappe.ui.form.on('Blanket Order', {
             frm.add_custom_button(__("Change To Date"), function() {
                 change_to_date(frm);
             });
-            // Adress-, Kontakt-, Steuer- und Konditionsfeld bei gebuchten R'aufträgen noch änderbar, wenn nicht gesetzt (Legacy)
+            // Adress-, Kontakt- und Konditionsfeld bei gebuchten R'aufträgen noch änderbar, wenn nicht gesetzt (Legacy)
+			// Steuertemplate ist generell schreibgeschützt, wird jedoch ggf. automatisch gesetzt
             if(cur_frm.doc.customer_address){
                 cur_frm.set_df_property('customer_address','read_only',1);
             }
             if(cur_frm.doc.contact_person){
                 cur_frm.set_df_property('contact_person','read_only',1);
-            }
-            if(cur_frm.doc.taxes_and_charges){
-                cur_frm.set_df_property('taxes_and_charges','read_only',1);
             }
             if(cur_frm.doc.payment_terms){
                 cur_frm.set_df_property('payment_terms','read_only',1);
@@ -52,6 +50,10 @@ frappe.ui.form.on('Blanket Order', {
     },
     validate(frm) {
         basic_sales_validations(frm);
+		// Steuervorlage ist hier schreibgeschützt und daher nicht als Pflichtfeld definiert
+		if(!frm.doc.taxes_and_charges) {
+				validation_error(frm, 'taxes_and_charges', __("Bitte im Kundenstamm eine Steuervorlage hinterlegen"));
+		}
     }
 });
 
@@ -142,15 +144,15 @@ function change_customer(frm) {
                 cur_frm.set_value('language', new_language);
                 cur_frm.refresh_field('language');
             }
-            // Neuer Rahmenauftrag: Templates übernehmen
-            if(cur_frm.doc.__islocal) {
-                if (!cur_frm.doc.taxes_and_charges && customer.taxes_and_charges) {
-                    cur_frm.set_value('taxes_and_charges', customer.taxes_and_charges);
-                }
-                if(!cur_frm.doc.payment_terms && customer.payment_terms){
-                    cur_frm.set_value('payment_terms', customer.payment_terms);
-                }
-            }
+            // Steuertemplate: Bis zum Buchen jeweils vom Kunden holen; bei AB-Erzeugung immer direkt von dort laden
+			//                 Wenn Feld leer (Legacy-Dok.), auch im gebuchten Zustand laden
+			if ((cur_frm.doc.docstatus == 0 || !cur_frm.doc.taxes_and_charges) && customer.taxes_and_charges) {
+				cur_frm.set_value('taxes_and_charges', customer.taxes_and_charges);
+			}
+			// Zahlungsbedingungen: Nur bei neuem Rahmenauftrag setzen
+			if(cur_frm.doc.__islocal && !cur_frm.doc.payment_terms && customer.payment_terms){
+				cur_frm.set_value('payment_terms', customer.payment_terms);
+			}
         }
     });
 }
