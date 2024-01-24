@@ -91,12 +91,14 @@
 										{% endif %}
 								</td>
 						    {% if doc.doctype == "Delivery Note" %}
-										<td>
-										  {{ chargennummer or '' }}
-										</td>
+									<td>
+										{{ chargennummer or '' }}
+									</td>
 								{% else %}
-										<td style="text-align: right;">{{ "{:,.2f}".format(item.rate / item.conversion_factor).replace(",", "'") }}&nbsp;{{ doc.currency }}</td>
-										<td style="text-align: right;">{{ "{:,.2f}".format(item.amount).replace(",", "'") }}&nbsp;{{ doc.currency }}</td>										
+									<td style="text-align: right;">{{ "{:,.2f}".format(item.rate).replace(",", "'") }}&nbsp;{{ doc.currency }}
+									  {% if item.uom != item.stock_uom %} / {{ item.uom }} {% endif %}
+									</td>
+									<td style="text-align: right;">{{ "{:,.2f}".format(item.amount).replace(",", "'") }}&nbsp;{{ doc.currency }}</td>										
 								{% endif %}
 						</tr>
 				{% endif %}
