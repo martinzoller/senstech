@@ -71,6 +71,32 @@ def submit_measurements(user, item, batch, sensor_id, measurands, values, units,
         else:
             return(e)
 
+
+# Like submit_measurements, but without an ID argument. Instead, the function will determine and use the next available sensor ID.
+# The return value is an array consisting of a result string and the assigned sensor ID.
+@frappe.whitelist()
+def submit_measurements_auto_id(user, item, batch, measurands, values, units, test_results=None, print_label='False', sent_from_host=''):
+    batch_id = frappe.db.exists('Batch', {'item': item, 'chargennummer':batch})
+    max_id = frappe.db.sql(("""
+      SELECT
+        MAX(sensor_id)
+      FROM
+        `tabSenstech Messdaten`
+      WHERE
+        batch='{batch_id}'
+      """
+    ).format(batch_id=batch_id))
+    if max_id[0][0]:
+        new_id = max_id[0][0]+1
+    else:
+        new_id = 1
+    res = submit_measurements(user, item, batch, new_id, measurands, values, units, test_results, print_label, sent_from_host)
+    if res == 'OK':
+        return [res, new_id]
+    else:
+        return [res, 0]
+
+
 # Triggered by submit_measurements() as well as a JS button to manually reprint labels.
 # Given the ID of a "Senstech Messdaten" doc, will print the appropriate single-sensor labels defined for the Item in question,
 # using the referenced sensor's most recent measurement data.
