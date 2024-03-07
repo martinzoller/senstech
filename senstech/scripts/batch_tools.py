@@ -169,35 +169,81 @@ def get_batch_production_details(batch):
 
 
 @frappe.whitelist()
-def get_next_batch_no(item_code):
-    item_doc = frappe.get_doc('Item', item_code)
-    this_year = datetime.date.today().strftime("%y")
-    sql_query = """SELECT `chargennummer`,`creation` 
-        FROM `tabBatch`
-        WHERE MID(`chargennummer`,4,2)='{year}'
-        AND item='{item}'
-        ORDER BY CONCAT(LEFT(`chargennummer`,2),TRIM(MID(`chargennummer`,6))) DESC LIMIT 1;""".format(year=this_year,item=item_code)
-    
-    latest_batch = frappe.db.sql(sql_query, as_dict=1)
-    if len(latest_batch) == 1:
-        latest_batch = latest_batch[0]
-        # Create another batch on same day: Assume next sub-batch, if applicable
-        if item_doc.has_sub_batches and latest_batch.creation.date() == datetime.date.today():
-            prev_sub_batch = latest_batch.chargennummer[5:].strip()
-            if prev_sub_batch == '':
-                next_sub_batch = 'A'
+def get_next_batch_no(batch_type, item_code = None, project = None, sales_order = None):
+    if batch_type == 'Serieprodukt':
+        item_doc = frappe.get_doc('Item', item_code)
+        if not item_doc:
+            return None
+        this_year = datetime.date.today().strftime("%y")
+        sql_query = """SELECT `chargennummer`,`creation` 
+            FROM `tabBatch`
+            WHERE MID(`chargennummer`,4,2)='{year}'
+            AND item='{item}'
+            ORDER BY CONCAT(LEFT(`chargennummer`,2),TRIM(MID(`chargennummer`,6))) DESC LIMIT 1;""".format(year=this_year,item=item_code)
+        
+        latest_batch = frappe.db.sql(sql_query, as_dict=1)
+        if len(latest_batch) == 1:
+            latest_batch = latest_batch[0]
+            # Create another batch on same day: Assume next sub-batch, if applicable
+            if item_doc.has_sub_batches and latest_batch.creation.date() == datetime.date.today():
+                prev_sub_batch = latest_batch.chargennummer[5:]
+                next_sub_batch = get_next_sub_batch(prev_sub_batch)
             else:
-                next_sub_batch = chr(ord(prev_sub_batch[0])+1)
-            next_batch = latest_batch.chargennummer[0:5] + next_sub_batch
+                next_batch = ('%02d/' % (int(latest_batch.chargennummer[0:2])+1)) + this_year
+                if item_doc.has_sub_batches:
+                    next_batch += 'A'
         else:
-            next_batch = ('%02d/' % (int(latest_batch.chargennummer[0:2])+1)) + this_year
+            next_batch = '01/'+this_year
             if item_doc.has_sub_batches:
                 next_batch += 'A'
-    else:
-        next_batch = '01/'+this_year
-        if item_doc.has_sub_batches:
-            next_batch += 'A'
+    
+    elif batch_type == 'Entwicklung':
+        if not project:
+            return None
+        cust_str = project[3:6]
+        proj_str = project[7:9]
+        sql_query = """SELECT `chargennummer`
+            FROM `tabBatch`
+            WHERE LEFT(`chargennummer`,7)='EP{cust}{proj}'
+            ORDER BY `chargennummer` DESC LIMIT 1;""".format(cust=cust_str,proj=proj_str)
+        latest_batch = frappe.db.sql(sql_query, as_dict=1)
+        if len(latest_batch) == 1:
+            latest_batch = latest_batch[0].chargennummer
+            next_batch = latest_batch[0:7] + get_next_sub_batch(latest_batch[7:])
+        else:
+            next_batch = 'EP'+cust_str+proj_str+'A'
+    
+    elif batch_type == 'Kleinauftrag':
+        if not sales_order:
+            return None
+        soid = sales_order[3:8]
+        sql_query = """SELECT `chargennummer`
+            FROM `tabBatch`
+            WHERE LEFT(`chargennummer`,7)='SO{soid}'
+            ORDER BY `chargennummer` DESC LIMIT 1;""".format(soid=soid)
+        latest_batch = frappe.db.sql(sql_query, as_dict=1)
+        if len(latest_batch) == 1:
+            latest_batch = latest_batch[0].chargennummer
+            next_batch = latest_batch[0:7] + get_next_sub_batch(latest_batch[7:])
+        else:
+            next_batch = 'SO'+soid+'A'
+    
     return next_batch
+            
+# Count the sub-batch letter code up by one (A, B, ..., Z, AA, AB, etc.)
+# Returns 'A' if an empty string is passed
+def get_next_sub_batch(prev_sub_batch):
+    # '@' is the character before 'A' and is used as a zero padding
+    # '[' is the character after 'Z', we add one to the end as an initial 'carryover'
+    sub_batch = list('@'+prev_sub_batch.strip()+'[')
+    for i in range(1,len(sub_batch)):
+        if sub_batch[-i] == '[':
+            sub_batch[-i] = 'A'
+            sub_batch[-(i+1)] = chr(ord(sub_batch[-(i+1)])+1)
+    # Remove leading zero ('@') if still present
+    # Also remove the carryover character at the end
+    sub_batch = ''.join(sub_batch).replace('@','')
+    return sub_batch[:-1]
 
 
 # Frappe 'YYYY-MM-DD' to Python datetime.date

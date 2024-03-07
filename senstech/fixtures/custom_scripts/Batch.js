@@ -160,10 +160,27 @@ frappe.ui.form.on('Batch', {
 			cur_frm.set_df_property('section_break_x','hidden',1);
 		}
 	},
+	batch_type(frm) {
+		if(frm.doc.__islocal) {
+			frm.fields_dict.chargennummer.set_value('')
+			if(frm.doc.batch_type == 'Kleinauftrag') {
+				frm.fields_dict.item.set_value('GP-00002');
+			}
+			else if(frm.doc.batch_type == 'Entwicklung') {
+				frm.fields_dict.item.set_value('GP-00001');
+			}
+			frm.fields_dict.project.set_value('')
+			frm.fields_dict.sales_order.set_value('')
+		}
+	},
 	item(frm) {
-	    if(cur_frm.doc.__islocal){
-	        auto_chargennr(frm);
-	    }
+		auto_chargennr(frm);
+	},
+	project(frm) {
+		auto_chargennr(frm);
+	},
+	sales_order(frm) {
+		auto_chargennr(frm);
 	},
     messdaten_nullpunkt(frm) {
         if(cur_frm.doc.messdaten_nullpunkt) {
@@ -655,17 +672,22 @@ function qr_labels(frm) {
 }
 
 function auto_chargennr(frm){
-    frappe.call({
-		method: 'senstech.scripts.batch_tools.get_next_batch_no',
-		args: {
-			item_code: frm.doc.item,
-		},
-		callback: (r) => {
-			if(r.message) {
-				frm.set_value('chargennummer',r.message);
+	if(cur_frm.doc.__islocal){
+		frappe.call({
+			method: 'senstech.scripts.batch_tools.get_next_batch_no',
+			args: {
+				batch_type: frm.doc.batch_type,
+				item_code: frm.doc.item,
+				project: frm.doc.project,
+				sales_order: frm.doc.sales_order
+			},
+			callback: (r) => {
+				if(r.message) {
+					frm.set_value('chargennummer',r.message);
+				}
 			}
-		}
-	});
+		});
+	}
 }
 
 function batch_label(frm) {
