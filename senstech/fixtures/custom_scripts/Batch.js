@@ -2,15 +2,15 @@ var histo_batch = '';
 
 frappe.ui.form.on('Batch', {
 	validate(frm) {
-	    if (cur_frm.doc.__islocal) {
-			var item = cur_frm.doc.item;	        
+	    if (frm.doc.__islocal) {
+			var item = frm.doc.item;
 	        frappe.db.get_value('Item',item,'has_sub_batches').then(r => {
 	            if(!r.message) {
 			        validation_error(frm, 'item', __("Fehler beim Laden des Basisartikels"));
     	            return;
 	            }
 			    var hat_teilchargen = r.message.has_sub_batches;	            
-			    var chargennummer = cur_frm.doc.chargennummer.trim();
+			    var chargennummer = frm.doc.chargennummer.trim();
 			    const schema_basis = /[0-9]{2}\/[0-9]{2}/;
 			    const schema_teilcharge = /[0-9]{2}\/[0-9]{2}[A-Z]{1}/;
 
@@ -20,40 +20,40 @@ frappe.ui.form.on('Batch', {
     			else if(!hat_teilchargen && chargennummer.match(schema_basis) != chargennummer) {
     			    validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer nach Schema 'NN/YY' angeben"));
     			}
-			    cur_frm.set_value('chargennummer', chargennummer);
+			    frm.set_value('chargennummer', chargennummer);
 			    var batch_id = item + "-" + chargennummer;
-			    cur_frm.set_value('batch_id', batch_id);
-                var bezeichnung = chargennummer + " - " + cur_frm.doc.item_name;
-                cur_frm.set_value('bezeichnung', bezeichnung);
+			    frm.set_value('batch_id', batch_id);
+                var bezeichnung = chargennummer + " - " + frm.doc.item_name;
+                frm.set_value('bezeichnung', bezeichnung);
 	        });
 		}
-	    if (cur_frm.doc.stueckzahl <= 0) {
+	    if (frm.doc.stueckzahl <= 0) {
 	        validation_error(frm, 'stueckzahl', __("Die Maximalstückzahl der Charge muss angegeben werden"));
 	    }
 	},
 	refresh(frm) {
 		/* Charge freigegeben oder Freigabe beantragt: Fast alles schreibgeschützt */
-		if(cur_frm.doc.freigabe_beantragt_durch || cur_frm.doc.freigabedatum) {
-			cur_frm.set_df_property('stueckzahl','read_only',1);
-			cur_frm.set_df_property('messdaten_nullpunkt','read_only',1);
-			cur_frm.set_df_property('messdaten_last','read_only',1);
+		if(frm.doc.freigabe_beantragt_durch || frm.doc.freigabedatum) {
+			frm.set_df_property('stueckzahl','read_only',1);
+			frm.set_df_property('messdaten_nullpunkt','read_only',1);
+			frm.set_df_property('messdaten_last','read_only',1);
 		}
 		else {
-			cur_frm.set_df_property('stueckzahl','read_only',0);
-			cur_frm.set_df_property('messdaten_nullpunkt','read_only',0);
-			cur_frm.set_df_property('messdaten_last','read_only',0);
+			frm.set_df_property('stueckzahl','read_only',0);
+			frm.set_df_property('messdaten_nullpunkt','read_only',0);
+			frm.set_df_property('messdaten_last','read_only',0);
 		}
 		
 		if(frm.is_new()) {
-			cur_frm.set_df_property('item','read_only',0);
-			cur_frm.set_df_property('chargennummer','read_only',0);
+			frm.set_df_property('item','read_only',0);
+			frm.set_df_property('chargennummer','read_only',0);
 		}
 		else {
-			cur_frm.set_df_property('item','read_only',1);
-			cur_frm.set_df_property('chargennummer','read_only',1);
+			frm.set_df_property('item','read_only',1);
+			frm.set_df_property('chargennummer','read_only',1);
 		}
 		/* Benötigt, damit Abschnitt "Messdaten" immer erscheint, wenn er bearbeitbar ist */
-		cur_frm.layout.refresh_sections();
+		frm.layout.refresh_sections();
 
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
 		if(!frm.is_new()) {
@@ -74,7 +74,7 @@ frappe.ui.form.on('Batch', {
 				batch_label(frm);
 			})
 			
-			cur_frm.set_df_property('section_break_x','hidden',0);
+			frm.set_df_property('section_break_x','hidden',0);
 		    
 			frappe.call({
 				method: 'senstech.scripts.tools.check_for_batch_quick_stock_entry',
@@ -125,7 +125,7 @@ frappe.ui.form.on('Batch', {
     						}
     				    }
     				    else {
-    				        if(cur_frm.doc.freigabedatum && freigabe_erlaubt) {
+    				        if(frm.doc.freigabedatum && freigabe_erlaubt) {
     				            frm.add_custom_button(__("Chargenfreigabe aufheben"), function() {
     				              chargenfreigabe_aufheben(frm);  
     				            })
@@ -151,13 +151,13 @@ frappe.ui.form.on('Batch', {
 			});
 			show_histograms(frm);
 			//show_prod_details(frm);
-			cur_frm.set_df_property('production_details','options', 'Produktions- und Ausschussdetails werden derzeit überarbeitet und sind nicht verfügbar.');
+			frm.set_df_property('production_details','options', 'Produktions- und Ausschussdetails werden derzeit überarbeitet und sind nicht verfügbar.');
 		}
 		else {
 			// Neues Dokument: ggf. Daten der zuvor geöffneten Charge ausblenden
-			cur_frm.set_df_property('production_details','options', ' ');
-			cur_frm.set_df_property('histogramm_grafik','options', ' ');
-			cur_frm.set_df_property('section_break_x','hidden',1);
+			frm.set_df_property('production_details','options', ' ');
+			frm.set_df_property('histogramm_grafik','options', ' ');
+			frm.set_df_property('section_break_x','hidden',1);
 		}
 	},
 	batch_type(frm) {
@@ -183,12 +183,12 @@ frappe.ui.form.on('Batch', {
 		auto_chargennr(frm);
 	},
     messdaten_nullpunkt(frm) {
-        if(cur_frm.doc.messdaten_nullpunkt) {
+        if(frm.doc.messdaten_nullpunkt) {
             get_histogram_data(frm);
         }
     },
     messdaten_last(frm) {
-        if(cur_frm.doc.messdaten_last) {
+        if(frm.doc.messdaten_last) {
             get_histogram_data(frm);
         }
     }
@@ -199,8 +199,8 @@ function an_lager_legen(frm, open_qty) {
 	var d = new frappe.ui.Dialog({
 		'fields': [
 			{'fieldname': 'qty', 'fieldtype': 'Float', 'reqd': 1, 'label': __('Stückzahl'), 'default': 0.000},
-			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': cur_frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
-			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': cur_frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')}
+			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
+			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')}
 		],
 		primary_action: function(){
 			if (d.get_values().qty <= open_qty) {
@@ -224,8 +224,8 @@ function aus_lager_entnehmen(frm) {
 			{'fieldname': 'qty', 'fieldtype': 'Float', 'reqd': 1, 'label': __('Stückzahl'), 'default': 1.000},
 			{'fieldname': 'comment', 'fieldtype': 'Data', 'reqd': 1, 'label': __('Verwendungszweck')},
 			{'fieldname': 'user', 'fieldtype': 'Link', 'options': 'Item', 'default': frappe.user.full_name(), 'read_only': 1, 'label': __('Entnommen durch')},
-			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': cur_frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
-			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': cur_frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')},
+			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
+			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')},
 			
 		],
 		primary_action: function(){
@@ -240,15 +240,15 @@ function aus_lager_entnehmen(frm) {
 						'from_warehouse': "Fertigerzeugnisse - ST",
 						'bemerkung_intern': val.comment,
 						'items': [{
-							'item_code': cur_frm.doc.item,
+							'item_code': frm.doc.item,
 							'qty': val.qty,
-							'batch_no': cur_frm.doc.name
+							'batch_no': frm.doc.name
 						}]
 					},
 					action: 'Submit'
 				}
 			}).then (f => {
-				cur_frm.refresh();
+				frm.refresh();
 			});
 		},
 		primary_action_label: __('Aus Lager entnehmen')
@@ -264,12 +264,12 @@ function batch_quick_stock_entry(frm, qty) {
 		args: {
 			batch_no: frm.doc.name,
 			warehouse: 'Fertigerzeugnisse - ST',
-			item: cur_frm.doc.item,
+			item: frm.doc.item,
 			qty: qty
 		},
 		callback: (r) => {
 			if(r.message) {
-				cur_frm.reload_doc();
+				frm.reload_doc();
               	var close_prompt = new frappe.ui.Dialog({
             		title: __("Lagerbuchung erfolgreich"),
             		fields: [
@@ -296,14 +296,14 @@ function get_histogram_data(frm) {
 	frappe.call({
 		method: 'senstech.scripts.batch_tools.get_histogramm_data',
 		args: {
-			item: cur_frm.doc.item,
-            batch: cur_frm.doc.name,
-            messdaten_nullpunkt: cur_frm.doc.messdaten_nullpunkt,
-            messdaten_last: cur_frm.doc.messdaten_last
+			item: frm.doc.item,
+            batch: frm.doc.name,
+            messdaten_nullpunkt: frm.doc.messdaten_nullpunkt,
+            messdaten_last: frm.doc.messdaten_last
 		},
 		callback: (r) => {
 			if(r.message) {
-				cur_frm.reload_doc();
+				frm.reload_doc();
 			}
 		}
 	});
@@ -312,26 +312,26 @@ function get_histogram_data(frm) {
 
 function show_histograms(frm) {
 	
-	if(cur_frm.doc.histogramm_anz_gemessene > 0) {
+	if(frm.doc.histogramm_anz_gemessene > 0) {
     	var histogramm = '<div>';
-    	var data = JSON.parse(cur_frm.doc.histogramm_daten);
+    	var data = JSON.parse(frm.doc.histogramm_daten);
         for (var i=0; i < data.length; i++) {
             histogramm += '<img style="width:49%" src="https://data.libracore.ch/server-side-charts/api/histogram.php?'+data[i]+'">';
         }
         histogramm += '</div>';
-        cur_frm.set_df_property('histogramm_grafik','options', histogramm);
+        frm.set_df_property('histogramm_grafik','options', histogramm);
     				
 	} else {
-		if(cur_frm.doc.messdaten_nullpunkt || cur_frm.doc.messdaten_last) {
-			cur_frm.set_df_property('histogramm_grafik','options', '<div>Messdaten ungültig</div>');
+		if(frm.doc.messdaten_nullpunkt || frm.doc.messdaten_last) {
+			frm.set_df_property('histogramm_grafik','options', '<div>Messdaten ungültig</div>');
 			// Save docname in a global variable to prevent a reload loop
-			if(window.last_reloaded_doc != cur_frm.docname) {
-				window.last_reloaded_doc = cur_frm.docname;
+			if(window.last_reloaded_doc != frm.docname) {
+				window.last_reloaded_doc = frm.docname;
 				get_histogram_data(frm);
 			}
 		}
 		else {
-			cur_frm.set_df_property('histogramm_grafik','options', '<div>Keine Messdaten vorhanden</div>');
+			frm.set_df_property('histogramm_grafik','options', '<div>Keine Messdaten vorhanden</div>');
 		}
 	}
 }
@@ -341,20 +341,20 @@ function show_prod_details(frm) {
     frappe.call({
 				method: 'senstech.scripts.batch_tools.get_batch_production_details',
 				args: {
-				    batch: cur_frm.doc.name,
+				    batch: frm.doc.name,
 				},
 				callback: (r) => {
 				    if(r.message != 'None') {
     				    var details = r.message;
-    				    var ausschuss_erw = (details.reject > 0 ? cur_frm.doc.stueckzahl - details.expected_qty+' ('+details.reject+'%)' : 'unbekannt');
+    				    var ausschuss_erw = (details.reject > 0 ? frm.doc.stueckzahl - details.expected_qty+' ('+details.reject+'%)' : 'unbekannt');
     				    var ausschuss_real = ''
     				    if(details.completed) {
-    				        ausschuss_real = cur_frm.doc.stueckzahl - details.entered_qty;
-    				        ausschuss_real = ausschuss_real + ' (' + Math.ceil(ausschuss_real*100/cur_frm.doc.stueckzahl) + '%)';
+    				        ausschuss_real = frm.doc.stueckzahl - details.entered_qty;
+    				        ausschuss_real = ausschuss_real + ' (' + Math.ceil(ausschuss_real*100/frm.doc.stueckzahl) + '%)';
     				    }
     				    var infosection = `<table class="infotable">
     				                       <tr><th>Stückzahl</th><th>Voraussichtlich</th><th>Tatsächlich</th></tr>
-    				                       <tr><td>Bei Chargeneröffnung</td><td></td><td>`+cur_frm.doc.stueckzahl+`</td></tr>
+    				                       <tr><td>Bei Chargeneröffnung</td><td></td><td>`+frm.doc.stueckzahl+`</td></tr>
     				                       <tr><td>Ausschuss</td><td>`+ausschuss_erw+`</td><td>`+ausschuss_real+`</td></tr>
     				                       <tr><td>Fertig gestellt</td><td>`+details.expected_qty+`</td><td>`+details.entered_qty+`</td></tr>`;
     				    if(details.completed) {
@@ -363,15 +363,15 @@ function show_prod_details(frm) {
     				        infosection = 'Produktionscharge voraussichtlich abgeschlossen am: '+details.completion+infosection+`
     				                       <tr><td></td><td></td><td></td></tr><tr><td>Verbleibend</td><td>`+details.projected_remaining_mfg_qty+`</td><td></td></tr></table>`;
     				    }
-    				    cur_frm.set_df_property('production_details','options', infosection);
+    				    frm.set_df_property('production_details','options', infosection);
     				    // Chargenfreigabe nicht aufhebbar, wenn schon Sensoren im Lager
     				    if(details.entered_qty > 0) {
-    				        if(cur_frm.custom_buttons['Chargenfreigabe aufheben']){
-    				            cur_frm.custom_buttons['Chargenfreigabe aufheben'].remove();
+    				        if(frm.custom_buttons['Chargenfreigabe aufheben']){
+    				            frm.custom_buttons['Chargenfreigabe aufheben'].remove();
     				        }
     				    }
 				    } else {
-				        cur_frm.set_df_property('production_details','options', 'Fehler beim Laden der Produktionsdetails');
+				        frm.set_df_property('production_details','options', 'Fehler beim Laden der Produktionsdetails');
 				    }
 				}
     });
@@ -399,7 +399,7 @@ function freigabeantrag(frm) {
         return;
     }
     
-    frappe.db.get_doc('Item', cur_frm.doc.item).then(item => {
+    frappe.db.get_doc('Item', frm.doc.item).then(item => {
     
         if(item) {
             
@@ -429,19 +429,19 @@ function freigabeantrag(frm) {
         		    antrag.hide();
         
                     // Artikelstammdaten setzen (werden schon für die Histo-Vorschau bei der Freigabe benötigt)
-                    cur_frm.set_value('artikelcode', item.item_code);
-                    cur_frm.set_value('artikelbezeichnung', item.item_name);
-                    cur_frm.set_value('artikelcode_kunde', item.artikelcode_kunde);
-                    cur_frm.set_value('produktrevision_kunde', item.produktrevision_kunde);
-                    cur_frm.set_value('qualitaetsspezifikation', item.qualitaetsspezifikation);
-                    cur_frm.set_value('short_description',short_description);
+                    frm.set_value('artikelcode', item.item_code);
+                    frm.set_value('artikelbezeichnung', item.item_name);
+                    frm.set_value('artikelcode_kunde', item.artikelcode_kunde);
+                    frm.set_value('produktrevision_kunde', item.produktrevision_kunde);
+                    frm.set_value('qualitaetsspezifikation', item.qualitaetsspezifikation);
+                    frm.set_value('short_description',short_description);
                     
                     // Antragsdaten setzen
-                    cur_frm.set_value('manufacturing_date', values.manufacturing_date);
-                    cur_frm.set_value('freigabe_beantragt_durch', values.freigabe_beantragt_durch);
+                    frm.set_value('manufacturing_date', values.manufacturing_date);
+                    frm.set_value('freigabe_beantragt_durch', values.freigabe_beantragt_durch);
                            
-                    cur_frm.save().then(r => {
-                        cur_frm.reload_doc();
+                    frm.save().then(r => {
+                        frm.reload_doc();
                     });
         		},
         		secondary_action_label: __("Abbrechen")
@@ -458,19 +458,19 @@ function freigabeantrag(frm) {
 
 function freigabeantrag_zurueck(frm) {
 	// Artikelstammdaten leeren
-	cur_frm.set_value('artikelcode', '');
-	cur_frm.set_value('artikelbezeichnung', '');
-	cur_frm.set_value('artikelcode_kunde', '');
-	cur_frm.set_value('produktrevision_kunde', '');
-	cur_frm.set_value('qualitaetsspezifikation', '');
-	cur_frm.set_value('short_description', '');
+	frm.set_value('artikelcode', '');
+	frm.set_value('artikelbezeichnung', '');
+	frm.set_value('artikelcode_kunde', '');
+	frm.set_value('produktrevision_kunde', '');
+	frm.set_value('qualitaetsspezifikation', '');
+	frm.set_value('short_description', '');
 	
 	// Antragsdaten leeren
-	cur_frm.set_value('manufacturing_date', '');
-	cur_frm.set_value('freigabe_beantragt_durch', '');
+	frm.set_value('manufacturing_date', '');
+	frm.set_value('freigabe_beantragt_durch', '');
 		   
-	cur_frm.save().then(r => {
-		cur_frm.reload_doc();
+	frm.save().then(r => {
+		frm.reload_doc();
 	});
 }
 
@@ -493,13 +493,13 @@ function charge_freigeben(frm) {
 }
 
 function charge_freigeben_schritt1(frm) {    
-    if(text_field_empty(cur_frm.doc.histogramm_text)) {
+    if(text_field_empty(frm.doc.histogramm_text)) {
         // Kein Histogramm zum Freigeben
         charge_freigeben_schritt2(frm, 'Produktionscharge freigeben');
         return;
     }
     
-    if(cur_frm.doc.histogramm_anz_gemessene == 0) {
+    if(frm.doc.histogramm_anz_gemessene == 0) {
         frappe.msgprint("Dieses Produkt hat ein Histogramm, jedoch liegen keine Messdaten vor. Chargenfreigabe nicht möglich!");
         return;    
     }
@@ -509,9 +509,9 @@ function charge_freigeben_schritt1(frm) {
 
 function charge_freigeben_schritt2(frm, step_title) {
             
-    var artikelcode_rev = cur_frm.doc.artikelcode_kunde;
-    if(cur_frm.doc.produktrevision_kunde)
-      artikelcode_rev += ' rev. '+cur_frm.doc.produktrevision_kunde;
+    var artikelcode_rev = frm.doc.artikelcode_kunde;
+    if(frm.doc.produktrevision_kunde)
+      artikelcode_rev += ' rev. '+frm.doc.produktrevision_kunde;
     
     var d = new frappe.ui.Dialog({
         title: step_title,
@@ -520,14 +520,14 @@ function charge_freigeben_schritt2(frm, step_title) {
                 label: 'Artikelcode',
                 fieldname: 'artikelcode',
                 fieldtype: 'Data',
-                default: cur_frm.doc.artikelcode,
+                default: frm.doc.artikelcode,
                 read_only: '1'
             },
             {
                 label: 'Artikelbezeichnung',
                 fieldname: 'item_name',
                 fieldtype: 'Data',
-                default: cur_frm.doc.artikelbezeichnung,
+                default: frm.doc.artikelbezeichnung,
                 read_only: '1'
             },
             {
@@ -545,7 +545,7 @@ function charge_freigeben_schritt2(frm, step_title) {
                 label: 'Kurzbeschreibung',
                 fieldname: 'short_description',
                 fieldtype: 'Data',
-                default: cur_frm.doc.short_description,
+                default: frm.doc.short_description,
                 read_only: '1'
             },
             {
@@ -556,7 +556,7 @@ function charge_freigeben_schritt2(frm, step_title) {
                 label: 'Qualitätsspezifikation',
                 fieldname: 'qualitaetsspezifikation',
                 fieldtype: 'Text Editor',
-                default: cur_frm.doc.qualitaetsspezifikation,
+                default: frm.doc.qualitaetsspezifikation,
                 read_only: '1'
             },
             {
@@ -573,7 +573,7 @@ function charge_freigeben_schritt2(frm, step_title) {
                 label: 'Herstelldatum',
                 fieldname: 'manufacturing_date',
                 fieldtype: 'Date',
-                default: cur_frm.doc.manufacturing_date,
+                default: frm.doc.manufacturing_date,
                 description: 'Für das COC. Wird vom Produktverantwortlichen im Freigabeantrag festgelegt.',
                 read_only: '1'
             },
@@ -581,7 +581,7 @@ function charge_freigeben_schritt2(frm, step_title) {
                 label: 'Produktverantwortliche/r',
                 fieldname: 'freigabe_beantragt_durch',
                 fieldtype: 'Data',
-                default: cur_frm.doc.freigabe_beantragt_durch,
+                default: frm.doc.freigabe_beantragt_durch,
                 read_only: '1'
             },
             {
@@ -607,12 +607,12 @@ function charge_freigeben_schritt2(frm, step_title) {
             d.hide();
             
             // Freigabedaten setzen
-            cur_frm.set_value('description', values.description);
-            cur_frm.set_value('freigabedatum', values.freigabedatum);
-            cur_frm.set_value('freigegeben_durch', values.freigegeben_durch);
+            frm.set_value('description', values.description);
+            frm.set_value('freigabedatum', values.freigabedatum);
+            frm.set_value('freigegeben_durch', values.freigegeben_durch);
                    
-            cur_frm.save().then(r => {
-                cur_frm.reload_doc();
+            frm.save().then(r => {
+                frm.reload_doc();
             });
         }
     });
@@ -628,11 +628,11 @@ function chargenfreigabe_aufheben(frm) {
     }    
     
     frappe.confirm('Freigabe der Produktionscharge wirklich aufheben?', () => { 
-        cur_frm.set_value('freigabedatum', '');
-        cur_frm.set_value('freigegeben_durch', '');
+        frm.set_value('freigabedatum', '');
+        frm.set_value('freigegeben_durch', '');
                
-        cur_frm.save().then(r => {
-            cur_frm.reload_doc();
+        frm.save().then(r => {
+            frm.reload_doc();
         });
     });
 }
@@ -653,14 +653,14 @@ function qr_labels(frm) {
 				d.hide();			    
     			// Bis-Wert auf ganzen Etikettenbogen aufrunden
     			var num_pages = Math.ceil((vals.to_no - (vals.from_no - 1)) / 30);
-    			frappe.db.set_value("Batch",cur_frm.doc.name,"print_format_parameters",vals.from_no+"-"+num_pages).then(r => {
+    			frappe.db.set_value("Batch",frm.doc.name,"print_format_parameters",vals.from_no+"-"+num_pages).then(r => {
     			   console.log(r);
     			   var att_url = frappe.urllib.get_full_url(
 				     "/api/method/frappe.utils.print_format.download_pdf?"
-    				 + "doctype=" + encodeURIComponent(cur_frm.doc.doctype)
-    				 + "&name=" + encodeURIComponent(cur_frm.doc.name)
+    				 + "doctype=" + encodeURIComponent(frm.doc.doctype)
+    				 + "&name=" + encodeURIComponent(frm.doc.name)
     				 + "&format=QR-Label%20Avery%20Zweckform%2085x14&no_letterhead=0"
-    				 + (cur_frm.doc.language ? "&_lang=" + cur_frm.doc.language : "")
+    				 + (frm.doc.language ? "&_lang=" + frm.doc.language : "")
 			       );
         		   window.open(att_url);
     			});
@@ -672,7 +672,7 @@ function qr_labels(frm) {
 }
 
 function auto_chargennr(frm){
-	if(cur_frm.doc.__islocal){
+	if(frm.doc.__islocal){
 		frappe.call({
 			method: 'senstech.scripts.batch_tools.get_next_batch_no',
 			args: {
