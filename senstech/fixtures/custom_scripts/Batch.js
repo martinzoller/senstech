@@ -52,7 +52,7 @@ frappe.ui.form.on('Batch', {
 					frm.set_value('bezeichnung', bezeichnung);
 				});
 				
-			} else if(frm.doc.batch_type == 'Kleinauftrag') {
+			} else if(frm.doc.batch_type == 'Lohnfertigung/Kleinauftrag') {
 				var sales_order = frm.doc.sales_order;
 				frappe.db.get_value('Sales Order',sales_order,'customer_name').then(r => {
 					if(!r.message) {
@@ -68,7 +68,7 @@ frappe.ui.form.on('Batch', {
 						validation_error(frm, 'chargennummer', __("Die AB-Nummer muss mit dem gewählten Auftrag übereinstimmen"));
 						return;
 					}
-					var bezeichnung = chargennummer + " - Kleinauftrag für " + r.message.customer_name;
+					var bezeichnung = chargennummer + " - Lohnfertigung/Kleinauftrag für " + r.message.customer_name;
 					frm.set_value('bezeichnung', bezeichnung);
 				});
 			}
@@ -205,7 +205,7 @@ frappe.ui.form.on('Batch', {
 			frm.fields_dict.item_name.set_value('');
 			frm.fields_dict.project.set_value('');
 			frm.fields_dict.sales_order.set_value('');
-			if(frm.doc.batch_type == 'Kleinauftrag') {
+			if(frm.doc.batch_type == 'Lohnfertigung/Kleinauftrag') {
 				frm.fields_dict.item.set_value('GP-00002');
 			}
 			else if(frm.doc.batch_type == 'Entwicklung') {

@@ -188,6 +188,7 @@ def get_next_batch_no(batch_type, item_code = None, project = None, sales_order 
             if item_doc.has_sub_batches and latest_batch.creation.date() == datetime.date.today():
                 prev_sub_batch = latest_batch.chargennummer[5:]
                 next_sub_batch = get_next_sub_batch(prev_sub_batch)
+                next_batch = latest_batch.chargennummer[0:5]+next_sub_batch
             else:
                 next_batch = ('%02d/' % (int(latest_batch.chargennummer[0:2])+1)) + this_year
                 if item_doc.has_sub_batches:
@@ -213,7 +214,7 @@ def get_next_batch_no(batch_type, item_code = None, project = None, sales_order 
         else:
             next_batch = 'EP'+cust_str+proj_str+'A'
     
-    elif batch_type == 'Kleinauftrag':
+    elif batch_type == 'Lohnfertigung/Kleinauftrag':
         if not sales_order:
             return None
         soid = sales_order[3:8]
