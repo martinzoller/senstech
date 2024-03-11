@@ -11,9 +11,10 @@ frappe.ui.form.on('Sales Order', {
     validate(frm) {
 		basic_sales_validations(frm);
 		frm.doc.items.forEach(entry => {
+			let pos_prefix = __("Pos. {0}: ",[entry.position]);
+			
 			// Entwicklungsauftrag: Offertenreferenz prüfen
 			if(entry.item_code == 'GP-00001') {
-				let pos_prefix = __("Pos. {0}: ",[entry.position]);
 				if(!entry.prevdoc_docname) {
 					validation_error(frm, 'items', pos_prefix+__("Die AB für Entwicklungsaufträge muss aus der jeweiligen Offerte erzeugt werden."));
 				} else {
@@ -24,30 +25,41 @@ frappe.ui.form.on('Sales Order', {
 					});
 				}
 			}
+			
+			// Nullserieentwicklung: Serieartikel prüfen
+			if(entry.item_code == 'GP-00003' && frm.doc.project) {
+				let dev_item_part = frm.doc.project.substr(2,7)+'00'; // z.B. '-272-0100'
+				if(!frm.doc.items.some(i => i.item_code.includes(dev_item_part))) {
+					validation_error(frm, 'items', pos_prefix+__("Die AB einer Nullserieentwicklung muss den jeweiligen Serieartikel bereits enthalten (noch ohne Gate-2-Freigabe). Dessen Artikelcode muss dem Schema '{0}' entsprechen.",['XX'+dev_item_part]));
+				}
+			}
 		});
+		
         reload_contacts(frm);
     },
     after_save(frm) {
         calculate_versanddatum(frm);
     },
     refresh(frm) {
-		let auto_batch_items = frm.doc.items.filter(f => (f.item_group.startsWith("Serieprodukte") || f.item_code == "GP-00002"));
-		if(auto_batch_items.length == 1) {
-			if(auto_batch_items[0].item_code == "GP-00002"){
-				frm.add_custom_button(__('Produktionscharge anlegen'), function() {
-					frappe.new_doc("Batch", {
-						batch_type: 'Lohnfertigung/Kleinauftrag',
-						item: 'GP-00002',
-						sales_order: frm.doc.name
+		if(!frm.doc.__islocal) {
+			let auto_batch_items = frm.doc.items.filter(f => (f.item_group.startsWith("Serieprodukte") || f.item_code == "GP-00002"));
+			if(auto_batch_items.length == 1) {
+				if(auto_batch_items[0].item_code == "GP-00002"){
+					frm.add_custom_button(__('Produktionscharge anlegen'), function() {
+						frappe.new_doc("Batch", {
+							batch_type: 'Lohnfertigung/Kleinauftrag',
+							item: 'GP-00002',
+							sales_order: frm.doc.name
+						});
 					});
-				});
-			} else {
-				frm.add_custom_button(__('Produktionscharge anlegen'), function() {
-					frappe.new_doc("Batch", {
-						batch_type: 'Serieprodukt',
-						item: auto_batch_items[0].item_code
+				} else {
+					frm.add_custom_button(__('Produktionscharge anlegen'), function() {
+						frappe.new_doc("Batch", {
+							batch_type: 'Serieprodukt',
+							item: auto_batch_items[0].item_code
+						});
 					});
-				});
+				}
 			}
 		}
         if (frm.doc.customer_address && frm.doc.shipping_address_name) {

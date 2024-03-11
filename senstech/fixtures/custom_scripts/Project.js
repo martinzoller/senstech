@@ -19,13 +19,15 @@ frappe.ui.form.on('Project', {
 	},
 	
 	refresh(frm) {
-		frm.add_custom_button(__('Produktionscharge anlegen'), function() {
-			frappe.new_doc("Batch", {
-				batch_type: 'Entwicklung',
-				item: 'GP-00011',
-				project: frm.doc.name
+		if(!frm.doc.__islocal) {
+			frm.add_custom_button(__('Produktionscharge anlegen'), function() {
+				frappe.new_doc("Batch", {
+					batch_type: 'Entwicklung',
+					item: 'GP-00011',
+					project: frm.doc.name
+				});
 			});
-		});
+		}
 	},
 	
 	copy_of_project_type(frm) {

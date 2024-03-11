@@ -101,6 +101,7 @@ function basic_sales_validations(frm) {
 		validation_error(frm, payment_terms_field, __("Vorlage Zahlungsbedingungen muss ausgewählt werden"));
 	}
 	
+	// EORI number validations (Territory dependent)
 	if(!frm.doc.eori_number && frm.doc.territory != "Schweiz" && ! ["Quotation", "Delivery Note"].includes(frm.doctype)) {
 		frappe.db.get_value("Territory", frm.doc.territory, "parent_territory").then(r => {
 			if(r.message && r.message.parent_territory == 'Europa') {
@@ -113,12 +114,29 @@ function basic_sales_validations(frm) {
 		});
 	}
 	
+	// Validation of generic development & contract manufacturing items
+	if(frm.doc.items.some(i => ['GP-00001','GP-00003'].includes(i.item_code)) && frm.doc.items.some(f => f.item_code=='GP-00002')) {
+		validation_error(frm, 'items', __("Ein Verkaufsdokument darf nicht gleichzeitig Entwicklung und Lohnfertigung/Kleinaufträge enthalten. Bitte zwei separate Dokumente anlegen."));
+	}
+	if(['Quotation','Sales Order'].includes(frm.doctype)) {
+		if(frm.doc.items.some(f => f.item_code=='GP-00011') && !frm.doc.items.some(f => f.item_code=='GP-00001')) {
+			validation_error(frm, 'items', __("Der Prototypen-Artikel GP-00011 darf nur in Kombination mit einem Entwicklungsauftrag GP-00001 offeriert oder bestellt werden"));
+		}
+		if(frm.doc.items.some(f => f.item_code=='GP-00012') && !frm.doc.items.some(f => f.item_code=='GP-00002')) {
+			validation_error(frm, 'items', __("Die Pauschale GP-00012 darf nur in Kombination mit einem Lohnfertigungs- oder Kleinauftrag GP-00002 offeriert oder bestellt werden"));
+		}
+	}
+	if(!frm.doc.project && frm.doctype != 'Quotation' && frm.doc.items.some(i => ['GP-00001','GP-00003'].includes(i.item_code))) {
+		validation_error(frm, 'project', __("Allen Verkaufsdokumenten mit Entwicklungspositionen muss ein Projekt zugewiesen sein"));
+	}
+	
+	// Validation of shipping fees and other line item specific requirements
 	let processed_count = 0;
 	let found_count = 0;
 	let items = frm.doc.items;
 	items.forEach(function(entry) {
-		if (frm.doctype != 'Quotation' && entry.item_code == 'GP-00003') {
-			validation_error(frm, 'items', __("Der generische Nullserie-Artikel GP-00003 darf nur für Offerten verwendet werden. Zum Bestellzeitpunkt ist ein spezifischer Artikel anzulegen. Bevor dieser ausgeliefert wird, muss die Nullserie-Freigabe (Gate 2) vorliegen."))
+		if(['GP-00001','GP-00003'].includes(entry.item_code) && entry.qty != 1) {
+			validation_error(frm, 'items', __("Entwicklungsaufträge können nicht in mehrfacher Stückzahl auftreten. Zur Auslieferung oder Verrechnung von Prototypen bitte den Artikel GP-00011 verwenden; für Nullserien den entsprechenden Serieartikel anlegen."));
 		}
 		if (entry.item_group) {
 			processed_count++;
@@ -143,9 +161,6 @@ function basic_sales_validations(frm) {
 			});
 		}
 	});
-	if(!frm.doc.project && frm.doctype != 'Quotation' && frm.doc.items.some(i => i.item_code == 'GP-00001')) {
-		validation_error(frm, 'project', __("Allen Verkaufsdokumenten mit Entwicklungspositionen muss ein Projekt zugewiesen sein"));
-	}
 }
 
 
