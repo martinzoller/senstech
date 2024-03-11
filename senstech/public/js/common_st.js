@@ -143,7 +143,7 @@ function basic_sales_validations(frm) {
 			});
 		}
 	});
-	if(!frm.doc.project && frm.doctype != 'Quotation' && frm.doc.items.some(i => i.item_group == 'Entwicklung nach PZ-2000')) {
+	if(!frm.doc.project && frm.doctype != 'Quotation' && frm.doc.items.some(i => i.item_code == 'GP-00001')) {
 		validation_error(frm, 'project', __("Allen Verkaufsdokumenten mit Entwicklungspositionen muss ein Projekt zugewiesen sein"));
 	}
 }

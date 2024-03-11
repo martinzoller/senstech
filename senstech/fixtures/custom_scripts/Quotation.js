@@ -99,7 +99,7 @@ frappe.ui.form.on('Quotation', {
 				validation_error(frm, 'pp_number', __("Die Projektvorschlagsnr. muss dem Schema PP-##### entsprechen."))
 			}
 		}
-		else if(frm.doc.items.some(e => ['Entwicklung nach PZ-2000','Kleinaufträge nach PZ-2002'].includes(e.item_group))) {
+		else if(frm.doc.items.some(e => ['GP-00001','GP-00002'].includes(e.item_code))) {
 			validation_error(frm, 'pp_number', __("Bei Entwicklungsprojekten und Kleinaufträgen muss eine Projektvorschlagsnummer angegeben werden."))
 		}
 		
@@ -247,7 +247,7 @@ function set_specsheet_queries(frm) {
 }
 
 function doc_has_dev_items(frm) {
-	return frm.doc.items.some(e => e.item_group == 'Entwicklung nach PZ-2000');
+	return frm.doc.items.some(e => e.item_code == 'GP-00001');
 }
 
 function check_not_dirty(frm) {
