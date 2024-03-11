@@ -209,7 +209,7 @@ frappe.ui.form.on('Batch', {
 				frm.fields_dict.item.set_value('GP-00002');
 			}
 			else if(frm.doc.batch_type == 'Entwicklung') {
-				frm.fields_dict.item.set_value('GP-00001');
+				frm.fields_dict.item.set_value('GP-00011');
 			}
 			else {
 				frm.fields_dict.item.set_value('');

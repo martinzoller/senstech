@@ -31,6 +31,25 @@ frappe.ui.form.on('Sales Order', {
         calculate_versanddatum(frm);
     },
     refresh(frm) {
+		let auto_batch_items = frm.doc.items.filter(f => (f.item_group.startsWith("Serieprodukte") || f.item_code == "GP-00002"));
+		if(auto_batch_items.length == 1) {
+			if(auto_batch_items[0].item_code == "GP-00002"){
+				frm.add_custom_button(__('Produktionscharge anlegen'), function() {
+					frappe.new_doc("Batch", {
+						batch_type: 'Lohnfertigung/Kleinauftrag',
+						item: 'GP-00002',
+						sales_order: frm.doc.name
+					});
+				});
+			} else {
+				frm.add_custom_button(__('Produktionscharge anlegen'), function() {
+					frappe.new_doc("Batch", {
+						batch_type: 'Serieprodukt',
+						item: auto_batch_items[0].item_code
+					});
+				});
+			}
+		}
         if (frm.doc.customer_address && frm.doc.shipping_address_name) {
             update_address_display(frm, ['address_display', 'shipping_address'], [frm.doc.customer_address, frm.doc.shipping_address_name], true);
         } else {
