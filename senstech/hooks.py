@@ -122,8 +122,7 @@ doc_events =  {
         "on_cancel": "senstech.scripts.delivery_note_tools.release_sensor_ids",
     },
     "Sales Order": {
-        "on_submit": ["senstech.scripts.sales_order_tools.create_dev_batches","senstech.scripts.tools.attach_pdf_hook"],
-        "on_cancel": "senstech.scripts.sales_order_tools.delete_dev_batches",
+        "on_submit": "senstech.scripts.tools.attach_pdf_hook",
     },
     "Blanket Order": {
         "on_submit": "senstech.scripts.tools.attach_pdf_hook",
