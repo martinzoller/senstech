@@ -4,42 +4,83 @@ frappe.ui.form.on('Batch', {
 	validate(frm) {
 	    if (frm.doc.__islocal) {
 			var item = frm.doc.item;
-	        frappe.db.get_value('Item',item,'has_sub_batches').then(r => {
-	            if(!r.message) {
-			        validation_error(frm, 'item', __("Fehler beim Laden des Basisartikels"));
-    	            return;
-	            }
-			    var hat_teilchargen = r.message.has_sub_batches;	            
-			    var chargennummer = frm.doc.chargennummer.trim();
-			    const schema_basis = /[0-9]{2}\/[0-9]{2}/;
-			    const schema_teilcharge = /[0-9]{2}\/[0-9]{2}[A-Z]{1}/;
+			var chargennummer = frm.doc.chargennummer.trim();
+			var batch_id = item + "-" + chargennummer;
+			frm.set_value('chargennummer', chargennummer);
+			frm.set_value('batch_id', batch_id);
+			
+			if(frm.doc.batch_type == 'Serieprodukt') {
+				frappe.db.get_value('Item',item,'has_sub_batches').then(r => {
+					if(!r.message) {
+						validation_error(frm, 'item', __("Fehler beim Laden des Basisartikels"));
+						return;
+					}
+					var hat_teilchargen = r.message.has_sub_batches;	            
+					const schema_basis = /^[0-9]{2}\/[0-9]{2}$/;
+					const schema_teilcharge = /^[0-9]{2}\/[0-9]{2}[A-Z]+$/;
 
-    			if(hat_teilchargen && chargennummer.match(schema_teilcharge) != chargennummer) {
-    			    validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer mit Teilcharge nach Schema 'NN/YYX' angeben"));
-    			}
-    			else if(!hat_teilchargen && chargennummer.match(schema_basis) != chargennummer) {
-    			    validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer nach Schema 'NN/YY' angeben"));
-    			}
-			    frm.set_value('chargennummer', chargennummer);
-			    var batch_id = item + "-" + chargennummer;
-			    frm.set_value('batch_id', batch_id);
-                var bezeichnung = chargennummer + " - " + frm.doc.item_name;
-                frm.set_value('bezeichnung', bezeichnung);
-	        });
+					if(hat_teilchargen && !schema_teilcharge.test(chargennummer)) {
+						validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer mit Teilcharge nach Schema 'NN/YYX[X]' angeben"));
+						return;
+					}
+					else if(!hat_teilchargen && !schema_basis.test(chargennummer)) {
+						validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer nach Schema 'NN/YY' angeben"));
+						return;
+					}
+					
+					var bezeichnung = chargennummer + " - " + frm.doc.item_name;
+					frm.set_value('bezeichnung', bezeichnung);
+				});
+				
+			} else if(frm.doc.batch_type == 'Entwicklung') {
+				var project = frm.doc.project;
+				frappe.db.get_value('Project',project,'mountain_name').then(r => {
+					if(!r.message) {
+						validation_error(frm, 'project', __("Fehler beim Laden des Projektnamens"));
+						return;
+					}
+					const schema_dev = /^EP[0-9]{5}[A-Z]+$/;
+					if(!schema_dev.test(chargennummer)) {
+						validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer nach Schema 'EPkkknnX[X]' angeben"));
+						return;
+					}
+					if(chargennummer.substr(2,3) != project.substr(3,3) || chargennummer.substr(5,2) != project.substr(7,2)) {
+						validation_error(frm, 'chargennummer', __("Die Kunden- und Projektnummer muss mit dem gewählten Projekt übereinstimmen"));
+						return;
+					}
+					var bezeichnung = chargennummer + " - Prototypen «" + r.message.mountain_name + "»";
+					frm.set_value('bezeichnung', bezeichnung);
+				});
+				
+			} else if(frm.doc.batch_type == 'Kleinauftrag') {
+				var sales_order = frm.doc.sales_order;
+				frappe.db.get_value('Sales Order',sales_order,'customer_name').then(r => {
+					if(!r.message) {
+						validation_error(frm, 'sales_order', __("Fehler beim Laden des Kundennamens"));
+						return;
+					}
+					const schema_k = /^SO[0-9]{5}[A-Z]+$/;
+					if(!schema_k.test(chargennummer)) {
+						validation_error(frm, 'chargennummer', __("Bitte eine gültige Chargennummer nach Schema 'SO#####X[X]' angeben"));
+						return;
+					}
+					if(chargennummer.substr(2,5) != sales_order.substr(3,5)) {
+						validation_error(frm, 'chargennummer', __("Die AB-Nummer muss mit dem gewählten Auftrag übereinstimmen"));
+						return;
+					}
+					var bezeichnung = chargennummer + " - Kleinauftrag für " + r.message.customer_name;
+					frm.set_value('bezeichnung', bezeichnung);
+				});
+			}
 		}
-	    if (frm.doc.stueckzahl <= 0) {
-	        validation_error(frm, 'stueckzahl', __("Die Maximalstückzahl der Charge muss angegeben werden"));
-	    }
 	},
 	refresh(frm) {
 		/* Charge freigegeben oder Freigabe beantragt: Fast alles schreibgeschützt */
 		if(frm.doc.freigabe_beantragt_durch || frm.doc.freigabedatum) {
-			frm.set_df_property('stueckzahl','read_only',1);
 			frm.set_df_property('messdaten_nullpunkt','read_only',1);
 			frm.set_df_property('messdaten_last','read_only',1);
 		}
 		else {
-			frm.set_df_property('stueckzahl','read_only',0);
 			frm.set_df_property('messdaten_nullpunkt','read_only',0);
 			frm.set_df_property('messdaten_last','read_only',0);
 		}
@@ -84,11 +125,11 @@ frappe.ui.form.on('Batch', {
 					warehouse: 'Fertigerzeugnisse - ST'
 				},
 				callback: (r) => {
-				    var entry_qty = r.message.entry_qty;
+				    //var entry_qty = r.message.entry_qty;
 				    var freigabe_noetig = r.message.benoetigt_chargenfreigabe;
 				    var freigabe_erlaubt = frm.get_perm(1, 'write');
 				    
-				    if(frm.doc.batch_completed) {
+				    if(frm.doc.batch_completed && !freigabe_noetig) {
 				        frm.add_custom_button(__("Produktionscharge ist abgeschlossen"), function() {}, __("Keine Einbuchung möglich"));
 						frm.add_custom_button(__("Aus Lager entnehmen"), function() {
 							aus_lager_entnehmen(frm);
@@ -103,7 +144,7 @@ frappe.ui.form.on('Batch', {
 								var button_shown = false;
     				            if(freigabe_erlaubt) {
 									button_shown = true;
-        	                        frm.add_custom_button(__("Charge freigeben"), function() {
+        	                        frm.add_custom_button(__("(Teil-)Charge freigeben"), function() {
         	                            charge_freigeben(frm);
         	                        });
         						}
@@ -130,21 +171,19 @@ frappe.ui.form.on('Batch', {
     				              chargenfreigabe_aufheben(frm);  
     				            })
     				        }
-    				        if(entry_qty >= frm.doc.stueckzahl) {
-    				            frm.add_custom_button(__("Maximalstückzahl erreicht"), function() {}, __("Keine Einbuchung möglich"));
-    				        }
-    					    else {
-        						var open_qty = frm.doc.stueckzahl - entry_qty;
+    					    else if(!freigabe_noetig) {
         						frm.add_custom_button(__("An Lager legen"), function() {
-        							an_lager_legen(frm, open_qty);
+        							an_lager_legen(frm);
         						});
     					    }
 							frm.add_custom_button(__("Aus Lager entnehmen"), function() {
 								aus_lager_entnehmen(frm);
 							});
-    						frm.add_custom_button(__("Charge abschliessen"), function() {
-                                charge_abschliessen(frm);
-                            });
+							if(!freigabe_noetig) {
+								frm.add_custom_button(__("Charge abschliessen"), function() {
+									charge_abschliessen(frm);
+								});
+							}
     					}
 				    }
 				}
@@ -162,15 +201,19 @@ frappe.ui.form.on('Batch', {
 	},
 	batch_type(frm) {
 		if(frm.doc.__islocal) {
-			frm.fields_dict.chargennummer.set_value('')
+			frm.fields_dict.chargennummer.set_value('');
+			frm.fields_dict.item_name.set_value('');
+			frm.fields_dict.project.set_value('');
+			frm.fields_dict.sales_order.set_value('');
 			if(frm.doc.batch_type == 'Kleinauftrag') {
 				frm.fields_dict.item.set_value('GP-00002');
 			}
 			else if(frm.doc.batch_type == 'Entwicklung') {
 				frm.fields_dict.item.set_value('GP-00001');
 			}
-			frm.fields_dict.project.set_value('')
-			frm.fields_dict.sales_order.set_value('')
+			else {
+				frm.fields_dict.item.set_value('');
+			}
 		}
 	},
 	item(frm) {
@@ -194,7 +237,7 @@ frappe.ui.form.on('Batch', {
     }
 })
 
-function an_lager_legen(frm, open_qty) {
+function an_lager_legen(frm) {
     
 	var d = new frappe.ui.Dialog({
 		'fields': [
@@ -203,12 +246,8 @@ function an_lager_legen(frm, open_qty) {
 			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')}
 		],
 		primary_action: function(){
-			if (d.get_values().qty <= open_qty) {
-				d.hide();
-				batch_quick_stock_entry(frm, d.get_values().qty);
-			} else {
-				frappe.msgprint(__("Die Summe der Lagerbuchungen übersteigt die Maximalstückzahl"), __("Menge prüfen"));
-			}
+			d.hide();
+			batch_quick_stock_entry(frm, d.get_values().qty);
 		},
 		primary_action_label: __('An Lager legen')
 	});
@@ -258,7 +297,7 @@ function aus_lager_entnehmen(frm) {
 }
 
 
-function batch_quick_stock_entry(frm, qty) {
+function batch_quick_stock_entry(frm, qty, auto_close=false) {
 	frappe.call({
 		method: 'senstech.scripts.batch_tools.batch_quick_stock_entry',
 		args: {
@@ -269,23 +308,28 @@ function batch_quick_stock_entry(frm, qty) {
 		},
 		callback: (r) => {
 			if(r.message) {
-				frm.reload_doc();
-              	var close_prompt = new frappe.ui.Dialog({
-            		title: __("Lagerbuchung erfolgreich"),
-            		fields: [
-            			{
-            			    fieldtype: "HTML",
-            			    options: '<p class="frappe-confirm-message">'+__("Falls dies die letzte Lagerbuchung war, kann die Charge nun abgeschlossen werden.")+'</p>'
-            			}
-            		],
-            		primary_action_label: __("Charge abschliessen"),
-            		primary_action: function() {
-            			charge_abschliessen(frm);
-            			close_prompt.hide();
-            		},
-            		secondary_action_label: __("Charge offen lassen")
-            	});
-            	close_prompt.show();
+				if(auto_close) {
+					charge_abschliessen(frm); // (reload_doc erfolgt im Anschluss)
+				}
+				else {
+					frm.reload_doc();
+					var close_prompt = new frappe.ui.Dialog({
+						title: __("Lagerbuchung erfolgreich"),
+						fields: [
+							{
+								fieldtype: "HTML",
+								options: '<p class="frappe-confirm-message">'+__("Falls dies die letzte Lagerbuchung war, kann die Charge nun abgeschlossen werden.")+'</p>'
+							}
+						],
+						primary_action_label: __("Charge abschliessen"),
+						primary_action: function() {
+							charge_abschliessen(frm);
+							close_prompt.hide();
+						},
+						secondary_action_label: __("Charge offen lassen")
+					});
+					close_prompt.show();
+				}
 			}
 		}
 	});
@@ -408,6 +452,12 @@ function freigabeantrag(frm) {
           	var antrag = new frappe.ui.Dialog({
         		title: __("Chargenfreigabe beantragen"),
         		fields: [
+					{
+                        label: 'Stückzahl',
+                        fieldname: 'stueckzahl',
+                        fieldtype: 'Data',
+                        description: 'Stückzahl für die Lagerbuchung.'
+                    },
                     {
                         label: 'Herstelldatum',
                         fieldname: 'manufacturing_date',
@@ -437,6 +487,7 @@ function freigabeantrag(frm) {
                     frm.set_value('short_description',short_description);
                     
                     // Antragsdaten setzen
+					frm.set_value('stueckzahl', values.stueckzahl);
                     frm.set_value('manufacturing_date', values.manufacturing_date);
                     frm.set_value('freigabe_beantragt_durch', values.freigabe_beantragt_durch);
                            
@@ -466,6 +517,7 @@ function freigabeantrag_zurueck(frm) {
 	frm.set_value('short_description', '');
 	
 	// Antragsdaten leeren
+	frm.set_value('stueckzahl', '');
 	frm.set_value('manufacturing_date', '');
 	frm.set_value('freigabe_beantragt_durch', '');
 		   
@@ -569,6 +621,14 @@ function charge_freigeben_schritt2(frm, step_title) {
                 fieldname: 'break2',
                 fieldtype: 'Section Break',
             },
+			{
+				label: 'Stückzahl',
+				fieldname: 'stueckzahl',
+				default: frm.doc.stueckzahl,
+				fieldtype: 'Data',
+				description: 'Stückzahl für die Lagerbuchung.',
+				read_only: '1'
+			},
             {
                 label: 'Herstelldatum',
                 fieldname: 'manufacturing_date',
@@ -611,8 +671,9 @@ function charge_freigeben_schritt2(frm, step_title) {
             frm.set_value('freigabedatum', values.freigabedatum);
             frm.set_value('freigegeben_durch', values.freigegeben_durch);
                    
+		    // Speichern und Lagerbuchung durchführen
             frm.save().then(r => {
-                frm.reload_doc();
+                batch_quick_stock_entry(frm, frm.doc.stueckzahl, true);
             });
         }
     });
