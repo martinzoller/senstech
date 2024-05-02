@@ -22,11 +22,16 @@
 		{% set pay_addr = frappe.get_doc("Address", doc.customer_address) %}
 	{% endif %}
 	{% if pay_addr %}
+		{% if pay_addr.abweichender_firmennamen %}
+			{% set pay_name = pay_addr.abweichender_firmennamen %}
+		{% else %}
+			{% set pay_name = doc.customer_name %}
+		{% endif %}
 		{% set pay_address_array = pay_addr.address_line1.split(" ") %}
 		{% set pay_address_line_item_count = pay_address_array | count %}
 		{% set pay_country = frappe.get_doc("Country", pay_addr.country) %}
 		{% set pay_country_code = pay_country.code | upper %}
-		{% set pay_address_line_detail = {'name': doc.customer, 'street': '', 'number': '', 'pin': pay_addr.pincode, 'city': pay_addr.city, 'country': pay_country_code } %}
+		{% set pay_address_line_detail = {'name': pay_name, 'street': '', 'number': '', 'pin': pay_addr.pincode, 'city': pay_addr.city, 'country': pay_country_code } %}
 		{% for i in range(0, (pay_address_line_item_count - 1)) %}
 			{% if pay_address_line_detail.update({'street': pay_address_line_detail.street + " " + pay_address_array[i] }) %}{% endif %}
 		{% endfor %}
@@ -49,7 +54,7 @@
 							{{ doc.name }}
 					 </td></tr>
 					 <tr><td style="font-size:8pt;"><b><span style="font-size: 6pt">{{ _("Zahlbar durch") }}</span></b><br />
-							{{ doc.customer_name }}<br />
+							{{ pay_address_line_detail.name }}<br />
 							{{ pay_address_line_detail.street }} {{ pay_address_line_detail.number }}<br />
 							{{ pay_address_line_detail.country }}-{{ pay_address_line_detail.pin }} {{ pay_address_line_detail.city }}<br />
 					 </td></tr>
@@ -110,7 +115,7 @@
 				<tr><td>{{ _("Zusätzliche Informationen") }}<br />
 					{{ doc.title }}</td></tr>
 				<tr><td>{{ _("Zahlungspflichtiger") }}<br />
-					{{ doc.customer_name }}<br />
+					{{ pay_address_line_detail.name }}<br />
 					{{ pay_address_line_detail.street }} {{ pay_address_line_detail.number }}<br />
 					{{ pay_address_line_detail.country }}-{{ pay_address_line_detail.pin }} {{ pay_address_line_detail.city }}<br />
 				</td></tr>
