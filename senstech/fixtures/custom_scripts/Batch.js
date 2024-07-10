@@ -88,10 +88,19 @@ frappe.ui.form.on('Batch', {
 		if(frm.is_new()) {
 			frm.set_df_property('item','read_only',0);
 			frm.set_df_property('chargennummer','read_only',0);
+			frm.set_df_property('batch_type','read_only',0);
+			frm.set_df_property('project','read_only',0);
+			frm.set_df_property('sales_order','read_only',0);
 		}
 		else {
+			if(!frm.doc.batch_type) {
+				frm.set_value('batch_type','Serieprodukt');
+			}
 			frm.set_df_property('item','read_only',1);
 			frm.set_df_property('chargennummer','read_only',1);
+			frm.set_df_property('batch_type','read_only',1);
+			frm.set_df_property('project','read_only',1);
+			frm.set_df_property('sales_order','read_only',1);
 		}
 		/* Benötigt, damit Abschnitt "Messdaten" immer erscheint, wenn er bearbeitbar ist */
 		frm.layout.refresh_sections();
@@ -455,7 +464,7 @@ function freigabeantrag(frm) {
 					{
                         label: 'Stückzahl',
                         fieldname: 'stueckzahl',
-                        fieldtype: 'Data',
+                        fieldtype: 'Int',
                         description: 'Stückzahl für die Lagerbuchung.'
                     },
                     {
@@ -476,6 +485,10 @@ function freigabeantrag(frm) {
         		],
         		primary_action_label: __("Freigabe beantragen"),
         		primary_action(values) {
+					if(!values.stueckzahl ||!values.manufacturing_date) {
+						frappe.msgprint("Bitte alle Felder ausfüllen");
+							return;
+					}
         		    antrag.hide();
         
                     // Artikelstammdaten setzen (werden schon für die Histo-Vorschau bei der Freigabe benötigt)
@@ -528,45 +541,36 @@ function freigabeantrag_zurueck(frm) {
 
 function charge_freigeben(frm) {
     if(frm.is_dirty()) {
-        frappe.msgprint("Produktionscharge wurde geändert, bitte zuerst speichern oder neu laden");
+        frappe.msgprint(__("Bitte zuerst speichern oder neu laden"), __("Produktionscharge wurde geändert"));
         return;
     }
     
     if(frm.doc.freigabe_beantragt_durch == '' || frm.doc.herstelldatum == '') {
-        frappe.msgprint("Ohne Freigabeantrag ist keine Chargenfreigabe möglich");
-        return;        
-    }
-    
-    if(frm.doc.freigabe_beantragt_durch == frappe.session.user_fullname) {
-        frappe.confirm('Dieselbe Person agiert als Produktverantwortlicher und als freigebender Produktbetreuer. Auf dem COC erscheint zweimal dieselbe Unterschrift. Wirklich fortfahren?', () => { charge_freigeben_schritt1(frm); });
-    } else {
-        charge_freigeben_schritt1(frm);
-    }
-}
-
-function charge_freigeben_schritt1(frm) {    
-    if(text_field_empty(frm.doc.histogramm_text)) {
-        // Kein Histogramm zum Freigeben
-        charge_freigeben_schritt2(frm, 'Produktionscharge freigeben');
+        frappe.msgprint(__("Ohne Freigabeantrag ist keine Chargenfreigabe möglich"), __("Fehler"));
         return;
     }
     
-    if(frm.doc.histogramm_anz_gemessene == 0) {
-        frappe.msgprint("Dieses Produkt hat ein Histogramm, jedoch liegen keine Messdaten vor. Chargenfreigabe nicht möglich!");
-        return;    
+    if(frm.doc.freigabe_beantragt_durch == frappe.session.user_fullname) {
+        frappe.msgprint(__("Die Freigabe kann nicht durch dieselbe Person erfolgen, die den Antrag gestellt hat."), __("Vieraugenprinzip"));
+        return;
     }
 	
-	doc_preview_dialog(frm, frm => charge_freigeben_schritt2(frm, 'Schritt 2: Chargendetails bestätigen'), __("Schritt 1: Histogramm freigeben"), __("Histogramm freigeben &gt;"));
+	charge_freigeben_dialog(frm);
 }
 
-function charge_freigeben_schritt2(frm, step_title) {
-            
+function charge_freigeben_dialog(frm) {
+	
+	if(!text_field_empty(frm.doc.histogramm_text) && frm.doc.histogramm_anz_gemessene == 0) {
+        frappe.msgprint("Dieses Produkt hat ein Histogramm, jedoch liegen keine Messdaten vor. Chargenfreigabe nicht möglich!");
+        return;
+    }
+    
     var artikelcode_rev = frm.doc.artikelcode_kunde;
     if(frm.doc.produktrevision_kunde)
       artikelcode_rev += ' rev. '+frm.doc.produktrevision_kunde;
     
     var d = new frappe.ui.Dialog({
-        title: step_title,
+        title: __("Schritt 1: Chargendetails bestätigen"),
         fields: [
             {
                 label: 'Artikelcode',
@@ -662,7 +666,7 @@ function charge_freigeben_schritt2(frm, step_title) {
                 read_only: '1'
             }
         ],
-        primary_action_label: 'Charge freigeben',
+        primary_action_label: 'Bestätigen &gt;',
         primary_action(values) {
             d.hide();
             
@@ -671,14 +675,19 @@ function charge_freigeben_schritt2(frm, step_title) {
             frm.set_value('freigabedatum', values.freigabedatum);
             frm.set_value('freigegeben_durch', values.freigegeben_durch);
                    
-		    // Speichern und Lagerbuchung durchführen
-            frm.save().then(r => {
-                batch_quick_stock_entry(frm, frm.doc.stueckzahl, true);
-            });
+		    // Vorschau zeigen
+			doc_preview_dialog(frm, frm => chargenfreigabe_abschliessen(frm), __("Schritt 2: COC und Histogramm freigeben"), __("Produktionscharge freigeben"), true);
         }
     });
     
     d.show();
+}
+
+function chargenfreigabe_abschliessen(frm) {
+	// Speichern
+	frm.save().then(r => {
+		frm.reload_doc();
+	});
 }
 
 
@@ -688,13 +697,13 @@ function chargenfreigabe_aufheben(frm) {
         return;
     }    
     
-    frappe.confirm('Freigabe der Produktionscharge wirklich aufheben?', () => { 
-        frm.set_value('freigabedatum', '');
-        frm.set_value('freigegeben_durch', '');
-               
-        frm.save().then(r => {
-            frm.reload_doc();
-        });
+    frappe.confirm('Freigabe der Produktionscharge wirklich aufheben?', () => {
+		frm.set_value('freigabedatum', '');
+		frm.set_value('freigegeben_durch', '');
+			   
+		frm.save().then(r => {
+			frm.reload_doc();
+		});
     });
 }
 

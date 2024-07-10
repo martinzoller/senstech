@@ -49,7 +49,7 @@ frappe.ui.form.on('Delivery Note', {
 });
 
 frappe.ui.form.on('Delivery Note Item', {
-    item_code: function(frm) {
+    item_code: function(frm, cdt, cdn) {
 		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
         frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");		
 		// Popup für Chargenauswahl ausblenden (erscheint ansonsten gefühlt genau dann nicht, wenn man es braucht, und umgekehrt...)

@@ -46,7 +46,8 @@ jenv = {
         "get_employee_name:senstech.scripts.tools.get_employee_name",
         "get_measurands_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurands_for_delivery_note_item",
         "get_measurements_for_delivery_note_item:senstech.senstech.doctype.senstech_messdaten.senstech_messdaten.get_measurements_for_delivery_note_item",
-        "text_field_empty:senstech.scripts.tools.text_field_empty"
+        "text_field_empty:senstech.scripts.tools.text_field_empty",
+        "get_party_details:erpnext.accounts.party.get_party_details",
 	]
 }
 
@@ -143,6 +144,9 @@ doc_events =  {
     "Customer": {
         "on_update": "senstech.scripts.customer_tools.check_customer_duns_address"
     },
+    "Batch": {
+        "before_save": "senstech.scripts.batch_tools.batch_auto_stock_entry",
+    }
 }
 
 # Scheduled Tasks
