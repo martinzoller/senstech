@@ -159,7 +159,10 @@ def validate_item(doc, method):
         if proj and proj != 'EP-'+doc.item_code[3:9]:
             frappe.throw(_("Der Bergname {0} wird schon für das Projekt {1} verwendet").format(doc.mountain_name, proj));
         else:
-            mtn_item = frappe.db.exists("Item", {'mountain_name': doc.mountain_name})
+            try:
+                mtn_item = frappe.db.exists("Item", {'mountain_name': doc.mountain_name})
+            except frappe.exceptions.DoesNotExistError as e:
+                pass
             if mtn_item:
                 mtn_item_doc = frappe.get_doc("Item", mtn_item)
                 if mtn_item_doc.item_code[3:9] != doc.item_code[3:9]:
