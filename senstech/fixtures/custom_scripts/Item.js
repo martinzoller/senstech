@@ -3,15 +3,14 @@
 TODO zum "Artikel-Assistent" (Herbst 2023)
 
 Bugs:
-- Anlegen einer Eigenprodukte-Vorlage lässt nur die Verwendung einer "neuen" Projektnr. zu - man kann deshalb gar keine Nummer auswählen!
-  => Projektnummern, für die es schon Halbfabrikate oder Substrate gibt, müssten auch zur Auswahl stehen
-  => aktuell kann es bei "manufactured_from" gar nie Auswahloptionen geben!
+- Zuweisen von Bergnamen erzeugt einen Fehler!
+- Beim Anlegen einer Eigenprodukte-Vorlage wird immer die nächste freie Projektnummer verwendet, man kann keine Nummer auswählen
+  => Eigentlich sollte man zuerst Halbfabrikate/Substrate anlegen können, aus denen das Endprodukt dann hergestellt wird (manufactured_from)!
+  => Zudem sollte man aus bestehenden internen Projektnummern (EP-011-xx) wählen können - das ist derzeit nur manuell möglich.
 - Die Bearbeitung bestehender Artikel ist noch nicht optimal...
   => Anzeige/Ausblendung von "manufactured_from" sollte eher nicht via Skript gelöst werden, oder sicher nicht mit Skript, das nur bei neuen Artikeln läuft.
 
 Nächste "Ausbaustufen":
-- Bei Serieprodukten den Berg aus der Liste "Senstech Berg" wählen lassen und daraus die Artikelbeschreibung erzeugen
-  => Optional den Berg in einem sep. Verknüpfungsfeld speichern und prüfen, dass jeder Bergname nur in 1 Projekt verwendet wird. Wohl zu aufwändig für vergleichsweise geringen Nutzen!
 - In Chargenmodul die "zusammenhängenden" Artikel mit entsprechenden Funktionen miteinander verknüpfen
   - anlegen kann man nur Substratchargen und (übergangsweise noch) Endprodukt-Chargen
   - Navigation durch den "Artikelbaum" anzeigen, zumindest Ebene 1 oberhalb und 1 unterhalb
@@ -71,9 +70,15 @@ frappe.ui.form.on('Item', {
 		if (frm.doc.__islocal) {
 			if(!frm.doc.item_code){
 				frm.set_value('item_code',__('Bitte zuerst Artikelgruppe auswählen'));
-			}
+			} else {
+			    frappe.db.exists("Item", frm.doc.item_code).then(this_ic => {
+					// Item Code identisch schon vorhanden: Vermutlich wurde der Artikel dupliziert
+			        if(this_ic) {
+			            frm.fields_dict.item_group.set_value(frm.doc.item_group); // Artikelgruppe neu auswählen und zugehörige Aktion triggern
+			        }
+			    });
+			}			
 			// Workaround, da aus "Gründen" das Häkchen has_batch_no beim Anlegen von Artikelvarianten nicht übernommen wird?!
-			// TODO - testen
 			frm.set_value('has_batch_no', frm.doc.copy_of_has_batch_no);
 		}
 		else {
@@ -146,7 +151,7 @@ frappe.ui.form.on('Item', {
 			// VALIDIERUNG ARTIKELCODE
 			if(item_grp == 'Buchhaltungskonten Aufwand') {
 				if(frm.doc.item_defaults.length>0) {
-					let exp_account = frm.doc.item_defaults[0].expense_account;
+					let exp_account = frm.doc.item_defaults[0].expense_account.substr(0,4);
 					if(item_code != 'AC-'+exp_account) {
 						validation_error(frm, 'item_code', __('Der Artikelcode von Buchhaltungskonto-Artikeln muss dem Schema "AC-####" entsprechen und mit dem verknüpften Aufwandkonto übereinstimmen'));
 					}
@@ -282,7 +287,7 @@ frappe.ui.form.on('Item', {
 			if(frm.doc.__islocal){
 				if(item_grp == 'Buchhaltungskonten Aufwand') {
 					if(frm.doc.item_defaults.length>0 && frm.doc.item_defaults[0].expense_account) {
-						frm.set_value('item_code', 'AC-'+frm.doc.item_defaults[0].expense_account);
+						frm.set_value('item_code', 'AC-'+frm.doc.item_defaults[0].expense_account.substr(0,4));
 					} else {
 						frm.set_value('item_code', 'Zuerst Aufwandkonto wählen');
 						frm.scroll_to_field('item_defaults'); // Hier gleich zu Aufwandkonto scrollen, da man sonst kaum etwas anpassen muss
