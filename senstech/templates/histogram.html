@@ -119,14 +119,16 @@ batch			  The production batch whose histogram should be shown
 		<td style="text-align: center;">
 			{% if batch.freigabe_beantragt_durch %}
 			  {% set unterschrift_ersteller = get_signature_for_name(batch.freigabe_beantragt_durch) %}
-				{% set name_ersteller = batch.freigabe_beantragt_durch %}				
+				{% set name_ersteller = batch.freigabe_beantragt_durch %}
+			{% elif doc.doctype == 'Batch' %}
+			  {% set unterschrift_ersteller = doc_data.unterschrift %}
+				{% set name_ersteller = doc_data.ansprechpartner %}
 			{% else %}
-			  {% set unterschrift_ersteller = get_signature_for_user_id(batch.owner) %}
-				{% set name_ersteller = get_employee_name(batch.owner) %}				
+				<div class="errorpopup">Fehler: Produktionscharge hat keinen Freigabeantrag</div>
 			{% endif %}
 			
 			{% if not (unterschrift_ersteller and name_ersteller) %}
-					<div class="errorpopup">Fehler: Unterschrift von Histogramm-Ersteller "{{ batch.freigabe_beantragt_durch or batch.owner }}" nicht gefunden</div>
+					<div class="errorpopup">Fehler: Unterschrift von Histogramm-Ersteller "{{ name_ersteller }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
@@ -152,7 +154,7 @@ batch			  The production batch whose histogram should be shown
 {% elif doc.doctype != 'Batch' %}
 	<div class="errorpopup">Fehler: Produktionscharge nicht freigegeben</div>
 {% else %}
-<tr><td colspan="3"><b>Produktionscharge ist noch nicht vom Produktbetreuer freigegeben</b></td></tr>
+<tr><td colspan="4"><b>Produktionscharge ist noch nicht vom Produktbetreuer freigegeben</b></td></tr>
 {% endif %}
 </table>
 <!-- /Datum und Unterschriften -->

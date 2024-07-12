@@ -8,9 +8,11 @@
 import frappe
 from frappe import _
 import csv, math, datetime, workalendar.europe, urllib.parse, json
-from erpnext.stock.get_item_details import get_item_defaults
+from erpnext.stock.doctype.item.item import get_item_defaults
+from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
 
 
+# Add items to stock using button (only for items where no batch clearance is required)
 @frappe.whitelist()
 def batch_quick_stock_entry(batch_no, warehouse, item, qty):
     stock_entry = frappe.get_doc({
@@ -27,6 +29,44 @@ def batch_quick_stock_entry(batch_no, warehouse, item, qty):
 
     return stock_entry.name
 
+# Return the appropriate default warehouse for an item
+def get_item_warehouse(item_code):
+    my_company = frappe.defaults.get_global_default('company')
+    item_wh = get_item_defaults(item_code, my_company).get('default_warehouse')
+    group_wh = get_item_group_defaults(item_code, my_company).get('default_warehouse')
+    global_wh =  frappe.defaults.get_defaults().default_warehouse
+    return item_wh or group_wh or global_wh or ''
+    
+
+# Make a stock entry when a batch is cleared; cancel the entry when clearance is revoked
+def batch_auto_stock_entry(doc, method):
+    if not hasattr(doc,'__islocal'):
+        prev_doc = frappe.get_doc(doc.doctype, doc.name)
+        if doc.freigabedatum and not prev_doc.freigabedatum:
+            # Batch clearance has been granted
+            batch_quick_stock_entry(doc.name, get_item_warehouse(doc.item), doc.item, doc.stueckzahl)
+            frappe.msgprint(_("{0} Stück an Lager gelegt").format(doc.stueckzahl), alert=True, indicator='green')
+        elif prev_doc.freigabedatum and not doc.freigabedatum:
+            # Batch clearance has been revoked
+            auto_stock_entry = frappe.db.get_list(
+                "Stock Entry",
+                fields = ("name"),
+                filters = {
+                    ("stock_entry_type", "=", "Material Receipt"),
+                    ("docstatus", "=", 1),
+                    ("Stock Entry Detail", "batch_no", "=", doc.name),
+                    ("Stock Entry Detail", "qty", "=", doc.stueckzahl)
+                },
+                order_by = "name DESC",
+                limit = 1
+            )
+            if auto_stock_entry:
+                found_entry = frappe.get_doc("Stock Entry", auto_stock_entry[0].name)
+                found_entry.cancel()
+                frappe.db.commit()
+                frappe.msgprint(_("Lagerbuchung {0} abgebrochen").format(auto_stock_entry[0].name), alert=True, indicator='green')
+            else:
+                frappe.msgprint(_("Lagereinbuchung konnte nicht abgebrochen werden, bitte Lagerbuch manuell prüfen"), indicator='red')
 
 @frappe.whitelist()
 def get_histogramm_data(item, batch, messdaten_nullpunkt=None, messdaten_last=None):
@@ -169,35 +209,82 @@ def get_batch_production_details(batch):
 
 
 @frappe.whitelist()
-def get_next_batch_no(item_code):
-    item_doc = frappe.get_doc('Item', item_code)
-    this_year = datetime.date.today().strftime("%y")
-    sql_query = """SELECT `chargennummer`,`creation` 
-        FROM `tabBatch`
-        WHERE MID(`chargennummer`,4,2)='{year}'
-        AND item='{item}'
-        ORDER BY CONCAT(LEFT(`chargennummer`,2),TRIM(MID(`chargennummer`,6))) DESC LIMIT 1;""".format(year=this_year,item=item_code)
-    
-    latest_batch = frappe.db.sql(sql_query, as_dict=1)
-    if len(latest_batch) == 1:
-        latest_batch = latest_batch[0]
-        # Create another batch on same day: Assume next sub-batch, if applicable
-        if item_doc.has_sub_batches and latest_batch.creation.date() == datetime.date.today():
-            prev_sub_batch = latest_batch.chargennummer[5:].strip()
-            if prev_sub_batch == '':
-                next_sub_batch = 'A'
+def get_next_batch_no(batch_type, item_code = None, project = None, sales_order = None):
+    if batch_type == 'Serieprodukt':
+        item_doc = frappe.get_doc('Item', item_code)
+        if not item_doc:
+            return None
+        this_year = datetime.date.today().strftime("%y")
+        sql_query = """SELECT `chargennummer`,`creation` 
+            FROM `tabBatch`
+            WHERE MID(`chargennummer`,4,2)='{year}'
+            AND item='{item}'
+            ORDER BY CONCAT(LEFT(`chargennummer`,2),TRIM(MID(`chargennummer`,6))) DESC LIMIT 1;""".format(year=this_year,item=item_code)
+        
+        latest_batch = frappe.db.sql(sql_query, as_dict=1)
+        if len(latest_batch) == 1:
+            latest_batch = latest_batch[0]
+            # Create another batch on same day: Assume next sub-batch, if applicable
+            if item_doc.has_sub_batches and latest_batch.creation.date() == datetime.date.today():
+                prev_sub_batch = latest_batch.chargennummer[5:]
+                next_sub_batch = get_next_sub_batch(prev_sub_batch)
+                next_batch = latest_batch.chargennummer[0:5]+next_sub_batch
             else:
-                next_sub_batch = chr(ord(prev_sub_batch[0])+1)
-            next_batch = latest_batch.chargennummer[0:5] + next_sub_batch
+                next_batch = ('%02d/' % (int(latest_batch.chargennummer[0:2])+1)) + this_year
+                if item_doc.has_sub_batches:
+                    next_batch += 'A'
         else:
-            next_batch = ('%02d/' % (int(latest_batch.chargennummer[0:2])+1)) + this_year
+            next_batch = '01/'+this_year
             if item_doc.has_sub_batches:
                 next_batch += 'A'
-    else:
-        next_batch = '01/'+this_year
-        if item_doc.has_sub_batches:
-            next_batch += 'A'
+    
+    elif batch_type == 'Entwicklung':
+        if not project:
+            return None
+        cust_str = project[3:6]
+        proj_str = project[7:9]
+        sql_query = """SELECT `chargennummer`
+            FROM `tabBatch`
+            WHERE LEFT(`chargennummer`,7)='EP{cust}{proj}'
+            ORDER BY `chargennummer` DESC LIMIT 1;""".format(cust=cust_str,proj=proj_str)
+        latest_batch = frappe.db.sql(sql_query, as_dict=1)
+        if len(latest_batch) == 1:
+            latest_batch = latest_batch[0].chargennummer
+            next_batch = latest_batch[0:7] + get_next_sub_batch(latest_batch[7:])
+        else:
+            next_batch = 'EP'+cust_str+proj_str+'A'
+    
+    elif batch_type == 'Lohnfertigung/Kleinauftrag':
+        if not sales_order:
+            return None
+        soid = sales_order[3:8]
+        sql_query = """SELECT `chargennummer`
+            FROM `tabBatch`
+            WHERE LEFT(`chargennummer`,7)='SO{soid}'
+            ORDER BY `chargennummer` DESC LIMIT 1;""".format(soid=soid)
+        latest_batch = frappe.db.sql(sql_query, as_dict=1)
+        if len(latest_batch) == 1:
+            latest_batch = latest_batch[0].chargennummer
+            next_batch = latest_batch[0:7] + get_next_sub_batch(latest_batch[7:])
+        else:
+            next_batch = 'SO'+soid+'A'
+    
     return next_batch
+            
+# Count the sub-batch letter code up by one (A, B, ..., Z, AA, AB, etc.)
+# Returns 'A' if an empty string is passed
+def get_next_sub_batch(prev_sub_batch):
+    # '@' is the character before 'A' and is used as a zero padding
+    # '[' is the character after 'Z', we add one to the end as an initial 'carryover'
+    sub_batch = list('@'+prev_sub_batch.strip()+'[')
+    for i in range(1,len(sub_batch)):
+        if sub_batch[-i] == '[':
+            sub_batch[-i] = 'A'
+            sub_batch[-(i+1)] = chr(ord(sub_batch[-(i+1)])+1)
+    # Remove leading zero ('@') if still present
+    # Also remove the carryover character at the end
+    sub_batch = ''.join(sub_batch).replace('@','')
+    return sub_batch[:-1]
 
 
 # Frappe 'YYYY-MM-DD' to Python datetime.date

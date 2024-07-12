@@ -1,0 +1,18 @@
+{% set coc_data = { 'item': doc.item, 'batch': doc.name, 'qty': doc.stueckzahl, 'is_preview': 1 } %}
+{% set doc_data = {} %}
+{% set item_doc = frappe.get_doc("Item", doc.item) %}
+{% if item_doc.kunde %}
+	{% set party_det = get_party_details(item_doc.kunde) %}
+	{% if doc.update({'customer': item_doc.kunde, 'customer_name': party_det.customer_name, 'customer_address': party_det.customer_address, 'address_display': party_det.address_display}) %}{% endif %}
+{% endif %}
+{{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+{% if not text_field_empty(item_doc.qualitaetsspezifikation) %}
+	{{ frappe.render_template('templates/coc.html', {'doc': doc, 'doc_data': doc_data, 'coc_data': coc_data }) }}
+	{% if not text_field_empty(doc.histogramm_text) %}
+		<div class="page-break"></div>
+			{{ frappe.render_template('templates/histogram.html', {'doc': doc, 'doc_data': doc_data}) }}
+	{% endif %}
+	<div class="watermark"><p>{{ _("Vorschau") }}</p></div>
+{% else %}
+	<div class="errorpopup">Fehler: Die Vorschauansicht ist nur für Produktionschargen mit Chargenfreigabe verfügbar</div>
+{% endif %}

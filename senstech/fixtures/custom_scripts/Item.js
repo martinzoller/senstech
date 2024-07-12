@@ -3,15 +3,10 @@
 TODO zum "Artikel-Assistent" (Herbst 2023)
 
 Bugs:
-- Anlegen einer Eigenprodukte-Vorlage lässt nur die Verwendung einer "neuen" Projektnr. zu - man kann deshalb gar keine Nummer auswählen!
-  => Projektnummern, für die es schon Halbfabrikate oder Substrate gibt, müssten auch zur Auswahl stehen
-  => aktuell kann es bei "manufactured_from" gar nie Auswahloptionen geben!
-- Die Bearbeitung bestehender Artikel ist noch nicht optimal...
+- Die Bearbeitung bestehender Artikel ist noch nicht optimal
   => Anzeige/Ausblendung von "manufactured_from" sollte eher nicht via Skript gelöst werden, oder sicher nicht mit Skript, das nur bei neuen Artikeln läuft.
 
 Nächste "Ausbaustufen":
-- Bei Serieprodukten den Berg aus der Liste "Senstech Berg" wählen lassen und daraus die Artikelbeschreibung erzeugen
-  => Optional den Berg in einem sep. Verknüpfungsfeld speichern und prüfen, dass jeder Bergname nur in 1 Projekt verwendet wird. Wohl zu aufwändig für vergleichsweise geringen Nutzen!
 - In Chargenmodul die "zusammenhängenden" Artikel mit entsprechenden Funktionen miteinander verknüpfen
   - anlegen kann man nur Substratchargen und (übergangsweise noch) Endprodukt-Chargen
   - Navigation durch den "Artikelbaum" anzeigen, zumindest Ebene 1 oberhalb und 1 unterhalb
@@ -71,9 +66,15 @@ frappe.ui.form.on('Item', {
 		if (frm.doc.__islocal) {
 			if(!frm.doc.item_code){
 				frm.set_value('item_code',__('Bitte zuerst Artikelgruppe auswählen'));
-			}
+			} else {
+			    frappe.db.exists("Item", frm.doc.item_code).then(this_ic => {
+					// Item Code identisch schon vorhanden: Vermutlich wurde der Artikel dupliziert
+			        if(this_ic) {
+			            frm.fields_dict.item_group.set_value(frm.doc.item_group); // Artikelgruppe neu auswählen und zugehörige Aktion triggern
+			        }
+			    });
+			}			
 			// Workaround, da aus "Gründen" das Häkchen has_batch_no beim Anlegen von Artikelvarianten nicht übernommen wird?!
-			// TODO - testen
 			frm.set_value('has_batch_no', frm.doc.copy_of_has_batch_no);
 		}
 		else {
@@ -146,7 +147,7 @@ frappe.ui.form.on('Item', {
 			// VALIDIERUNG ARTIKELCODE
 			if(item_grp == 'Buchhaltungskonten Aufwand') {
 				if(frm.doc.item_defaults.length>0) {
-					let exp_account = frm.doc.item_defaults[0].expense_account;
+					let exp_account = frm.doc.item_defaults[0].expense_account.substr(0,4);
 					if(item_code != 'AC-'+exp_account) {
 						validation_error(frm, 'item_code', __('Der Artikelcode von Buchhaltungskonto-Artikeln muss dem Schema "AC-####" entsprechen und mit dem verknüpften Aufwandkonto übereinstimmen'));
 					}
@@ -282,7 +283,7 @@ frappe.ui.form.on('Item', {
 			if(frm.doc.__islocal){
 				if(item_grp == 'Buchhaltungskonten Aufwand') {
 					if(frm.doc.item_defaults.length>0 && frm.doc.item_defaults[0].expense_account) {
-						frm.set_value('item_code', 'AC-'+frm.doc.item_defaults[0].expense_account);
+						frm.set_value('item_code', 'AC-'+frm.doc.item_defaults[0].expense_account.substr(0,4));
 					} else {
 						frm.set_value('item_code', 'Zuerst Aufwandkonto wählen');
 						frm.scroll_to_field('item_defaults'); // Hier gleich zu Aufwandkonto scrollen, da man sonst kaum etwas anpassen muss
@@ -318,20 +319,32 @@ frappe.ui.form.on('Item', {
 									{ 'value': 'KB', 'label': __('Legacy: Kraftsensor-Bügel (KB-)') },
 									{ 'value': 'KE', 'label': __('Legacy: Kraftsensor Eiger (KE-)') },									
 									{ 'value': 'KZ', 'label': __('Legacy: Kraftsensor zentriert (KZ-)') },
-								]}
+								]},
+								{
+									'fieldname': 'project_no',
+									'fieldtype': 'Select',
+									'label': __('Projektnummer'),
+									'description': 'XX-011-<b>##</b>00',
+									'options': []
+								},
 							],
 							'primary_action': function(){
 								let val = eigenprod_popup.get_values();
-								if (val.sensor_type) {
+								if (val.sensor_type && val.project_no) {
 									eigenprod_popup.hide();
-									set_new_own_item_code(frm, val.sensor_type);
+									frm.set_value('item_code', val.sensor_type+'-011-'+val.project_no+'00');
+									manufactured_from_filter(frm, 'CU-00011', val.project_no);
 								} else {
-									frappe.msgprint(__("Bitte eine Option auswählen"), __("Keine Produktart ausgewählt"));
+									frappe.msgprint(__("Bitte alle Felder ausfüllen"), __("Angaben unvollständig"));
 								}
 							},
 							'primary_action_label': __('OK')
 						});
-						eigenprod_popup.show();
+						get_customer_projects(frm, proj_list => {
+							eigenprod_popup.set_df_property('project_no', 'options', proj_list);
+							eigenprod_popup.show();
+						});
+						
 					}
 				}
 				else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
@@ -611,27 +624,6 @@ function set_new_generic_item_code(frm, prefix) {
             var next_number = response.message;
             if (next_number) {
                 frm.set_value('item_code', prefix+'-'+next_number);
-            }
-        }
-    });
-}
-
-// Nächsten Artikelcode für Eigenprodukt ermitteln und mit angegebenem Präfix ins Feld schreiben
-function set_new_own_item_code(frm, prefix) {
-	frappe.call({
-    	'method': 'senstech.scripts.item_tools.get_next_item_code_part',
-		'args': {
-			'item_group_filter': 'Eigenprodukte%',			
-			'ic_filter_string': '-011-',
-			'ic_filter_startpos': 2,
-			'ic_part_startpos': 7,
-			'ic_part_length': 2
-		},
-    	'callback': function(response) {
-            var next_number = response.message;
-            if (next_number) {
-                frm.set_value('item_code', prefix+'-011-'+next_number+'00');
-				manufactured_from_filter(frm, 'CU-00011', next_number);
             }
         }
     });

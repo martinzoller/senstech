@@ -84,8 +84,11 @@ function validate_iban(iban, is_qr_iban) {
 // Falls DUNS-Nr. leer ist und Firmenname/Land ausgefüllt sind, Abfrage bei d&b ausführen
 function check_for_duns(frm){
 	if(frm.doc.supplier_name && frm.doc.country && !frm.doc.duns) {
-		let address_list = frm.doc.__onload.addr_list;
-		let main_address = address_list.filter(e => e.is_primary_address)[0] || address_list[0] || {};
+		let main_address = {};
+		if(frm.doc.__onload) {
+			let address_list = frm.doc.__onload.addr_list;
+			main_address = address_list.filter(e => e.is_primary_address)[0] || address_list[0] || {};
+		}
 		frappe.call({
 			method: 'senstech.scripts.tools.get_duns',
 			args: {

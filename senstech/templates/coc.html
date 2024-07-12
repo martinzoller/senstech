@@ -28,24 +28,24 @@ coc_data  COC-specific data (item, batch, qty)
 <table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
 	<tr>
 		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
-		<td style="width: 24%;">{% if doc.po_no %}{{ doc.po_no }}{% else %}-{% endif %}</td>
+		<td style="width: 24%;">{{ doc.po_no or '-' }}</td>
 		<td style="width: 3%;"></td>
 		<td style="width: 24%;">{{ _("Datum") }}</td>
-		<td style="width: 24%;">{{ doc.get_formatted('posting_date') }}</td>
+		<td style="width: 24%;">{{ doc.get_formatted('posting_date') or frappe.utils.get_datetime(doc.modified).strftime('%d.%m.%Y') }}</td>
 	</tr>
 	<tr>
 		<td>{{ _("Ihre Kundennummer") }}</td>
-		<td>{{ doc.customer }}</td>
+		<td>{{ doc.customer or '-' }}</td>
 		<td></td>
 		<td>{{ _("Rahmenauftrag") }}</td>
-		<td>{% if doc_data.rahmenauftrag %}{{ doc_data.rahmenauftrag }}{% else %}-{% endif %}</td>	
+		<td>{{ doc_data.rahmenauftrag or '-' }}</td>	
 	</tr>
 	<tr>
 		<td>{{ _("Unsere Lieferantennr.") }}</td>
-		<td>{% if doc_data.unsere_lieferantennummer %}{{ doc_data.unsere_lieferantennummer }}{% else %}-{% endif %}</td>
+		<td>{{ doc_data.unsere_lieferantennummer or '-' }}</td>
 		<td></td>
 		<td>{{ _("Lieferscheinnummer") }}</td>
-		<td>{{ doc.name }}</td>
+		<td>{{ doc.name if doc.doctype == 'Delivery Note' else _('Noch nicht ausgeliefert') }}</td>
 	</tr>
 </table>
 <!-- /Detailtabelle -->
@@ -96,13 +96,15 @@ coc_data  COC-specific data (item, batch, qty)
 			{% if charge_stamm.freigabe_beantragt_durch %}
 			  {% set unterschrift_ersteller = get_signature_for_name(charge_stamm.freigabe_beantragt_durch) %}
 				{% set name_ersteller = charge_stamm.freigabe_beantragt_durch %}
+			{% elif coc_data.is_preview %}
+			  {% set unterschrift_ersteller = doc_data.unterschrift %}
+				{% set name_ersteller = doc_data.ansprechpartner %}
 			{% else %}
-			  {% set unterschrift_ersteller = get_signature_for_user_id(charge_stamm.owner) %}
-				{% set name_ersteller = get_employee_name(charge_stamm.owner) %}
+				<div class="errorpopup">Fehler: Produktionscharge hat keinen Freigabeantrag</div>
 			{% endif %}
 			
 			{% if not (unterschrift_ersteller and name_ersteller) %}
-					<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ charge_stamm.freigabe_beantragt_durch or charge_stamm.owner }}" nicht gefunden</div>
+					<div class="errorpopup">Fehler: Unterschrift von CoC-Ersteller "{{ name_ersteller }}" nicht gefunden</div>
 			{% endif %}
 			<img src="{{ unterschrift_ersteller }}" style="width: 100px !important; margin-top: -15px;">
 		</td>
@@ -110,6 +112,7 @@ coc_data  COC-specific data (item, batch, qty)
 				{{ name_ersteller }}
 		</td>
 	</tr>
+	{% if charge_stamm.freigabedatum %}
 	<tr>
 		<td style="text-align: left;">{{ _("Produktbetreuer Senstech AG:")}}</td>
 		<td style="text-align: left;">{{ frappe.utils.get_datetime(charge_stamm.freigabedatum).strftime('%d.%m.%Y') }}</td>
@@ -124,5 +127,13 @@ coc_data  COC-specific data (item, batch, qty)
 				{{ charge_stamm.freigegeben_durch }}
 		</td>
 	</tr>
+	{% elif coc_data.is_preview %}
+	<tr>
+		<td style="text-align: left;">{{ _("Produktbetreuer Senstech AG:")}}</td>
+		<td colspan="3"><b>{{ _("Freigabe durch Produktbetreuer ist noch nicht erfolgt") }}</b></td>
+	</tr>
+	{% else %}
+		<div class="errorpopup">Fehler: Produktionscharge nicht freigegeben</div>
+	{% endif %}
 </table>
 <!-- /Bestaetigungstext -->

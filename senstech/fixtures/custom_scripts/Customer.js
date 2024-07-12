@@ -16,7 +16,7 @@ frappe.ui.form.on('Customer', {
 				}
 			});
 		}
-		else if(!frm.doc.eori_number.match(/^[A-Z]{2}[0-9]{4,15}$/)) {
+		else if(frm.doc.eori_number && !frm.doc.eori_number.match(/^[A-Z]{2}[0-9]{4,15}$/)) {
 			validation_error(frm, 'eori_number', __("Die EORI-Nummer muss aus einem ISO-Ländercode und einer Ziffernfolge bestehen."));
 		}
 	},
@@ -73,8 +73,11 @@ function check_for_duns(frm){
 	if(frm.doc.customer_name && terricountry && !frm.doc.duns) {
 		frappe.db.exists("Country", terricountry).then(is_country => {
 			if(is_country) {
-				let address_list = frm.doc.__onload.addr_list;
-				let main_address = address_list.filter(e => e.is_primary_address)[0] || address_list[0] || {};
+				let main_address = {};
+				if(frm.doc.__onload) {
+					let address_list = frm.doc.__onload.addr_list;
+					main_address = address_list.filter(e => e.is_primary_address)[0] || address_list[0] || {};
+				}
 				frappe.call({
 					method: 'senstech.scripts.tools.get_duns',
 					args: {

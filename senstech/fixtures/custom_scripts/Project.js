@@ -18,6 +18,18 @@ frappe.ui.form.on('Project', {
 		}
 	},
 	
+	refresh(frm) {
+		if(!frm.doc.__islocal) {
+			frm.add_custom_button(__('Produktionscharge anlegen'), function() {
+				frappe.new_doc("Batch", {
+					batch_type: 'Entwicklung',
+					item: 'GP-00011',
+					project: frm.doc.name
+				});
+			});
+		}
+	},
+	
 	copy_of_project_type(frm) {
 		frm.set_value('project_type', frm.doc.copy_of_project_type);
 		if(frm.doc.copy_of_project_type == 'Intern') {
