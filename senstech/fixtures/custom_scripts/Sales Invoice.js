@@ -16,20 +16,20 @@ frappe.ui.form.on('Sales Invoice', {
         reload_contacts(frm);
     },
     refresh(frm) {
-        if(frm.is_new()==1 && cur_frm.doc.customer){
+        if(frm.is_new()==1 && frm.doc.customer){
             check_mail_contact(frm);
         }
-        if (cur_frm.doc.customer_address && cur_frm.doc.shipping_address_name) {
-            update_address_display(frm, ['address_display', 'shipping_address'], [cur_frm.doc.customer_address, cur_frm.doc.shipping_address_name], true);
+        if (frm.doc.customer_address && frm.doc.shipping_address_name) {
+            update_address_display(frm, ['address_display', 'shipping_address'], [frm.doc.customer_address, frm.doc.shipping_address_name], true);
         } else {
-            if (cur_frm.doc.customer_address) {
-                update_address_display(frm, 'address_display', cur_frm.doc.customer_address);
+            if (frm.doc.customer_address) {
+                update_address_display(frm, 'address_display', frm.doc.customer_address);
             }
-            if (cur_frm.doc.shipping_address_name) {
-                update_address_display(frm, 'shipping_address', cur_frm.doc.shipping_address_name);
+            if (frm.doc.shipping_address_name) {
+                update_address_display(frm, 'shipping_address', frm.doc.shipping_address_name);
             }
         }
-        if (cur_frm.doc.docstatus == 1 && cur_frm.doc.status != 'Paid') {
+        if (frm.doc.docstatus == 1 && frm.doc.status != 'Paid') {
             frm.add_custom_button(__("Create auto Payment"), function() {
                 create_auto_payment(frm);
             });
@@ -45,7 +45,7 @@ frappe.ui.form.on('Sales Invoice', {
         jQuery('div[data-fieldname="base_in_words"]').hide();
     },
     before_submit(frm) {
-        cur_frm.doc.submitted_by = frappe.user.name;
+        frm.doc.submitted_by = frappe.user.name;
     },
     after_cancel(frm) {
         add_cancelled_watermark(frm);
@@ -56,12 +56,12 @@ function create_auto_payment(frm) {
     frappe.call({
         "method": "senstech.scripts.sales_invoice_tools.create_payment",
         "args": {
-            "sinv": cur_frm.doc.name
+            "sinv": frm.doc.name
         },
         "callback": function(response) {
             var response = response.message;
             if (response.includes("PE-")) {
-                cur_frm.reload_doc();
+                frm.reload_doc();
             } else {
                 frappe.msgprint(response, "Error");
             }
@@ -77,7 +77,7 @@ function check_mail_contact(frm) {
             filters: [
                 ["parenttype","=",'Contact'],
                 ["link_doctype","=","Customer"],
-                ["link_name","=", cur_frm.doc.customer]
+                ["link_name","=", frm.doc.customer]
             ],
             fields: ["parent"],
             parent: "Contact"
@@ -104,12 +104,12 @@ function check_mail_contact(frm) {
                             for (var i=0; i < r.message.length; i++) {
                                 email_contact_list.push(r.message[i].name);
                             }
-                            var check_contact = email_contact_list.includes(cur_frm.doc.contact_person);
+                            var check_contact = email_contact_list.includes(frm.doc.contact_person);
                             if (!check_contact) {
                                 if (email_contact_list.length == 1) {
                                     // Änderung im Formular statt im Dok. vornehmen, dann lädt es
                                     // automatisch den Kontakt und aktualisiert das Contact Display etc.
-                                    cur_frm.set_value('contact_person',email_contact_list[0])
+                                    frm.set_value('contact_person',email_contact_list[0])
                                     //frm.doc.contact_person = email_contact_list[0]
                                     frappe.show_alert({message: "Kontakt auf E-Mail-Rechnungsempfänger '"+ email_contact_list[0]+"' gesetzt.", indicator: 'green'}, 5);
                                 } else {
@@ -126,23 +126,23 @@ function check_mail_contact(frm) {
 
 
 function fetch_templates_from_customer(frm) {
-    if(!cur_frm.doc.customer) {
+    if(!frm.doc.customer) {
         return;
     }
     frappe.call({
         "method": "frappe.client.get",
         "args": {
             "doctype": "Customer",
-            "name": cur_frm.doc.customer
+            "name": frm.doc.customer
         },
         "callback": function(response) {
             var customer = response.message;
 
-            if (!cur_frm.doc.taxes_and_charges && customer.taxes_and_charges) {
-                cur_frm.set_value('taxes_and_charges', customer.taxes_and_charges);
+            if (!frm.doc.taxes_and_charges && customer.taxes_and_charges) {
+                frm.set_value('taxes_and_charges', customer.taxes_and_charges);
             }
-            if(!cur_frm.doc.payment_terms_template && customer.payment_terms){
-                cur_frm.set_value('payment_terms_template', customer.payment_terms);
+            if(!frm.doc.payment_terms_template && customer.payment_terms){
+                frm.set_value('payment_terms_template', customer.payment_terms);
             }
         }
     });

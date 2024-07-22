@@ -10,7 +10,7 @@ function unlink_email_queue(frm) {
     frappe.call({
         "method": "senstech.scripts.communication_tools.unlink_email_queue",
         "args": {
-            "communication": cur_frm.doc.name
+            "communication": frm.doc.name
         }
     });
     frappe.msgprint(__("Unlinked"));

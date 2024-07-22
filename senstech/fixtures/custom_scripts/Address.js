@@ -8,7 +8,7 @@ frappe.ui.form.on('Address', {
     before_save(frm) {
         // Bug Workaround: Linktitel korrekt setzen
         var fix_doctypes = { Customer: 'customer_name', Supplier: 'bezeichnung'};
-        var links = cur_frm.doc.links;
+        var links = frm.doc.links;
     	if (links) {
 		    links.forEach(function(entry) {
 		        if(Object.keys(fix_doctypes).includes(entry.link_doctype) && entry.link_name != '') {

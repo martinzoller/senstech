@@ -26,12 +26,12 @@ function assign_lead(frm, user) {
         "args": {
             "assign_to": user,
             "doctype": "Lead",
-            "name": cur_frm.doc.name,
+            "name": frm.doc.name,
             "description": __("Lead Zuweisung")
         },
         "callback": function(response) {
-            cur_frm.set_value("lead_owner", user);
-			cur_frm.save();
+            frm.set_value("lead_owner", user);
+			frm.save();
 			frappe.msgprint(__("Die Zuweisung wurde vollzogen."));
         }
     });

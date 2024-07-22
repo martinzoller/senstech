@@ -10,14 +10,14 @@ frappe.ui.form.on('Supplier', {
 				validation_error(frm, 'iban', __("QR-IBAN bitte im entsprechenden Feld eingeben."));
 			}
 			else {
-				validate_iban(iban, false);
+				validate_iban(frm, iban, false);
 			}
 		}
 		
 		if(frappe.validated) {
 			var qr_iban = (frm.doc.esr_participation_number || '').replace(/\s+/g,'');
 			if(qr_iban) {
-				validate_iban(qr_iban, true);
+				validate_iban(frm, qr_iban, true);
 			}
 		}
 	},
@@ -25,10 +25,10 @@ frappe.ui.form.on('Supplier', {
 		check_for_duns(frm);
 	},
 	after_save(frm) {
-        var bezeichnung = cur_frm.doc.supplier_name + " (" + cur_frm.doc.name + ")";
-        if(cur_frm.doc.bezeichnung != bezeichnung) {
-            cur_frm.set_value('bezeichnung', bezeichnung);
-            cur_frm.save();
+        var bezeichnung = frm.doc.supplier_name + " (" + frm.doc.name + ")";
+        if(frm.doc.bezeichnung != bezeichnung) {
+            frm.set_value('bezeichnung', bezeichnung);
+            frm.save();
 		}
 	},
 	supplier_name(frm) {
@@ -39,7 +39,7 @@ frappe.ui.form.on('Supplier', {
 	},
 });
 
-function validate_iban(iban, is_qr_iban) {
+function validate_iban(frm, iban, is_qr_iban) {
 	var qr_dash = is_qr_iban ? 'QR-':'';
 	$.ajax({
 		url: 'https://openiban.com/validate/'+iban,
@@ -53,8 +53,8 @@ function validate_iban(iban, is_qr_iban) {
 				frappe.show_alert({message: __(qr_dash+"IBAN erfolgreich validiert"), indicator: 'green'}, 5);
 				if(!is_qr_iban) {
 					if(result.checkResults.bankCode) {
-						if(cur_frm.doc.bic != result.bankData.bic) {
-							cur_frm.set_value("bic", result.bankData.bic);
+						if(frm.doc.bic != result.bankData.bic) {
+							frm.set_value("bic", result.bankData.bic);
 							frappe.show_alert({message: __("BIC automatisch aktualisiert"), indicator: 'green'}, 5);
 						}
 						else {

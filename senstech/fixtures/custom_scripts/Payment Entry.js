@@ -44,53 +44,53 @@ frappe.ui.form.on('Payment Entry', {
 });
 
 function deduct_to_unclear(frm) {
-    add_deduction("1097 - Durchlaufkonto Zahlungskonten - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    add_deduction(frm, "1097 - Durchlaufkonto Zahlungskonten - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function credit_card(frm) {
-    add_deduction("1095 - Firmenkreditkarte - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    add_deduction(frm, "1095 - Firmenkreditkarte - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function rounding(frm) {
-    add_deduction("6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    add_deduction(frm, "6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function bank_expenses(frm) {
-    add_deduction("6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    add_deduction(frm, "6940 - Bank-/PC-Spesen - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function salaries(frm) {
-    add_deduction("1091 - Lohndurchlaufkonto - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    add_deduction(frm, "1091 - Lohndurchlaufkonto - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function sva(frm) {
-    add_deduction("5700 - AHV / IV / EO - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    add_deduction(frm, "5700 - AHV / IV / EO - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
 function exchange(frm) {
     var amount = frm.doc.unallocated_amount || frm.doc.difference_amount;
     if (amount > 0) {
-        add_deduction("6974 - realisierte Kursverluste - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+        add_deduction(frm, "6974 - realisierte Kursverluste - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
     } else {
-        add_deduction("6975 - realisierte Kursgewinne - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+        add_deduction(frm, "6975 - realisierte Kursgewinne - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
     }
 }
 
 function rent(frm) {
-    add_deduction("6000 - Miete - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
+    add_deduction(frm, "6000 - Miete - ST", "Haupt - ST", frm.doc.unallocated_amount || frm.doc.difference_amount);
 }
 
-function add_deduction(account, cost_center, amount) {
-    var child = cur_frm.add_child('deductions');
+function add_deduction(frm, account, cost_center, amount) {
+    var child = frm.add_child('deductions');
     frappe.model.set_value(child.doctype, child.name, 'account', account);
     frappe.model.set_value(child.doctype, child.name, 'cost_center', cost_center);
     frappe.model.set_value(child.doctype, child.name, 'amount', amount);
-    cur_frm.refresh_field('deductions');
+    frm.refresh_field('deductions');
 }
 
 function match_outstanding_amounts(frm) {
-    (cur_frm.doc.references || []).forEach(function (reference) {
+    (frm.doc.references || []).forEach(function (reference) {
         frappe.model.set_value(reference.doctype, reference.name, 'allocated_amount', reference.outstanding_amount);
     });
-    cur_frm.refresh_fields();
+    frm.refresh_fields();
 }

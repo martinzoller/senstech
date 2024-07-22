@@ -175,23 +175,23 @@ frappe.ui.form.on('Quotation Item', {
 
 
 function fetch_templates_from_party(frm) {
-    if(!cur_frm.doc.party_name) {
+    if(!frm.doc.party_name) {
         return;
     }
     frappe.call({
         "method": "frappe.client.get",
         "args": {
-            "doctype": cur_frm.doc.quotation_to,
-            "name": cur_frm.doc.party_name
+            "doctype": frm.doc.quotation_to,
+            "name": frm.doc.party_name
         },
         "callback": function(response) {
             var customer = response.message;
 
-            if (!cur_frm.doc.taxes_and_charges && customer.taxes_and_charges) {
-                cur_frm.set_value('taxes_and_charges', customer.taxes_and_charges);
+            if (!frm.doc.taxes_and_charges && customer.taxes_and_charges) {
+                frm.set_value('taxes_and_charges', customer.taxes_and_charges);
             }
-            if(!cur_frm.doc.payment_terms_template && customer.payment_terms){
-                cur_frm.set_value('payment_terms_template', customer.payment_terms);
+            if(!frm.doc.payment_terms_template && customer.payment_terms){
+                frm.set_value('payment_terms_template', customer.payment_terms);
             }
         }
     });
@@ -615,9 +615,9 @@ function gate1_dialog(frm) {
 						frappe.validated = true;
 						frm.script_manager.trigger("before_submit").then(function() {
 							if(frappe.validated) {
-								cur_frm.save('Submit', function(r) {
+								frm.save('Submit', function(r) {
 									if(!r.exc) {
-										cur_frm.script_manager.trigger("on_submit");
+										frm.script_manager.trigger("on_submit");
 									}
 								});
 							}
