@@ -40,6 +40,20 @@ frappe.ui.form.on('Purchase Order', {
             }, 1000);
         }
     },
+	currency(frm) {
+        // Non-standard currency, or price list was changed: Assign the appropriate price list for this currency
+        if(frm.doc.currency != frappe.sys_defaults.currency || frm.doc.buying_price_list != frappe.sys_defaults.buying_price_list) {
+            frappe.db.get_list("Price List", {fields: ['name'], filters: {enabled: true, buying: true, currency: frm.doc.currency}}).then(f => {
+                if(f.length == 1) {
+                    frm.set_value('buying_price_list', f[0]['name']);
+					frappe.show_alert({message: __('Währungswechsel: Preisliste \'{0}\' zugewiesen', [frm.doc.buying_price_list]), indicator: 'green'}, 5);
+                }
+                else {
+                    frappe.show_alert({message: __('Keine eindeutige Einkaufs-Preisliste für Währung \'{0}\' definiert', [frm.doc.currency]), indicator: 'orange'}, 10);
+                }
+			});
+        }		
+	},
     validate(frm) {
 		basic_purchasing_validations(frm);
     },
