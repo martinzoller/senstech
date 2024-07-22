@@ -114,14 +114,6 @@ frappe.ui.form.on('Sales Order', {
     before_submit(frm) {
         frm.doc.submitted_by = frappe.user.name;
     },
-    on_submit(frm) {
-		// Chargen werden serverseitig angelegt und hier nur abgefragt
-		frappe.db.get_list("Batch", { fields: ['batch_id'], filters: { batch_id: ['LIKE', frm.docname+"-P%A"] }}).then(res => {
-			res.forEach(row => {
-				frappe.show_alert({message: __("Produktionscharge für Entwicklungsauftrag wurde automatisch angelegt:")+' <a href="#Form/Batch/'+row.batch_id+'">'+row.batch_id+'</a>', indicator: 'green'}, 10);
-			});
-		});
-    },
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }
