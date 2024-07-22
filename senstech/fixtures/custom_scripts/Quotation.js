@@ -154,6 +154,10 @@ frappe.ui.form.on('Quotation', {
 		}
         frm.doc.submitted_by = frappe.user.name;
     },
+	on_submit(frm) {
+		// ggf. Dialog zum Aktualisieren von Listenpreisen anzeigen
+		update_list_prices(frm);
+	},
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }

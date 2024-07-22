@@ -275,3 +275,152 @@ function project_query(frm) {
 function text_field_empty(val) {
 	return !val || val == '<div><br></div>';
 }
+
+function update_list_prices(frm) {
+	let processed_count = 0;
+	let dialog_items = [];
+	frm.doc.items.forEach(function(item, idx) {
+		frappe.db.get_doc('Item Group',item.item_group).then(item_grp => {
+			// Ignore items with blanket order references and items without list price
+			if (!item.blanket_order && item_grp.has_list_price && item.rate != item.price_list_rate && item.rate != 0) {
+				dialog_items.push(idx)
+			}
+
+			// Detect when we are done with all items
+			processed_count++;
+			if(processed_count == frm.doc.items.length && dialog_items.length > 0) {
+				update_list_prices_show_dialog(frm, dialog_items);
+			}
+		});
+	});
+}
+
+function update_list_prices_show_dialog(frm, dialog_items) {
+	let table_rows = '';
+	frm.doc.items.forEach(function(item, idx) {
+		if(dialog_items.includes(idx)) {
+			// TODO: Staffelpreise Link
+			table_rows += `
+				<div class="list-item-container">
+					<div class="list-item">
+						<div class="list-item__content" style="flex: 0 0 10px;"><input type="checkbox" data-row="${idx}" ${(item.item_group.startsWith('Eigenprodukte') ? 'class="no-select" style="visibility:hidden"' : 'class="row-select"')}></div>
+						<div class="list-item__content ellipsis"><span class="ellipsis">${item.item_code}</span></div>
+						<div class="list-item__content ellipsis"><span class="ellipsis">${item.item_name}</span></div>
+						<div class="list-item__content" style="flex: 0 0 60px;">${(item.item_group.startsWith('Eigenprodukte') ? '<span class="ellipsis">'+__('Staffelpreise')+'<br><b><a href="#TODO" target="_blank">&gt; '+__('Anpassen')+'</a></b></span>' : item.price_list_rate.toFixed(2))}</div>
+						<div class="list-item__content" style="flex: 0 0 30px;">${item.rate.toFixed(2)}</div>
+					</div>
+				</div>
+			`;
+		}
+	});
+	
+	// Note: The data table in this dialog is designed to look similar to a frappe.ui.MultiSelectDialog.
+	//       We are not using a MultiSelectDialog as that seems to be quite limited in functionality, e.g.
+	//       it seems to always show a document name and date, both of which do not make sense for an item table
+	//       (doc name will be an alphanumeric code, and date will be the same for all entries)
+	let list_prices_dialog = new frappe.ui.Dialog({
+		title: __('Artikelpreise speichern'),
+		fields: [
+			{
+				'fieldname': 'price_intro',
+				'fieldtype': 'HTML',
+				'options': __('Die Preise für einen oder mehrere Artikel entsprechen nicht dem hinterlegten Listenpreis. <strong>Soll die Preisliste angepasst werden?</strong> Bitte Artikel auswählen, deren Listenpreis aktualisiert werden soll.'),
+			},
+			{
+				fieldname: 'data_table',
+				fieldtype: 'HTML',
+				options: `
+					<div class="results" style="border: 1px solid #d1d8dd; border-radius: 3px;">
+						<div class="list-item list-item--head">
+							<div class="list-item__content" style="flex: 0 0 10px;">
+								<input type="checkbox" id="select_all">
+							</div><div class="list-item__content ellipsis">
+								<span class="ellipsis">${__('Artikelcode')}</span>
+							</div><div class="list-item__content ellipsis">
+								<span class="ellipsis">${__('Artikelbezeichnung')}</span>
+							</div><div class="list-item__content" style="flex: 0 0 60px;">
+								${__('Listenpreis')}
+							</div><div class="list-item__content" style="flex: 0 0 30px;">
+								${__('Preis')}
+							</div>
+						</div>
+						${table_rows}
+					</div>
+				`
+			}
+		],
+		primary_action_label: __('Markierte Preise speichern'),
+		secondary_action_label: __('Preisliste nicht anpassen'),
+		primary_action(values) {
+			// Collect selected rows
+			let selected_rows = [];
+			list_prices_dialog.$body.find('.row-select:checked').each((i, checkbox) => {
+				let row_index = checkbox.getAttribute('data-row');
+				selected_rows.push(row_index);
+			});
+
+			// Close the dialog
+			list_prices_dialog.hide();
+			
+			// Process the selection
+			if(selected_rows.length > 0) {
+				update_list_prices_exec(frm, selected_rows);
+			}
+		},
+		on_page_show() {
+			// Handle "select all" checkbox after the dialog is shown
+			list_prices_dialog.$body.find('#select_all')[0].addEventListener('change', function() {
+				let checkboxes = list_prices_dialog.$body.find('.row-select');
+				checkboxes.each((i, checkbox) => {
+					checkbox.checked = this.checked;
+				});
+			});
+			
+			// Add event listener to each row checkbox to handle deselection of "select all"
+			list_prices_dialog.$body.find('.row-select').each((i, checkbox) => {
+				checkbox.addEventListener('change', function() {
+					if (!this.checked) {
+						list_prices_dialog.$body.find('#select_all')[0].checked = false;
+					} else {
+						// Check if all row checkboxes are checked
+						let allChecked = true;
+						list_prices_dialog.$body.find('.row-select').each((i, rowCheckbox) => {
+							if (!rowCheckbox.checked) {
+								allChecked = false;
+							}
+						});
+						list_prices_dialog.$body.find('#select_all')[0].checked = allChecked;
+					}
+				});
+			});
+			
+			// Add event listener to each row to toggle checkbox when clicking on the row
+			// Base the selector on the checkboxes to exclude rows without a visible checkbox
+			list_prices_dialog.$body.find('.row-select').parent().parent().each((i,row) => {
+				row.addEventListener('click', function(event) {
+					if (event.target.tagName !== 'INPUT') {
+						let checkbox = this.querySelector('.row-select');
+						checkbox.checked = !checkbox.checked;
+
+						// Trigger change event manually to handle "select all" logic
+						checkbox.dispatchEvent(new Event('change'));
+					}
+				});
+			});
+		}
+	});
+
+	list_prices_dialog.show();	
+}
+
+function update_list_prices_exec(frm, sel_items) {
+	    frappe.call({
+        "method": "senstech.scripts.tools.set_price_list_rates",
+        "args": {
+            "doc": frm.doc,
+            "sel_items": sel_items
+        },
+        "callback": function(response) {
+        }
+    });
+}
