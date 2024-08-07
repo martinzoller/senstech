@@ -77,7 +77,7 @@ frappe.ui.form.on('Sales Order', {
         }
         setTimeout(function(){
             // Lieferdatum kürzer darstellen
-            reformat_delivery_dates();
+            reformat_delivery_dates(frm);
         }, 1000);
         if(frm.doc.__islocal) {
             // ggf. Kundendaten abrufen
@@ -194,11 +194,13 @@ function fetch_templates_from_blanket_order(frm, blanket_order) {
 }
 
 
-function reformat_delivery_dates() {
-    $('div[data-fieldname="delivery_date"] > .static-area:visible').each(function(index){
-        var date4 = $(this).text();
+function reformat_delivery_dates(frm) {
+    let target = frm.fields_dict.items.$wrapper.find('.grid-body .data-row div.col[data-fieldname="delivery_date"]');
+    target.each(function(index){
+        let static_area = $(this).find('.static-area:visible').first();
+        var date4 = $(static_area).text();
         if (date4.match(/^\d{2}.\d{2}.\d{4}$/)) {
-            $(this).text(date4.substr(0,6)+date4.substr(8,2));
+            $(static_area).text(date4.substr(0,6)+date4.substr(8,2));
         }
     });
 }
