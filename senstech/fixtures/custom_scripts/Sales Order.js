@@ -194,13 +194,36 @@ function fetch_templates_from_blanket_order(frm, blanket_order) {
 }
 
 
+// Hack the date selector to show a two-digit instead of four-digit year, so that the full date fits into a size-1 table column
 function reformat_delivery_dates(frm) {
     let target = frm.fields_dict.items.$wrapper.find('.grid-body .data-row div.col[data-fieldname="delivery_date"]');
+    
     target.each(function(index){
-        let static_area = $(this).find('.static-area:visible').first();
-        var date4 = $(static_area).text();
-        if (date4.match(/^\d{2}.\d{2}.\d{4}$/)) {
-            $(static_area).text(date4.substr(0,6)+date4.substr(8,2));
-        }
+        let static_area = $(this).find('.static-area')[0];
+        $(static_area).text(reformat_delivery_date($(static_area).text()));
+        
+    	let newObserver = new MutationObserver( (chgs) => {
+    	    if(chgs.length > 0 && chgs[0].addedNodes.length > 0){
+    	        let node = chgs[0].addedNodes[0];
+    	        if(node.innerHTML && node.innerHTML.startsWith('<input')) {
+    	            $(node.firstChild).on('blur', f => {
+	                    setTimeout(() => {
+	                        $(f.target).val(reformat_delivery_date($(f.target).val()));
+	                    }, 200);
+    	            });
+    	        } else if (node.nodeValue) {
+                        $(static_area).text(reformat_delivery_date(node.nodeValue));
+    	        }
+    	    }
+        });
+        newObserver.observe(this, {subtree: true, childList: true});
     });
+}
+
+function reformat_delivery_date(date) {
+    if (date.match(/^\d{2}.\d{2}.\d{4}$/)) {
+        return date.substr(0,6)+date.substr(8,2);
+    } else {
+        return date;
+    }
 }
