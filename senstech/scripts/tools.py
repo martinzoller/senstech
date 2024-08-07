@@ -406,9 +406,16 @@ def set_price_list_rates(doc, sel_items):
     if cint(frappe.db.get_single_value("Stock Settings", "auto_insert_price_list_rate_if_missing")):
         frappe.msgprint(_("Bitte automatische Preisspeicherung in den Lager-Einstellungen deaktivieren"), alert=True, indicator='red')
         return
+    # The following is just a warning as editing the list prices in docs will not do much harm
+    if cint(frappe.db.get_default("editable_price_list_rate")):
+        frappe.msgprint(_("Bitte in den Vertriebseinstellungen das Bearbeiten von Listenpreisen innerhalb von Transaktionen verbieten"), alert=True, indicator='orange')
     price_list = doc.get('selling_price_list') or doc.get('buying_price_list')
     doc_currency = doc['currency']
     if price_list and frappe.db.get_value("Price List", price_list, "currency", cache=True) == doc_currency:
+        # Require price_not_uom_dependent - which in reality means the contrary, i.e. list price WILL be converted to target UOM in purchasing/sales docs
+        if frappe.db.get_value("Price List", price_list, "price_not_uom_dependent", cache=True) == False:
+            frappe.msgprint(_("Bei der Preisliste '{0}' ist das Häkchen für UOM-Abhängigkeit nicht gesetzt, dieses ist für die korrekte Anwendung von Listenpreisen erforderlich", [price_list]), alert=True, indicator='red')
+            return
         if frappe.has_permission("Item Price", "write"):
             for idx in sel_items:
                 line_item = doc['items'][int(idx)]

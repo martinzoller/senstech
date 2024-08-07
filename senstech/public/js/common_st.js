@@ -277,11 +277,18 @@ function text_field_empty(val) {
 }
 
 function update_list_prices(frm) {
+	let buying_or_selling = frm.doc.selling_price_list ? 'selling' : 'buying';
+	let price_list_field = buying_or_selling+'_price_list';
+	// Never update list prices when we don't have a matching price list for the document's currency
+	if(frm.doc.currency != frappe.sys_defaults.currency && frm.doc[price_list_field] == frappe.sys_defaults[price_list_field]) {
+		return;
+	}
+	
 	let processed_count = 0;
 	let dialog_items = [];
 	frm.doc.items.forEach(function(item, idx) {
 		frappe.db.get_doc('Item Group',item.item_group).then(item_grp => {
-			// Ignore items with blanket order references and items without list price
+			// Ignore items with blanket order references and item groups without list prices
 			if (!item.blanket_order && item_grp.has_list_price && item.rate != item.price_list_rate && item.rate != 0) {
 				dialog_items.push(idx)
 			}
