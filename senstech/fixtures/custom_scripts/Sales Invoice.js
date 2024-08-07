@@ -9,6 +9,9 @@ frappe.ui.form.on('Sales Invoice', {
             fetch_templates_from_customer(frm);
         }, 1000);
     },
+	currency(frm) {
+        assign_price_list_by_currency(frm);
+	},
     validate(frm) {
 	    if(!frm.doc.is_return) {
     		basic_sales_validations(frm);

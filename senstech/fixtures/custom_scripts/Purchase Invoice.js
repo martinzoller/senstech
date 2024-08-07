@@ -36,6 +36,9 @@ frappe.ui.form.on('Purchase Invoice', {
         }
 		payment_type_changed(frm);
     },
+	currency(frm) {
+        assign_price_list_by_currency(frm);
+	},
 	payment_type(frm) {
 		payment_type_changed(frm);
 	}

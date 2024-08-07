@@ -7,6 +7,9 @@ frappe.ui.form.on('Quotation', {
             fetch_templates_from_party(frm);
         }, 1000);
     },
+	currency(frm) {
+        assign_price_list_by_currency(frm);
+	},
     refresh(frm) {
         if (frm.doc.customer_address && frm.doc.shipping_address_name) {
             update_address_display(frm, ['address_display', 'shipping_address'], [frm.doc.customer_address, frm.doc.shipping_address_name], true);

@@ -8,6 +8,9 @@ frappe.ui.form.on('Sales Order', {
             fetch_templates_from_customer(frm);
         }, 1000);
     },
+	currency(frm) {
+        assign_price_list_by_currency(frm);
+	},
     validate(frm) {
 		basic_sales_validations(frm);
 		frm.doc.items.forEach(entry => {

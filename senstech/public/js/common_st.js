@@ -424,3 +424,35 @@ function update_list_prices_exec(frm, sel_items) {
         }
     });
 }
+
+
+// Assign price list to purchasing/sales doc depending on document's currency
+function assign_price_list_by_currency(frm) {
+	let buying_or_selling = frm.doc.selling_price_list ? 'selling' : 'buying';
+	let price_list_field = buying_or_selling+'_price_list';
+	
+	// If the currency and price list correspond to system defaults, assume they match. Otherwise, find a price list matching the document's currency
+	if(frm.doc.currency != frappe.sys_defaults.currency || frm.doc[price_list_field] != frappe.sys_defaults[price_list_field]) {
+		let price_list_filters = {enabled: true, currency: frm.doc.currency};
+		price_list_filters[buying_or_selling] = true;
+		frappe.db.get_list("Price List", {fields: ['name'], filters: price_list_filters}).then(f => {
+			if(f.length == 1) {
+				frm.set_value(price_list_field, f[0]['name']);
+				frappe.show_alert({message: __('Währungswechsel: Preisliste \'{0}\' zugewiesen', [f[0]['name']]), indicator: 'green'}, 5);
+			}
+			else {
+				frm.set_value(price_list_field, frappe.sys_defaults[price_list_field]);
+				
+				if(f.length > 1) {
+					frappe.show_alert({message: __('Es existieren mehrere Preislisten für die gewählte Währung'), indicator: 'orange'}, 10);
+				}
+				if(buying_or_selling === 'buying'){
+					frappe.show_alert({message: __('Keine Einkaufs-Preisliste für Währung \'{0}\' definiert. Es stehen keine Listenpreise zur Verfügung!', [frm.doc.currency]), indicator: 'orange'}, 10);
+				}
+				else {
+					frappe.show_alert({message: __('Keine Verkaufs-Preisliste für Währung \'{0}\' definiert. Es werden umgerechnete {1}-Preise angezeigt.', [frm.doc.currency, frappe.sys_defaults.currency]), indicator: 'orange'}, 10);
+				}
+			}
+		});
+	}	
+}
