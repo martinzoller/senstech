@@ -212,7 +212,12 @@ function validation_error(frm, field, message) {
 	frappe.msgprint(message, __("Validation") );
 	if(frappe.validated) {
 		frappe.validated = false;
-		frm.scroll_to_field(field);
+		if(field == 'items') {
+			// Workaround as scroll_to_field() doesn't work properly in this case
+			frappe.utils.scroll_to(frm.fields_dict.items.$wrapper);
+		} else {
+			frm.scroll_to_field(field);
+		}
 	}
 }
 
