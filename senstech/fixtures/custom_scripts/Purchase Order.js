@@ -53,6 +53,10 @@ frappe.ui.form.on('Purchase Order', {
 					filters: {'is_purchase_item': 1, 'item_code': ['not like', 'AC-%']}
 				}
 		});
+		
+		setTimeout(function(){
+            add_uom_to_rate_fields(frm);
+        }, 1000);
 
         if (frm.doc.supplier_address && frm.doc.shipping_address) {
             update_address_display(frm, ['address_display', 'shipping_address_display'], [frm.doc.supplier_address, frm.doc.shipping_address], true);

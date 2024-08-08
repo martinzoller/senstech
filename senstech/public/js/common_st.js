@@ -463,3 +463,35 @@ function assign_price_list_by_currency(frm) {
 		});
 	}	
 }
+
+
+// Show UOM of purchasing/sales docs in "rate" column as we don't have space to show it as a separate column
+function add_uom_to_rate_fields(frm) {
+    let target = frm.fields_dict.items.$wrapper.find('.grid-body .data-row div.col[data-fieldname="rate"]');
+	let child_dt = frm.fields_dict.items.grid.doctype;
+    
+    target.each(function(index){
+        let static_area = $(this).find('.static-area')[0];
+		let uom = locals[child_dt][frm.doc.items[index].name]['uom'];
+        $(static_area).text(add_uom_to_rate(uom, $(static_area).text()));
+        
+    	let newObserver = new MutationObserver( (chgs) => {
+    	    if(chgs.length > 0 && chgs[0].addedNodes.length > 0 && chgs[0].addedNodes[0].nodeName == 'DIV' && chgs[0].addedNodes[0].firstChild){
+    	        let childNode = chgs[0].addedNodes[0].firstChild;
+				if(childNode.textContent) {
+					uom = locals[child_dt][frm.doc.items[index].name]['uom'];
+					childNode.textContent = add_uom_to_rate(uom, childNode.textContent);
+				}
+    	    }
+        });
+        newObserver.observe(this, {subtree: true, childList: true});
+    });
+}
+
+function add_uom_to_rate(uom, rate) {
+    if (rate.match(/\d{1}.\d{2}$/)) {
+        return rate+' / '+uom;
+    } else {
+        return rate;
+    }
+}

@@ -76,8 +76,8 @@ frappe.ui.form.on('Sales Order', {
             }
         }
         setTimeout(function(){
-            // Lieferdatum kürzer darstellen
             reformat_delivery_dates(frm);
+			add_uom_to_rate_fields(frm);
         }, 1000);
         if(frm.doc.__islocal) {
             // ggf. Kundendaten abrufen
@@ -211,6 +211,9 @@ function reformat_delivery_dates(frm) {
 	                        $(f.target).val(reformat_delivery_date($(f.target).val()));
 	                    }, 200);
     	            });
+					setTimeout(() => {
+						$(node.firstChild).val(reformat_delivery_date($(node.firstChild).val()));
+					}, 200);
     	        } else if (node.nodeValue) {
                         $(static_area).text(reformat_delivery_date(node.nodeValue));
     	        }
