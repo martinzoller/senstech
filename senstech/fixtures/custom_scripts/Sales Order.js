@@ -64,6 +64,9 @@ frappe.ui.form.on('Sales Order', {
 					});
 				}
 			}
+			frm.doc.items.forEach(function(item, idx) {
+			    frappe.model.set_value('Sales Order Item', frm.doc.items[idx].name, 'qty_in_stock_uom', item.stock_qty);
+			});
 		}
         if (frm.doc.customer_address && frm.doc.shipping_address_name) {
             update_address_display(frm, ['address_display', 'shipping_address'], [frm.doc.customer_address, frm.doc.shipping_address_name], true);
@@ -131,13 +134,29 @@ frappe.ui.form.on('Sales Order Item', {
     item_code: function(frm, cdt, cdn) {
 		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
         frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");		
-        var current_item = locals[cdt][cdn];
-        setTimeout(function(){
-            if(current_item.blanket_order) {
-                fetch_templates_from_blanket_order(frm, current_item.blanket_order);
-            }
-        }, 1000);
     },
+	stock_uom(frm, cdt, cdn) {
+		// This one is read only and is set by scripts
+		frappe.model.set_value(cdt, cdn, 'copy_of_stock_uom',locals[cdt][cdn].stock_uom);
+	},
+	qty_in_stock_uom(frm, cdt, cdn) {
+		// Set qty accordingly, this will trigger a script that will set stock_qty
+		let val = locals[cdt][cdn].qty_in_stock_uom / locals[cdt][cdn].conversion_factor;
+		frappe.model.set_value(cdt, cdn, 'qty', val);
+	},
+	qty(frm, cdt, cdn) {
+		frappe.model.set_value(cdt, cdn, 'qty_in_stock_uom', locals[cdt][cdn].qty * locals[cdt][cdn].conversion_factor);
+	},
+	price_list_rate(frm, cdt, cdn) {
+	    // When a new item is selected, price_list_rate is triggered after the details have been fetched => Item-specific code can go here
+	    // (This will usually also trigger when a new UOM is selected for the item)
+	    var current_item = locals[cdt][cdn];
+        if(current_item.blanket_order) {
+            fetch_templates_from_blanket_order(frm, current_item.blanket_order);
+        }
+        frappe.model.set_value(cdt, cdn, 'qty_in_stock_uom', current_item.stock_qty);
+        frappe.model.set_value(cdt, cdn, 'copy_of_stock_uom',current_item.stock_uom);
+	},
 	items_add: function(frm, cdt, cdn) {
 		set_position_number(frm, cdt, cdn);
 	}

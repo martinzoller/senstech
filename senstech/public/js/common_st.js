@@ -65,6 +65,7 @@ function update_address_display(frm, fields, addresses, as_list=false) {
     });
 }
 
+// Applies for: Purchasing docs (RQ, PO, PR, PI), Sales docs (QN, SO, SI, BO) and DN
 function basic_common_validations(frm) {
 	if (!frm.doc.taxes_and_charges && frm.doctype != "Request for Quotation") {
 		validation_error(frm, 'taxes_and_charges', __("Bitte Vorlage für Steuern und Abgaben hinterlegen"));
@@ -74,6 +75,8 @@ function basic_common_validations(frm) {
 	if(! ["Blanket Order", "Purchase Receipt"].includes(frm.doctype)) {
 		let pos_numbers = [];
 		frm.doc.items.forEach(function(entry) {
+			entry.copy_of_stock_uom = entry.stock_uom;
+			entry.qty_in_stock_uom = entry.stock_qty;
 			if(text_field_empty(entry.description)){
 				entry.description = entry.item_name;
 			}
@@ -89,11 +92,13 @@ function basic_common_validations(frm) {
 }
 
 
+// Applies for: RQ, PO, PR, PI
 function basic_purchasing_validations(frm) {
 	basic_common_validations(frm);
 }
 
 
+// Applies for: QN, SO, SI, BO
 function basic_sales_validations(frm) {
 	basic_common_validations(frm);
 	let payment_terms_field = (frm.doctype=='Blanket Order'?'payment_terms':'payment_terms_template');
