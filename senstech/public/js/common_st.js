@@ -505,3 +505,70 @@ function add_uom_to_rate(uom, rate) {
         return rate;
     }
 }
+
+
+// Event handling for modified UOM-related UI in the item table, including the fields 'qty_in_stock_uom' and 'copy_of_stock_uom' as well as showing the UOM directly in the table rows
+// Applies to QN, SO, DN, SI, PO, PR, PI
+// (BO is not UOM-aware at all, RQ has no stock-related fields)
+function handle_custom_uom_fields(dt) {
+	let child_dt = dt+' Item';
+	
+	frappe.ui.form.on(dt, {
+		refresh(frm) {
+			if(!frm.doc.__islocal) {
+				frm.doc.items.forEach(function(item, idx) {
+					frappe.model.set_value(child_dt, frm.doc.items[idx].name, 'qty_in_stock_uom', item.stock_qty);
+					frappe.model.set_value(child_dt, frm.doc.items[idx].name, 'copy_of_stock_uom', item.stock_uom);
+				});
+			}
+			// qty_in_stock_uom is writable on submitted docs to allow it to always be set to the value of stock_qty,
+			// however it should not be user editable when the doc is submitted
+			if(frm.doc.docstatus > 0) {
+				frm.fields_dict.items.grid.fields_map.qty_in_stock_uom.read_only = 1;
+			}
+			if(dt != 'Delivery Note') {
+				setTimeout(function(){
+					add_uom_to_rate_fields(frm);
+				}, 1000);
+			}
+		},
+	});
+	
+	if(['Quotation', 'Sales Order', 'Delivery Note', 'Sales Invoice'].includes(dt)) {
+		frappe.ui.form.on(child_dt, {
+			item_code(frm, cdt, cdn) {
+				// Workaround for a pricing bug in sales docs:
+				// Set the 'margin' to zero to prevent it from being added to the 'rate' when a new item is selected
+				frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");
+			},
+		});
+	}
+	
+	frappe.ui.form.on(child_dt, {
+		stock_uom(frm, cdt, cdn) {
+			// This one is read only and is set by scripts
+			frappe.model.set_value(cdt, cdn, 'copy_of_stock_uom',locals[cdt][cdn].stock_uom);
+		},
+		
+		qty_in_stock_uom(frm, cdt, cdn) {
+			// Set qty accordingly, this will trigger a script that will set stock_qty
+			let val = locals[cdt][cdn].qty_in_stock_uom / locals[cdt][cdn].conversion_factor;
+			frappe.model.set_value(cdt, cdn, 'qty', val);
+		},
+		
+		qty(frm, cdt, cdn) {
+			frappe.model.set_value(cdt, cdn, 'qty_in_stock_uom', locals[cdt][cdn].qty * locals[cdt][cdn].conversion_factor);
+		},
+		
+		price_list_rate(frm, cdt, cdn) {
+			// When a new item is selected, price_list_rate is triggered after the details have been fetched => Item-specific code can go here
+			// (This will usually also trigger when a new UOM is selected for the item)
+			var current_item = locals[cdt][cdn];
+			if(current_item.blanket_order) {
+				fetch_templates_from_blanket_order(frm, current_item.blanket_order);
+			}
+			frappe.model.set_value(cdt, cdn, 'qty_in_stock_uom', current_item.stock_qty);
+			frappe.model.set_value(cdt, cdn, 'copy_of_stock_uom',current_item.stock_uom);
+		},
+	});
+}

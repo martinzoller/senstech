@@ -167,14 +167,12 @@ frappe.ui.form.on('Quotation', {
 });
 
 frappe.ui.form.on('Quotation Item', {
-    item_code(frm, cdt, cdn) {
-		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
-        frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");
-    },
 	items_add: function(frm, cdt, cdn) {
 		set_position_number(frm, cdt, cdn);
    }
 });
+
+handle_custom_uom_fields('Quotation');
 
 
 function fetch_templates_from_party(frm) {

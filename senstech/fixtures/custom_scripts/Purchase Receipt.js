@@ -21,3 +21,5 @@ frappe.ui.form.on('Purchase Receipt', {
         }
     }
 });
+
+handle_custom_uom_fields('Purchase Receipt');
