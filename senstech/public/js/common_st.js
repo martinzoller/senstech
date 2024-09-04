@@ -563,10 +563,7 @@ function handle_custom_uom_fields(dt) {
 		price_list_rate(frm, cdt, cdn) {
 			// When a new item is selected, price_list_rate is triggered after the details have been fetched => Item-specific code can go here
 			// (This will usually also trigger when a new UOM is selected for the item)
-			var current_item = locals[cdt][cdn];
-			if(current_item.blanket_order) {
-				fetch_templates_from_blanket_order(frm, current_item.blanket_order);
-			}
+			let current_item = locals[cdt][cdn];
 			frappe.model.set_value(cdt, cdn, 'qty_in_stock_uom', current_item.stock_qty);
 			frappe.model.set_value(cdt, cdn, 'copy_of_stock_uom',current_item.stock_uom);
 		},

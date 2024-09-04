@@ -129,6 +129,13 @@ frappe.ui.form.on('Sales Order', {
 frappe.ui.form.on('Sales Order Item', {
 	items_add: function(frm, cdt, cdn) {
 		set_position_number(frm, cdt, cdn);
+	},
+	price_list_rate(frm, cdt, cdn) {
+		// When a new item is selected, price_list_rate is triggered after the details have been fetched => Item-specific code can go here
+		let current_item = locals[cdt][cdn];
+		if(current_item.blanket_order) {
+			fetch_templates_from_blanket_order(frm, current_item.blanket_order);
+		}
 	}
 });
 
