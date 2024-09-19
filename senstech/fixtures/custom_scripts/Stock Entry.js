@@ -14,7 +14,7 @@ frappe.ui.form.on('Stock Entry', {
 })
 
 function check_batch_release(frm) {
-    var items = cur_frm.doc.items;
+    var items = frm.doc.items;
 	items.forEach(function(entry) {
         if (entry.batch_no) {
 		    frappe.call({
@@ -132,28 +132,28 @@ function entnahme_blech(frm) {
 
 function submit_entnahme_blech(frm, values) {
 	// set defaults
-	cur_frm.set_value("stock_entry_type", values.stock_entry_type);
-	cur_frm.set_value("from_warehouse", values.from_warehouse);
+	frm.set_value("stock_entry_type", values.stock_entry_type);
+	frm.set_value("from_warehouse", values.from_warehouse);
 	
 	// remove all rows
 	var tbl = frm.doc.items || [];
 	var i = tbl.length;
 	while (i--)
 	{
-		cur_frm.get_field("items").grid.grid_rows[i].remove();
+		frm.get_field("items").grid.grid_rows[i].remove();
 	}
 	
 	// add item row
-	var child = cur_frm.add_child('items');
+	var child = frm.add_child('items');
 	frappe.model.set_value(child.doctype, child.name, 'item_code', values.scan_item);
 	frappe.model.set_value(child.doctype, child.name, 'qty', values.qty);
 	frappe.model.set_value(child.doctype, child.name, 'uom', 'Stk');
 	frappe.model.set_value(child.doctype, child.name, 'conversion_factor', values.conversion_factor_to_default_stock_uom);
 	frappe.model.set_value(child.doctype, child.name, 'transfer_qty', values.qty_in_default_stock_uom);
 	frappe.model.set_value(child.doctype, child.name, 'allow_zero_valuation_rate', 1);
-	cur_frm.refresh_field('items');
+	frm.refresh_field('items');
 	
-	cur_frm.save().then(() => {
-		cur_frm.savesubmit();
+	frm.save().then(() => {
+		frm.savesubmit();
 	});
 }

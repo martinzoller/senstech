@@ -7,6 +7,9 @@ frappe.ui.form.on('Quotation', {
             fetch_templates_from_party(frm);
         }, 1000);
     },
+	currency(frm) {
+        assign_price_list_by_currency(frm);
+	},
     refresh(frm) {
         if (frm.doc.customer_address && frm.doc.shipping_address_name) {
             update_address_display(frm, ['address_display', 'shipping_address'], [frm.doc.customer_address, frm.doc.shipping_address_name], true);
@@ -154,40 +157,42 @@ frappe.ui.form.on('Quotation', {
 		}
         frm.doc.submitted_by = frappe.user.name;
     },
+	on_submit(frm) {
+		// ggf. Dialog zum Aktualisieren von Listenpreisen anzeigen
+		update_list_prices(frm);
+	},
     after_cancel(frm) {
         add_cancelled_watermark(frm);
     }
 });
 
 frappe.ui.form.on('Quotation Item', {
-    item_code(frm, cdt, cdn) {
-		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
-        frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");
-    },
 	items_add: function(frm, cdt, cdn) {
 		set_position_number(frm, cdt, cdn);
    }
 });
 
+handle_custom_uom_fields('Quotation');
+
 
 function fetch_templates_from_party(frm) {
-    if(!cur_frm.doc.party_name) {
+    if(!frm.doc.party_name) {
         return;
     }
     frappe.call({
         "method": "frappe.client.get",
         "args": {
-            "doctype": cur_frm.doc.quotation_to,
-            "name": cur_frm.doc.party_name
+            "doctype": frm.doc.quotation_to,
+            "name": frm.doc.party_name
         },
         "callback": function(response) {
             var customer = response.message;
 
-            if (!cur_frm.doc.taxes_and_charges && customer.taxes_and_charges) {
-                cur_frm.set_value('taxes_and_charges', customer.taxes_and_charges);
+            if (!frm.doc.taxes_and_charges && customer.taxes_and_charges) {
+                frm.set_value('taxes_and_charges', customer.taxes_and_charges);
             }
-            if(!cur_frm.doc.payment_terms_template && customer.payment_terms){
-                cur_frm.set_value('payment_terms_template', customer.payment_terms);
+            if(!frm.doc.payment_terms_template && customer.payment_terms){
+                frm.set_value('payment_terms_template', customer.payment_terms);
             }
         }
     });
@@ -611,9 +616,9 @@ function gate1_dialog(frm) {
 						frappe.validated = true;
 						frm.script_manager.trigger("before_submit").then(function() {
 							if(frappe.validated) {
-								cur_frm.save('Submit', function(r) {
+								frm.save('Submit', function(r) {
 									if(!r.exc) {
-										cur_frm.script_manager.trigger("on_submit");
+										frm.script_manager.trigger("on_submit");
 									}
 								});
 							}

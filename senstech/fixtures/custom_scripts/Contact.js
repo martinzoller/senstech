@@ -1,35 +1,35 @@
 frappe.ui.form.on('Contact', {
     
 	before_load(frm) {
-	    if(cur_frm.doc.__islocal) {
-    		if(cur_frm.doc.funktion == "-Kontakt vom System angelegt-") {
-    		    cur_frm.doc.funktion = "Unbekannt";
+	    if(frm.doc.__islocal) {
+    		if(frm.doc.funktion == "-Kontakt vom System angelegt-") {
+    		    frm.doc.funktion = "Unbekannt";
     		}
     		//check_dynamic_link();
 	    }
-        add_child_lines();   
+        add_child_lines(frm);
 	},
 	
 	funktion(frm) {
-	    var fkt = cur_frm.doc.funktion;
+	    var fkt = frm.doc.funktion;
 	    if (fkt == 'Allgemeine Nummer/Mailadresse') {
-	        cur_frm.set_value('first_name','Allgemein');
-	        cur_frm.set_value('last_name','');
-	        cur_frm.set_value('salutation','');
+	        frm.set_value('first_name','Allgemein');
+	        frm.set_value('last_name','');
+	        frm.set_value('salutation','');
 	    }
 	},
 	
 	validate(frm) {
-	    if (cur_frm.doc.__islocal && cur_frm.doc.funktion == 'Unbekannt' && !cur_frm.doc.first_name && !cur_frm.doc.last_name && !cur_frm.doc.salutation) {
-	        if (cur_frm.doc.phone_nos[0].phone || cur_frm.doc.email_ids[0].email_id) {
+	    if (frm.doc.__islocal && frm.doc.funktion == 'Unbekannt' && !frm.doc.first_name && !frm.doc.last_name && !frm.doc.salutation) {
+	        if (frm.doc.phone_nos[0].phone || frm.doc.email_ids[0].email_id) {
     	        // Lazy-Option um allgemeine Nummer und/oder E-Mail zu setzen (alles leer lassen)
-    	        cur_frm.set_value('first_name','Allgemein');
-    	        cur_frm.set_value('funktion','Allgemeine Nummer/Mailadresse');
+    	        frm.set_value('first_name','Allgemein');
+    	        frm.set_value('funktion','Allgemeine Nummer/Mailadresse');
 	        }
 	    }
 	    
-	    var fkt = cur_frm.doc.funktion;
-	    cur_frm.set_value('designation', fkt);
+	    var fkt = frm.doc.funktion;
+	    frm.set_value('designation', fkt);
 	    if (fkt != 'Allgemeine Nummer/Mailadresse' && fkt != '-Kontakt vom System angelegt-' && fkt != 'E-Mail-Rechnungsempfänger') {
     	    if(! validation_require(frm, 'last_name', __('Nachname muss angegeben werden. Für allgemeinen Kontakt bitte "Allgemeine Nummer/Mailadresse" als Funktion auswählen.'))) {
     	        return;
@@ -39,7 +39,7 @@ frappe.ui.form.on('Contact', {
     	    }
 	    }
 	    if (fkt == 'Allgemeine Nummer/Mailadresse' || fkt == 'E-Mail-Rechnungsempfänger') {
-	        if (!['Customer','Supplier'].includes(cur_frm.doc.links[0].link_doctype) || !cur_frm.doc.links[0].link_name) {
+	        if (!['Customer','Supplier'].includes(frm.doc.links[0].link_doctype) || !frm.doc.links[0].link_name) {
     	        validation_error(frm, 'links', __("Allgemeine Kontakte und Rechnungsempfänger müssen mit einem Kunden/Lieferanten verknüpft sein"));
     	        return;	            
 	        }
@@ -51,17 +51,17 @@ frappe.ui.form.on('Contact', {
     },
 	
 	after_save(frm) {
-	    add_child_lines();
+	    add_child_lines(frm);
 	}
 });
 
 // Primäre E-Mail und Telefonnummern setzen, leere Child-Zeilen entfernen (erzeugt durch add_child_lines)
 function update_child_lines_set_primary(frm) {
-    var emails = cur_frm.doc.email_ids;
-    var tels = cur_frm.doc.phone_nos;
-    var links = cur_frm.doc.links;
-	cur_frm.set_value('phone', '');
-	cur_frm.set_value('mobile_no', '');
+    var emails = frm.doc.email_ids;
+    var tels = frm.doc.phone_nos;
+    var links = frm.doc.links;
+	frm.set_value('phone', '');
+	frm.set_value('mobile_no', '');
 	if (emails) {
         if(emails.length == 1 && !emails[0].email_id) {
 	        emails.pop(); // ggf. leeren Eintrag wieder löschen
@@ -69,10 +69,10 @@ function update_child_lines_set_primary(frm) {
 		emails.forEach(function(entry) {
 			if (entry.idx == 1) {
 				entry.is_primary = 1;
-				if (cur_frm.doc.funktion=="E-Mail-Rechnungsempfänger") {
-				    cur_frm.set_value('first_name',entry.email_id);
-				    cur_frm.set_value('last_name','');
-				    cur_frm.set_value('salutation','');
+				if (frm.doc.funktion=="E-Mail-Rechnungsempfänger") {
+				    frm.set_value('first_name',entry.email_id);
+				    frm.set_value('last_name','');
+				    frm.set_value('salutation','');
 				}
 			} 
 		});
@@ -98,7 +98,7 @@ function update_child_lines_set_primary(frm) {
 	    
         // Bug Workaround: Linktitel korrekt setzen
         var fix_doctypes = { Customer: 'customer_name', Supplier: 'supplier_name'};
-        var links = cur_frm.doc.links;
+        var links = frm.doc.links;
         links.forEach(function(entry) {
             if(Object.keys(fix_doctypes).includes(entry.link_doctype) && entry.link_name != '') {
                 frappe.db.get_doc(entry.link_doctype,entry.link_name).then(function(linkdoc) {
@@ -108,33 +108,33 @@ function update_child_lines_set_primary(frm) {
                     
                     // TODO: Firma wird auf letzte Verknüpfung mit Kunde/Lieferant gesetzt
                     //       Evtl. validieren dass nur 1 solche Verknüpfung existiert!
-                    cur_frm.set_value('firma',entry.link_title);
-	                cur_frm.refresh_field('firma');
-	                cur_frm.set_value('newsletter_language',linkdoc.language);
-	                cur_frm.refresh_field('newsletter_language');
+                    frm.set_value('firma',entry.link_title);
+	                frm.refresh_field('firma');
+	                frm.set_value('newsletter_language',linkdoc.language);
+	                frm.refresh_field('newsletter_language');
                 });
             }
         });
     }
-    cur_frm.refresh_field('email_ids');
-    cur_frm.refresh_field('phone_nos');
-    cur_frm.refresh_field('links');
+    frm.refresh_field('email_ids');
+    frm.refresh_field('phone_nos');
+    frm.refresh_field('links');
 }
 
 // Automatisch leere Zeile bei E-Mail, Telefon und Verknüpfung (Kunde) erzeugen
-function add_child_lines() {
-    if (is_empty(cur_frm.doc.email_ids)) {
-        cur_frm.add_child('email_ids');
-        cur_frm.refresh_field('email_ids');
+function add_child_lines(frm) {
+    if (is_empty(frm.doc.email_ids)) {
+        frm.add_child('email_ids');
+        frm.refresh_field('email_ids');
     }	    
-    if (is_empty(cur_frm.doc.phone_nos)) {
-        cur_frm.add_child('phone_nos');
-        cur_frm.refresh_field('phone_nos');
+    if (is_empty(frm.doc.phone_nos)) {
+        frm.add_child('phone_nos');
+        frm.refresh_field('phone_nos');
     }
-    if (is_empty(cur_frm.doc.links)) {
-        var new_link = cur_frm.add_child('links');
+    if (is_empty(frm.doc.links)) {
+        var new_link = frm.add_child('links');
         new_link.link_doctype = "Customer";
-        cur_frm.refresh_field('links');
+        frm.refresh_field('links');
     }
 }
 

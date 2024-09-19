@@ -36,6 +36,9 @@ frappe.ui.form.on('Purchase Invoice', {
         }
 		payment_type_changed(frm);
     },
+	currency(frm) {
+        assign_price_list_by_currency(frm);
+	},
 	payment_type(frm) {
 		payment_type_changed(frm);
 	}
@@ -87,3 +90,5 @@ function payment_type_changed(frm) {
 		locals.iban = "LSV"; // Prevent validation error (empty IBAN) when LSV is selected
 	}	
 }
+
+handle_custom_uom_fields('Purchase Invoice');

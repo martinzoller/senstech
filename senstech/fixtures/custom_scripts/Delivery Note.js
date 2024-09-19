@@ -50,8 +50,6 @@ frappe.ui.form.on('Delivery Note', {
 
 frappe.ui.form.on('Delivery Note Item', {
     item_code: function(frm, cdt, cdn) {
-		// Verhindern, dass bei Artikelwechsel die "Marge" des alten zum Preis des neuen Artikels addiert wird
-        frappe.model.set_value(cdt, cdn, "margin_rate_or_amount", "0");		
 		// Popup für Chargenauswahl ausblenden (erscheint ansonsten gefühlt genau dann nicht, wenn man es braucht, und umgekehrt...)
         frappe.flags.hide_serial_batch_dialog = true;
 		// TODO: schauen, wie man die Hinweismeldung wegkriegt, dass es von keiner Charge genügend Stück hat - oder diese in ein unobtrusive popup notice verwandeln. Ebenso möglichst nicht automatisch die erstbeste Charge zuweisen!
@@ -165,6 +163,8 @@ frappe.ui.form.on('Delivery Note Item', {
 		set_position_number(frm, cdt, cdn);
    }
 });
+
+handle_custom_uom_fields('Delivery Note');
 
 
 function fetch_taxes_and_charges_from_customer(frm) {

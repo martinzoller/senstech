@@ -8,6 +8,7 @@
 import frappe
 from frappe import _, attach_print
 from frappe.contacts.doctype.address.address import get_address_display, address_query
+from frappe.utils import cint
 import json, socket, os, six
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import tempfile
@@ -391,3 +392,65 @@ def check_duns_address(duns, country, ref_doc):
             duns_addr.save()
             frappe.db.commit()
             frappe.msgprint(_("Adresse gemäss DUNS-Eintrag angelegt"), alert=True, indicator='green')
+
+
+# Update list prices of the line items where the user agreed to do so
+@frappe.whitelist()
+def set_price_list_rates(doc, sel_items):
+
+    if isinstance(doc, six.string_types):
+        doc = json.loads(doc)
+    if isinstance(sel_items, six.string_types):
+        sel_items = json.loads(sel_items)
+        
+    if cint(frappe.db.get_single_value("Stock Settings", "auto_insert_price_list_rate_if_missing")):
+        frappe.msgprint(_("Bitte automatische Preisspeicherung in den Lager-Einstellungen deaktivieren"), alert=True, indicator='red')
+        return
+    # The following is just a warning as editing the list prices in docs will not do much harm
+    if cint(frappe.db.get_default("editable_price_list_rate")):
+        frappe.msgprint(_("Bitte in den Vertriebseinstellungen das Bearbeiten von Listenpreisen innerhalb von Transaktionen verbieten"), alert=True, indicator='orange')
+    price_list = doc.get('selling_price_list') or doc.get('buying_price_list')
+    doc_currency = doc['currency']
+    if price_list and frappe.db.get_value("Price List", price_list, "currency", cache=True) == doc_currency:
+        # Require price_not_uom_dependent - which in reality means the contrary, i.e. list price WILL be converted to target UOM in purchasing/sales docs
+        if frappe.db.get_value("Price List", price_list, "price_not_uom_dependent", cache=True) == False:
+            frappe.msgprint(_("Bei der Preisliste '{0}' ist das Häkchen für UOM-Abhängigkeit nicht gesetzt, dieses ist für die korrekte Anwendung von Listenpreisen erforderlich", [price_list]), alert=True, indicator='red')
+            return
+        if frappe.has_permission("Item Price", "write"):
+            for idx in sel_items:
+                line_item = doc['items'][int(idx)]
+                item_code = line_item['item_code']
+                has_list_price = frappe.db.get_value("Item Group", line_item['item_group'], "has_list_price")
+                conversion_factor = line_item.get('conversion_factor') or 1
+                price_list_rate = line_item['rate'] / conversion_factor
+                if has_list_price and price_list_rate > 0:
+                    item_prices = frappe.db.get_list('Item Price',
+                        {'item_code': item_code, 'price_list': price_list, 'currency': doc_currency},
+                        ['name', 'price_list_rate', 'min_qty', 'valid_upto'])
+                    if len(item_prices):
+                        if len(item_prices) > 1 or item_prices[0].min_qty != 1 or item_prices[0].valid_upto:
+                            frappe.msgprint(_("Preis für Artikel {0} kann nicht gespeichert werden: Preisliste {1} enthält Staffelpreise oder mehrere Preiseinträge").format(item_code, price_list), alert=True, indicator='red')
+                        else:
+                            if item_prices[0].price_list_rate != price_list_rate:
+                                frappe.db.set_value('Item Price', item_prices[0].name, "price_list_rate", price_list_rate)
+                                frappe.msgprint(_("Item Price updated for {0} in Price List {1}").format(item_code,
+                                    price_list), alert=True, indicator='green')
+                            else:
+                                frappe.msgprint(_("Listenpreis für {0} in Preisliste {1} beträgt bereits {2} {3:.2f}").format(item_code,
+                                    price_list, doc_currency, price_list_rate), alert=True, indicator='green')
+                    else:
+                        item_price = frappe.get_doc({
+                            "doctype": "Item Price",
+                            "price_list": price_list,
+                            "item_code": item_code,
+                            "currency": doc_currency,
+                            "price_list_rate": price_list_rate
+                        })
+                        item_price.insert()
+                        frappe.db.commit()
+                        frappe.msgprint(_("Item Price added for {0} in Price List {1}").format(item_code,
+                            price_list), alert=True, indicator='green')
+        else:
+            frappe.msgprint(_("Preise nicht gespeichert: Benutzer hat kein Schreibrecht auf Artikelpreisen"), alert=True, indicator='red')
+    else:
+        frappe.msgprint(_("Preise nicht gespeichert: Keine Preisliste in passender Währung gefunden"), alert=True, indicator='red')

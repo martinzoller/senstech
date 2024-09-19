@@ -1,6 +1,6 @@
 frappe.ui.form.on('Purchase Receipt', {
     before_save(frm) {
-		if (!cur_frm.doc.taxes_and_charges) {
+		if (!frm.doc.taxes_and_charges) {
 		    fetch_taxes_and_charges_from_supplier(frm);
 		}
 	},
@@ -14,10 +14,12 @@ frappe.ui.form.on('Purchase Receipt', {
 		basic_purchasing_validations(frm);
     },
     supplier(frm) {
-        if (!cur_frm.doc.taxes_and_charges) {
+        if (!frm.doc.taxes_and_charges) {
             setTimeout(function(){
                 fetch_taxes_and_charges_from_supplier(frm);
             }, 1000);
         }
     }
 });
+
+handle_custom_uom_fields('Purchase Receipt');

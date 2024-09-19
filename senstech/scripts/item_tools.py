@@ -7,6 +7,7 @@
 #
 import frappe
 from frappe import _
+from erpnext.stock.doctype.item.item import get_uom_conv_factor
 from frappe.utils.data import today, add_days
 from senstech.scripts.project_tools import get_next_project_id
 
@@ -167,3 +168,9 @@ def validate_item(doc, method):
                 mtn_item_doc = frappe.get_doc("Item", mtn_item)
                 if mtn_item_doc.item_code[3:9] != doc.item_code[3:9]:
                     frappe.throw(_("Der Bergname {0} wird schon für Artikel {1} verwendet, der zu einem anderen Projekt gehört").format(doc.mountain_name, mtn_item_doc.item_code));
+    
+    # Make sure the stock UOM can be converted to pcs
+    default_stock_uom = frappe.db.get_single_value("Stock Settings", "stock_uom")
+    if doc.stock_uom and doc.stock_uom != default_stock_uom:
+        if get_uom_conv_factor(doc.stock_uom, default_stock_uom) == '':
+            frappe.throw(_("Für die gewählte Lagereinheit ist kein Konvertierungsfaktor zur Standard-Lagereinheit definiert")+" ({from_uom} => {to_uom})".format(from_uom=doc.stock_uom, to_uom=default_stock_uom))

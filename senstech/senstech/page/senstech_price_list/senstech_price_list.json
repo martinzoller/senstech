@@ -1,0 +1,35 @@
+{
+ "content": null,
+ "creation": "2024-09-04 14:40:11.796878",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2024-09-04 14:40:44.999114",
+ "modified_by": "Administrator",
+ "module": "Senstech",
+ "name": "senstech_price_list",
+ "owner": "Administrator",
+ "page_name": "senstech_price_list",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Sales Master Manager"
+  },
+  {
+   "role": "Purchase Manager"
+  },
+  {
+   "role": "Purchase Master Manager"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Preistabelle"
+}
