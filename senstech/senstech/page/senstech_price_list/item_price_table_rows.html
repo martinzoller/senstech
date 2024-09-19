@@ -1,0 +1,66 @@
+<div class="dashboard-list-item">
+		<div class="row">
+			<div class="col-sm-4" style="margin-top: 8px;">
+				<b>{{ __("Item Name") }}</b>
+			</div>
+			<div class="col-sm-4" style="margin-top: 8px;">
+				<b>{{ __("Item Code") }}</b>
+			</div>			
+			<div class="col-sm-3 {% if some_price_breaks %} text-center {% endif %}">
+				<b>{{ __("List Price") }} [{{ currency }}]</b>
+			</div>
+			<div class="col-sm-1 text-right">
+			</div>
+		</div>
+		{% if some_price_breaks %}
+		<div class="row">
+			<div class="col-sm-8">
+			</div>
+				<div class="col-sm-1">
+					{{ __("ab {0} Stk", [1]) }}
+				</div>
+				<div class="col-sm-1">
+					{{ __("ab {0} Stk", [10]) }}
+				</div>
+				<div class="col-sm-1">
+					{{ __("ab {0} Stk", [20]) }}
+				</div>
+			<div class="col-sm-1 text-right">
+			</div>
+		</div>
+		{% endif %}
+	</div>
+{% for d in data %}
+	<div class="dashboard-list-item">
+		<div class="row">
+			<div class="col-sm-4" style="margin-top: 8px;">
+				<a data-type="item"	data-name="{{ d.item_code }}">
+					{{ d.item_name }}
+				</a>
+			</div>
+			<div class="col-sm-4" style="margin-top: 8px;">
+				{{ d.item_code }}
+			</div>
+			<div class="col-sm-1">
+			  <!-- The code below is to avoid rounding errors, see https://stackoverflow.com/a/32178833  -->
+				<input type="text" class="input-with-feedback form-control input-sm price-list-field" data-item-code="{{ d.item_code }}" data-min-qty="1" placeholder="{{ d.has_price_breaks ? "1+" : __("Preis") }}" value="{{ (d.price_1>0 ? Number(Math.round(parseFloat(d.price_1 + "e2")) + "e-2").toFixed(2) : d.price_1) }}" autocomplete="off">
+			</div>
+			<div class="col-sm-1">
+				{% if d.has_price_breaks %}
+					<input type="text" class="input-with-feedback form-control input-sm price-list-field" data-item-code="{{ d.item_code }}" data-min-qty="10" placeholder="10+" value="{{ (d.price_10>0 ? Number(Math.round(parseFloat(d.price_10 + "e2")) + "e-2").toFixed(2) : d.price_10) }}" autocomplete="off">
+				{% endif %}
+			</div>
+			<div class="col-sm-1">
+				{% if d.has_price_breaks %}
+					<input type="text" class="input-with-feedback form-control input-sm price-list-field" data-item-code="{{ d.item_code }}" data-min-qty="20" placeholder="20+" value="{{ (d.price_20>0 ? Number(Math.round(parseFloat(d.price_20 + "e2")) + "e-2").toFixed(2) : d.price_20) }}" autocomplete="off">
+				{% endif %}
+			</div>
+			<div class="col-sm-1 text-right">
+				<!-- for optional future button... -->
+			</div>
+		</div>
+	</div>
+{% endfor %}
+
+{% if can_write %}
+{% endif %}

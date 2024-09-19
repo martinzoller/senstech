@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import frappe
 from frappe import _
 
 def get_data():
@@ -169,6 +170,12 @@ def get_data():
           'label': _('Artikel')
         },
         {
+          'type': 'page',
+          'name': 'senstech_price_list',
+          'label': _('Preistabelle'),
+          'route_options': { 'price_list': frappe.defaults.get_global_default('selling_price_list') }
+        },
+        {
           'type': 'doctype',
           'name': 'Item Attribute',
           'label': _('Artikelattribut')
@@ -179,13 +186,6 @@ def get_data():
           'doctype': 'Item',
           'name': 'Item Variant Details',
           'label': _('Übersicht der Artikelvarianten')
-        },
-        {
-          'type': 'report',
-          'is_query_report': False,
-          'doctype': 'Item Price',
-          'name': 'Item-wise Price List Rate',
-          'label': _('Artikelpreise')
         },
         {
           'type': 'page',

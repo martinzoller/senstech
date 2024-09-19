@@ -447,6 +447,7 @@ def set_price_list_rates(doc, sel_items):
                             "price_list_rate": price_list_rate
                         })
                         item_price.insert()
+                        frappe.db.commit()
                         frappe.msgprint(_("Item Price added for {0} in Price List {1}").format(item_code,
                             price_list), alert=True, indicator='green')
         else:

@@ -316,14 +316,13 @@ function update_list_prices_show_dialog(frm, dialog_items) {
 	let table_rows = '';
 	frm.doc.items.forEach(function(item, idx) {
 		if(dialog_items.includes(idx)) {
-			// TODO: Staffelpreise Link
 			table_rows += `
 				<div class="list-item-container">
 					<div class="list-item">
 						<div class="list-item__content" style="flex: 0 0 10px;"><input type="checkbox" data-row="${idx}" ${(item.item_group.startsWith('Eigenprodukte') ? 'class="no-select" style="visibility:hidden"' : 'class="row-select"')}></div>
 						<div class="list-item__content ellipsis"><span class="ellipsis">${item.item_code}</span></div>
 						<div class="list-item__content ellipsis"><span class="ellipsis">${item.item_name}</span></div>
-						<div class="list-item__content" style="flex: 0 0 60px;">${(item.item_group.startsWith('Eigenprodukte') ? '<span class="ellipsis">'+__('Staffelpreise')+'<br><b><a href="#TODO" target="_blank">&gt; '+__('Anpassen')+'</a></b></span>' : item.price_list_rate.toFixed(2))}</div>
+						<div class="list-item__content" style="flex: 0 0 60px;">${(item.item_group.startsWith('Eigenprodukte') ? '<span class="ellipsis">'+__('Staffelpreise')+'<br><b><a href="desk#senstech_price_list?item_code='+item.item_code+'" target="_blank">&gt; '+__('Anpassen')+'</a></b></span>' : item.price_list_rate.toFixed(2))}</div>
 						<div class="list-item__content" style="flex: 0 0 30px;">${item.rate.toFixed(2)}</div>
 					</div>
 				</div>
