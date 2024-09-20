@@ -68,7 +68,7 @@
    "description": null,
    "docstatus": 0,
    "dt": "Sales Order Item",
-   "fetch_from": "item.item_name",
+   "fetch_from": "item_code.item_name",
    "fetch_if_empty": 0,
    "fieldname": "original_item_name",
    "fieldtype": "Data",
