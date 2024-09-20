@@ -93,7 +93,7 @@ frappe.ui.form.on('Sales Order', {
                 }, 1000);
             }
 			// Workaround: Steuern bei AB-Anlegen aus Rahmenauftrag korrekt laden
-            if(frm.doc.taxes_and_charges && frm.doc.taxes.length == 0) {
+            if(frm.doc.taxes_and_charges && (!frm.doc.taxes || frm.doc.taxes.length == 0)) {
                 frm.script_manager.trigger('taxes_and_charges');
             }
             // ggf. Position der 1. Zeile korrekt setzen (Bugfix, offenbar wird diese Zeile neu automatisch erzeugt?)
