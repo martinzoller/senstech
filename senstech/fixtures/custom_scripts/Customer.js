@@ -35,7 +35,7 @@ frappe.ui.form.on('Customer', {
         }
 	    if (!frm.doc.taxes_and_charges) {
 	        if (['Schweiz','Liechtenstein'].includes(frm.doc.territory)) {
-	            frm.set_value('taxes_and_charges',"8.1% MWST (303)");
+	            frm.set_value('taxes_and_charges',"8.1% MWST (303) - ST");
 	        }
 	        else {
 	            frm.set_value('taxes_and_charges',"Export 0% MWST (220) - ST");
