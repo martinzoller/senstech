@@ -543,6 +543,7 @@ function handle_custom_uom_fields(dt) {
 		});
 	}
 	
+	let is_handling_qty_event = false;
 	frappe.ui.form.on(child_dt, {
 		stock_uom(frm, cdt, cdn) {
 			// This one is read only and is set by scripts
@@ -552,11 +553,21 @@ function handle_custom_uom_fields(dt) {
 		qty_in_stock_uom(frm, cdt, cdn) {
 			// Set qty accordingly, this will trigger a script that will set stock_qty
 			let val = locals[cdt][cdn].qty_in_stock_uom / locals[cdt][cdn].conversion_factor;
-			frappe.model.set_value(cdt, cdn, 'qty', val);
+			if(!is_handling_qty_event) {
+				is_handling_qty_event = true;
+				frappe.model.set_value(cdt, cdn, 'qty', val).then(() => {
+					is_handling_qty_event = false;
+				});
+			}
 		},
 		
 		qty(frm, cdt, cdn) {
-			frappe.model.set_value(cdt, cdn, 'qty_in_stock_uom', locals[cdt][cdn].qty * locals[cdt][cdn].conversion_factor);
+			if(!is_handling_qty_event) {
+				is_handling_qty_event = true;
+				frappe.model.set_value(cdt, cdn, 'qty_in_stock_uom', locals[cdt][cdn].qty * locals[cdt][cdn].conversion_factor).then(() => {
+					is_handling_qty_event = false;
+				});
+			}
 		},
 		
 		price_list_rate(frm, cdt, cdn) {
