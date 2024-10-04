@@ -23,20 +23,20 @@ frappe.pages['senstech_price_list'].on_page_load = function(wrapper) {
 	page.item_group_field = page.add_field({
 		fieldname: 'item_group',
 		label: __('Item Group'),
-		fieldtype:'Link',
-		options:'Item Group',
+		fieldtype: 'Link',
+		options: 'Item Group',
 	});
 
 	page.sales_field = page.add_field({
 		fieldname: 'is_sales_item',
 		label: __('Is sales item'),
-		fieldtype:'Check',
+		fieldtype: 'Check',
 	});
 	
 	page.purchase_field = page.add_field({
 		fieldname: 'is_purchase_item',
 		label: __('Is purchase item'),
-		fieldtype:'Check',
+		fieldtype: 'Check',
 	});
 	
 	// Set sorting options
@@ -117,15 +117,16 @@ frappe.pages['senstech_price_list'].on_page_load = function(wrapper) {
 		let item_code = ev.target.getAttribute("data-item-code");
 		let min_qty = ev.target.getAttribute("data-min-qty");
 		let rate = parseFloat(ev.target.value) || 0;
-		let success_callback = () => {
+		let success_callback = (new_uom) => {
 			ev.target.classList.add('lds-done');
 			$(ev.target.nextElementSibling).remove();
+			$("input[data-fieldname="+item_code+"_uom]")[0].value = new_uom;
 		};
 		let error_callback = () => { $(ev.target.nextElementSibling).remove(); };
 		
 		if(item_code && min_qty) {
 			// Show animation to indicate saving is in progress		
-			ev.target.insertAdjacentHTML('afterend','<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>');
+			ev.target.insertAdjacentHTML('afterend','<div class="lds-ellipsis" style="left:85%"><div></div><div></div><div></div><div></div></div>');
 			page.item_price_table.save_price(item_code, min_qty, rate, success_callback, error_callback);
 			if(rate>0)
 				ev.target.value = Number(Math.round(parseFloat(rate + "e2")) + "e-2").toFixed(2);
@@ -134,7 +135,30 @@ frappe.pages['senstech_price_list'].on_page_load = function(wrapper) {
 		}
 	});
 	
+	page.main.on('change', 'input[data-target=UOM]', function(ev) {
+		$(ev.target.parentNode.nextElementSibling).remove();
+		
+		let fieldname = ev.target.getAttribute("data-fieldname");
+		let item_code = fieldname.substr(0, fieldname.length - 4);
+		let uom = ev.target.value;
+		let success_callback = (new_uom) => {
+			ev.target.classList.add('lds-done');
+			$(ev.target.parentNode.nextElementSibling).remove();
+			ev.target.value = new_uom;
+		};
+		let error_callback = () => { $(ev.target.parentNode.nextElementSibling).remove(); };
+		
+		if(item_code) {
+			ev.target.parentNode.insertAdjacentHTML('afterend','<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>');
+			page.item_price_table.save_uom(item_code, uom, success_callback, error_callback);
+		}
+	});
+	
 	page.main.on('focus', 'input.price-list-field', function(ev) {
+		ev.target.classList.remove('lds-done');
+	});
+	
+	page.main.on('focus', 'input[data-target=UOM]', function(ev) {
 		ev.target.classList.remove('lds-done');
 	});
 }

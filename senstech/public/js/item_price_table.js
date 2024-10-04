@@ -1,4 +1,4 @@
-// Adaptation of erpnext.stock.ItemDashboard
+// Adaptation of erpnext.stock.dashboard.item_dashboard
 
 ItemPriceTable = Class.extend({
 	init: function(opts) {
@@ -68,6 +68,20 @@ ItemPriceTable = Class.extend({
 
 		if (context.data.length > 0) {
 			$(frappe.render_template('item_price_table_rows', context)).appendTo(this.result);
+			context.data.forEach(row => {
+				uom_sel = frappe.ui.form.make_control({
+					df: {
+						fieldname: row.item_code+"_uom",
+						fieldtype: "Link",
+						options: "UOM",
+						placeholder:__("UOM"),
+					},
+					parent: $("#"+row.item_code+"_uom"),
+					only_input: true,
+				});
+				uom_sel.set_input(row.uom);
+				uom_sel.refresh();
+			});
 		} else {
 			var message = __("No data to show")
 			if(!this.price_list && !this.item_code && !this.item_group) {
@@ -125,8 +139,28 @@ ItemPriceTable = Class.extend({
 				rate: rate
 			},
 			callback: function(r) {
-				if(r.message == 'success') {
-					success_callback && success_callback();
+				if(r.message) {
+					success_callback && success_callback(r.message);
+				} else {
+					error_callback && error_callback();
+				}
+			},
+			error: function(r) {
+				error_callback && error_callback();
+			}
+		});
+	},
+	
+	save_uom: function(item_code, uom, success_callback, error_callback) {
+		frappe.call({
+			method: 'senstech.senstech.page.senstech_price_list.item_price_table.set_price_uom',
+			args: {
+				item_code: item_code,
+				uom: uom,
+			},
+			callback: function(r) {
+				if(r.message) {
+					success_callback && success_callback(r.message);
 				} else {
 					error_callback && error_callback();
 				}

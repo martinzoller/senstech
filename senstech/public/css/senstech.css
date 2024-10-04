@@ -106,11 +106,15 @@
 
 /* LOADING SPINNER */
 
-.lds-done {
-	border: 1.5px solid #0d6;
+.lds-done, .lds-done:focus {
+	animation: lds-done1 10s;
+}
+@keyframes lds-done1 {
+	0% { border: 1.5px solid #0d6;  }
+	80% { border: 1.5px solid #0d6;  }
+	100% { border: 1px solid #d1d8dd; }
 }
 .lds-ellipsis {
-  /* change color here */
   color: #36414c;
 }
 .lds-ellipsis,
@@ -121,9 +125,6 @@
   display: inline-block;
   position: absolute;
 	top: 0px;
-	left: 85%;
-  /* width: 30px; */
-  /* height: 30px; */
 }
 .lds-ellipsis div {
   position: absolute;
