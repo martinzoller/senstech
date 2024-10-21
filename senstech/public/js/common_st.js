@@ -275,11 +275,23 @@ function doc_preview_dialog(frm, callback, dialog_title = __("Dokumentvorschau")
 }
 
 function project_query(frm) {
-	frm.set_query('project', () => {
-		return {
-			filters: { project_type: 'Extern' }
-		};
-	});
+	if(frm.doc.customer) {
+		frm.set_query('project', () => {
+			return {
+				filters: {
+					name: ['LIKE','%-'+frm.doc.customer.substr(5,3)+'-%'],
+					project_type: 'Extern'
+				}
+			};
+		});
+	}
+	else {
+		frm.set_query('project', () => {
+			return {
+				filters: { project_type: 'Extern' }
+			};
+		});
+	}
 };
 
 function text_field_empty(val) {

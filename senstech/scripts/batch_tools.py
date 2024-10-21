@@ -209,8 +209,32 @@ def get_batch_production_details(batch):
 
 
 @frappe.whitelist()
+def get_pilot_series_qty(item_code):
+    my_company = frappe.defaults.get_global_default('company')
+    item_defaults = get_item_defaults(item_code, my_company)    
+    result = frappe.db.sql("""
+        SELECT
+          SUM(CASE WHEN sle.actual_qty > 0 THEN sle.actual_qty ELSE 0 END) AS entered_stock_qty,
+        FROM
+          `tabBatch` batch
+          LEFT JOIN `tabStock Ledger Entry` sle ON sle.batch_no = batch.name AND sle.docstatus < 2 AND sle.warehouse='{warehouse}'
+        WHERE
+          batch.item = '{item_code}' AND
+          batch.batch_type = 'Nullserie'
+        """.format(
+          item_code = item_code,
+          warehouse = item_defaults.default_warehouse,
+        ), as_dict=True)
+    if len(result) == 1:
+        return result[0].entered_stock_qty
+    else:
+        return 0
+
+@frappe.whitelist()
 def get_next_batch_no(batch_type, item_code = None, project = None, sales_order = None):
-    if batch_type == 'Serieprodukt':
+    if batch_type == 'Serieprodukt' or batch_type == 'Nullserie':
+        if not item_code:
+            return None
         item_doc = frappe.get_doc('Item', item_code)
         if not item_doc:
             return None

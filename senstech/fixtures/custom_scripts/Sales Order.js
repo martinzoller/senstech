@@ -6,6 +6,7 @@ frappe.ui.form.on('Sales Order', {
     customer(frm) {
         setTimeout(function(){
             fetch_templates_from_customer(frm);
+			project_query(frm);
         }, 1000);
     },
 	currency(frm) {

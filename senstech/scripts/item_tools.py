@@ -189,3 +189,24 @@ def get_direct_uom_conv_factor(uom, stock_uom):
             value = d.value
 
     return value
+
+
+# Find a Sales Order that includes the Pilot Series Item (GP-00003) and the given new item
+@frappe.whitelist()
+def get_pilot_series_order(item_code, customer):
+    sales_orders = frappe.db.sql("""
+      SELECT so.name FROM
+        `tabSales Order` so
+        INNER JOIN `tabSales Order Item` soi1 ON soi1.`parent` = so.`name`
+        INNER JOIN `tabSales Order Item` soi2 ON soi2.`parent` = so.`name`
+      WHERE
+        so.`customer` = %s AND
+        so.`docstatus` = 1 AND
+        soi1.`item_code` = 'GP-00003' AND
+        soi2.`item_code` = %s
+      ORDER BY so.`creation` LIMIT 1
+    """, (customer, item_code), as_dict=True)
+    if len(sales_orders) > 0:
+        return sales_orders[0].name
+    else:
+        return ''

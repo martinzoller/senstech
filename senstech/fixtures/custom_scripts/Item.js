@@ -2,10 +2,6 @@
 
 TODO zum "Artikel-Assistent" (Herbst 2023)
 
-Bugs:
-- Die Bearbeitung bestehender Artikel ist noch nicht optimal
-  => Anzeige/Ausblendung von "manufactured_from" sollte eher nicht via Skript gelöst werden, oder sicher nicht mit Skript, das nur bei neuen Artikeln läuft.
-
 Nächste "Ausbaustufen":
 - In Chargenmodul die "zusammenhängenden" Artikel mit entsprechenden Funktionen miteinander verknüpfen
   - anlegen kann man nur Substratchargen und (übergangsweise noch) Endprodukt-Chargen
@@ -53,47 +49,49 @@ AUSSCHUSSGRUND-STATISTIK
 
 */
 
+frappe.require('/assets/senstech/js/gate_n.js');
 
 frappe.ui.form.on('Item', {
-    before_load(frm) {
-        if (frm.doc.description == frm.doc.item_name) {
-            frm.set_value('description','');
-        }
-    },
+	before_load(frm) {
+		if (frm.doc.description == frm.doc.item_name) {
+			frm.set_value('description','');
+		}
+	},
 	refresh(frm) {
 		frm.set_df_property('is_stock_item', 'read_only', true); // Schreibschutz muss manuell gesetzt werden, vermutlich weil is_stock_item standardmässig ein Pflichtfeld ist
-		print_format_filter(frm);
+		print_format_filters(frm);
+		item_specific_fields(frm);
 		if (frm.doc.__islocal) {
 			if(!frm.doc.item_code){
 				frm.set_value('item_code',__('Bitte zuerst Artikelgruppe auswählen'));
 			} else {
-			    frappe.db.exists("Item", frm.doc.item_code).then(this_ic => {
+				frappe.db.exists("Item", frm.doc.item_code).then(this_ic => {
 					// Item Code identisch schon vorhanden: Vermutlich wurde der Artikel dupliziert
-			        if(this_ic) {
-			            frm.fields_dict.item_group.set_value(frm.doc.item_group); // Artikelgruppe neu auswählen und zugehörige Aktion triggern
-			        }
-			    });
+					if(this_ic) {
+						frm.fields_dict.item_group.set_value(frm.doc.item_group); // Artikelgruppe neu auswählen und zugehörige Aktion triggern
+					}
+				});
 			}			
 			// Workaround, da aus "Gründen" das Häkchen has_batch_no beim Anlegen von Artikelvarianten nicht übernommen wird?!
 			frm.set_value('has_batch_no', frm.doc.copy_of_has_batch_no);
 		}
 		else {
 			frm.fields_dict.description.$wrapper.find('#variant_description').remove();
-            if (frm.doc.variant_of) {
-                let variant_desc = '<div id="variant_description"><b>Variantenbeschreibung (erscheint oberhalb der Artikelbeschreibung)</b>';
-                frappe.call({
-                    'method': 'senstech.scripts.item_tools.get_item_variant_description',
-                    'args': {
-                        'item': frm.doc.name
-                    },
-                    'callback': function(response) {
-                        variant_desc += response.message + '</div>';
+			if (frm.doc.variant_of) {
+				let variant_desc = '<div id="variant_description"><b>Variantenbeschreibung (erscheint oberhalb der Artikelbeschreibung)</b>';
+				frappe.call({
+					'method': 'senstech.scripts.item_tools.get_item_variant_description',
+					'args': {
+						'item': frm.doc.name
+					},
+					'callback': function(response) {
+						variant_desc += response.message + '</div>';
 						frm.fields_dict.description.$wrapper.find('#variant_description').remove(); // do this again within the callback to avoid double descriptions in case of double-refresh
-                        frm.fields_dict.description.$wrapper.prepend(variant_desc);
-                    }
-                });
-            }
-		    get_batch_info(frm);
+						frm.fields_dict.description.$wrapper.prepend(variant_desc);
+					}
+				});
+			}
+			get_batch_info(frm);
 			frm.add_custom_button(__((frm.doc.has_variants?'Artikelbez. und Variantenzahl drucken':'Lageretikett drucken')), function() {
 				lageretikett(frm.doc);
 			});
@@ -103,29 +101,108 @@ frappe.ui.form.on('Item', {
 				});
 			}
 		}
+		
+		
+		// Freigabe Gate 2/3 - nur bei Serieprodukten und Eigenprodukt-Vorlagen
+		if (!frm.doc.__islocal && (frm.doc.item_group.startsWith("Serieprodukte") || (frm.doc.item_group.startsWith('Eigenprodukte') && frm.doc.has_variants))) {
+			if(frm.doc.gate2_reviewed_date) {
+				if(frm.doc.gate2_review_result == "Gate 2 erreicht") {
+					// Gate 2 durchschritten => Buttons für Gate 3 anzeigen
+					if(frm.doc.gate3_reviewed_date) {
+						if(frm.doc.gate3_review_result != "Gate 3 erreicht und Produktionsfreigabe erteilt") {
+							// Gate-3-Freigabe abgelehnt
+							if(frappe.perm.has_perm("Item", 1, "write")) {
+								frm.add_custom_button(__("Gate-3-Review wiederholen"), function() {
+									gate3_request(frm, true);
+								});
+								// Zurückziehen nach erfolgtem Review erfordert Review-Berechtigung
+								frm.add_custom_button(__("Gate-3-Antrag zurückziehen"), function() {
+									check_not_dirty(frm) &&	gateN_withdraw_request(frm, 3);
+								});
+							}
+							else {
+								frm.add_custom_button(__("Neuerliche Freigabe erfordert höhere Berechtigung."), function() {}, __("Gate-3-Antrag abgelehnt"));
+							}
+						}
+						// (ansonsten ist Gate 3 auch durchschritten und es sind keine Buttons anzuzeigen)
+					}
+					else if(frm.doc.gate3_requested_date) {
+						// Hängiger Antrag für Gate 3
+						if(frappe.perm.has_perm("Item", 1, "write") && frm.doc.gate3_requested_by_user != frappe.user.name) {
+							frm.add_custom_button(__("Gate-3-Review durchführen"), function() {
+								gate3_request(frm);
+							});
+						}
+						if(frappe.perm.has_perm("Item", 0, "write")) {
+							frm.add_custom_button(__("Gate-3-Antrag zurückziehen"), function() {
+								check_not_dirty(frm) && gateN_withdraw_request(frm, 3);
+							});
+						} else {
+							frm.add_custom_button(__("Bearbeitung erfordert höhere Berechtigung."), function() {}, __("Gate-3-Antrag hängig"));
+						}
+					} else if(frappe.perm.has_perm("Item", 0, "write")) {
+						frm.add_custom_button(__("Gate-3-Freigabe beantragen"), function() {
+							gate3_request(frm);
+						});
+					}
+				}
+				else {
+					// Gate-2-Freigabe abgelehnt
+					if(frappe.perm.has_perm("Item", 1, "write")) {
+						frm.add_custom_button(__("Gate-2-Review wiederholen"), function() {
+							gate2_request(frm, true);
+						});
+						// Zurückziehen nach erfolgtem Review erfordert Review-Berechtigung
+						frm.add_custom_button(__("Gate-2-Antrag zurückziehen"), function() {
+							check_not_dirty(frm) &&	gateN_withdraw_request(frm, 2);
+						});
+					}
+					else {
+						frm.add_custom_button(__("Neuerliche Freigabe erfordert höhere Berechtigung."), function() {}, __("Gate-2-Antrag abgelehnt"));
+					}
+				}
+			}	
+			// Gate-2-Freigabeantrag gestellt
+			else if(frm.doc.gate2_requested_date) {
+				if(frappe.perm.has_perm("Item", 1, "write") && frm.doc.gate2_requested_by_user != frappe.user.name) {
+					frm.add_custom_button(__("Gate-2-Review durchführen"), function() {
+						gate2_request(frm);
+					});
+				}
+				if(frappe.perm.has_perm("Item", 0, "write")) {
+					frm.add_custom_button(__("Gate-2-Antrag zurückziehen"), function() {
+						check_not_dirty(frm) && gateN_withdraw_request(frm, 2);
+					});
+				} else {
+					frm.add_custom_button(__("Bearbeitung erfordert höhere Berechtigung."), function() {}, __("Gate-2-Antrag hängig"));
+				}
+			} else if(frappe.perm.has_perm("Item", 0, "write")) {
+				frm.add_custom_button(__("Gate-2-Freigabe beantragen"), function() {
+					gate2_request(frm);
+				});
+			}
+			
+		}
 	},
 	validate(frm) {
 		let item_grp = frm.doc.item_group;
 		let item_code = frm.doc.item_code;
 		frm.set_value('has_batch_no', frm.doc.copy_of_has_batch_no);		
-	    var plain_description = frm.doc.description.replace('<div>','').replace('</div>','').replace('<br>','');
-	    if (plain_description == '' || plain_description == '-' || plain_description == item_code) {
-	        frm.set_value('description', frm.doc.item_name);
-	    }
-	    if (frm.doc.is_sales_item && frm.doc.is_purchase_item) {
+		var plain_description = frm.doc.description.replaceAll('<div>','').replaceAll('</div>','').replaceAll('<br>','');
+		if (plain_description == '' || plain_description == '-' || plain_description == item_code) {
+			frm.set_value('description', frm.doc.item_name);
+		}
+		if (frm.doc.is_sales_item && frm.doc.is_purchase_item) {
 			validation_error(frm, 'is_sales_item', __("Ein Artikel darf nicht als Einkaufs- wie auch Verkaufsartikel definiert sein."));
-	    }
+		}
 		if (frm.doc.benoetigt_chargenfreigabe && !frm.doc.has_batch_no) {
-	        validation_error(frm, 'has_batch_no', __("Chargenfreigabe ist nur bei aktivierter Chargennummer möglich"));
-	    }
-	    if (!text_field_empty(frm.doc.qualitaetsspezifikation)  && !frm.doc.benoetigt_chargenfreigabe) {
-	        validation_error(frm, 'benoetigt_chargenfreigabe', __("Ein COC kann nur bei freigegebenen Chargen erzeugt werden. Bitte Chargenfreigabe aktivieren oder Qualitätsspezifikation leer lassen."));
-	    }
+			validation_error(frm, 'has_batch_no', __("Chargenfreigabe ist nur bei aktivierter Chargennummer möglich"));
+		}
+		if (!text_field_empty(frm.doc.qualitaetsspezifikation)  && !frm.doc.benoetigt_chargenfreigabe) {
+			validation_error(frm, 'benoetigt_chargenfreigabe', __("Ein COC kann nur bei freigegebenen Chargen erzeugt werden. Bitte Chargenfreigabe aktivieren oder Qualitätsspezifikation leer lassen."));
+		}
 		if (['Verkauf','Einkauf','Intern'].includes(item_grp)) {
 			validation_error(frm, 'item_group', __("Die übergeordneten Artikelgruppen 'Einkauf', 'Verkauf' und 'Intern' dürfen keinem Artikel zugewiesen werden."));
-		}
-		if(item_grp.startsWith('Serieprodukte') && !frm.doc.kunde) {
-			validation_error(frm, 'kunde', __("Bei kundenspezifischen Serieprodukten muss der betreffende Kunde ausgewählt werden"));
 		}
 		if(item_grp.startsWith('Eigenprodukte') && !frm.doc.variant_of && !frm.doc.has_variants) {
 			validation_error(frm, 'has_variants', __("In den Artikelgruppen für Eigenprodukte sind nur Artikelvorlagen und -varianten erlaubt"));
@@ -187,6 +264,7 @@ frappe.ui.form.on('Item', {
 				if(frm.doc.variant_of && !eigenprod_variant_regex.test(item_code)) {
 					validation_error(frm, 'item_code', __('Der Artikelcode von Eigenproduktvarianten muss dem Schema "XX-011-nn00-Axxx-Byyy-Czzz-...." entsprechen'));
 				}
+				validate_customer_and_project(frm);
 			}
 			else if(['Halbfabrikate','Sensorsubstrate poliert','Sensorsubstrate isoliert','Wiederkehrende Lohnfertigung (PZ-2002)'].includes(item_grp)) {
 				// Halbfabrikate:   HF-kkk-nnxx, wobei kkk die Kundennr. ist
@@ -197,11 +275,7 @@ frappe.ui.form.on('Item', {
 				if(!intermediate_goods_regex.test(item_code)) {
 					validation_error(frm, 'item_code', __('Der Artikelcode von Sensorsubstraten, Halbfabrikaten und Lohnfertigungsartikeln muss dem Schema "HF|PS|IS|LF-kkk-ppnn" entsprechen'));
 				}
-				let item_code_customer = item_code.substr(3,3);
-				// Bei Kundencode 011 den Kunden nicht validieren, damit Eigenprodukte optional einen Kunden und eine Kunden-ArtNr haben können (= IST SAP-Nr.)
-				if(item_code_customer != '011') {
-					validate_item_code_customer(frm, item_code_customer);
-				}
+				validate_customer_and_project(frm);
 				let intermediate_goods_index = item_code.substr(9,2);
 				if(intermediate_goods_index == 0) {
 					validation_error(frm, 'item_code', __("Der Artikelindex 'nn' im Namensschema XX-kkk-ppnn muss mindestens 1 sein"));
@@ -212,7 +286,7 @@ frappe.ui.form.on('Item', {
 				if(!series_prod_regex.test(item_code)) {
 					validation_error(frm, 'item_code', __('Der Artikelcode von Serieprodukten muss dem Schema "PR-kkk-nn00-Rxx-Tyy" entsprechen'));
 				}
-				validate_item_code_customer(frm, item_code.substr(3,3));	
+				validate_customer_and_project(frm);	
 			}
 			else {
 				// alle anderen Verkaufsartikel (Entwicklung, Kleinaufträge, Versandkosten, Gebühren und Abgaben, Geräte und Komponenten, Immobilienvermietung, übrige Dienstleistungen)
@@ -333,7 +407,6 @@ frappe.ui.form.on('Item', {
 								if (val.sensor_type && val.project_no) {
 									eigenprod_popup.hide();
 									frm.set_value('item_code', val.sensor_type+'-011-'+val.project_no+'00');
-									manufactured_from_filter(frm, 'CU-00011', val.project_no);
 								} else {
 									frappe.msgprint(__("Bitte alle Felder ausfüllen"), __("Angaben unvollständig"));
 								}
@@ -420,7 +493,6 @@ frappe.ui.form.on('Item', {
 										var next_number = response.message;
 										if (next_number) {
 											frm.set_value('item_code', base_item_code+next_number);
-											manufactured_from_filter(frm, val.customer, val.project_no);
 											if(val.end_product_type == 'custom') {
 												// Kunde im Artikel auch setzen
 												// Umgekehrt ist es der Einfachheit halber nicht verknüpft (bei nachträglicher Änderung des Kunden muss Artikelcode von Hand angepasst werden)
@@ -512,7 +584,6 @@ frappe.ui.form.on('Item', {
 								let new_item_code = 'PR-'+cust_proj+'00-'+val.spec_revision+'-'+val.type_index;
 								frm.set_value('item_code', new_item_code);
 								frm.set_value('kunde', val.customer);
-								manufactured_from_filter(frm, val.customer, val.project_no);
 								find_and_set_mountain(frm, cust_proj);
 							} else {
 								frappe.msgprint(__("Bitte alle Felder ausfüllen"), __("Angaben unvollständig"));
@@ -526,9 +597,6 @@ frappe.ui.form.on('Item', {
 				else {
 					// alle anderen Verkaufsartikel (Entwicklung, Kleinaufträge, Versandkosten, Gebühren und Abgaben, Geräte und Komponenten, Immobilienvermietung, übrige Dienstleistungen)
 					set_new_generic_item_code(frm, 'GP');
-					// Feld "hergestellt aus" ist hier ausgeblendet
-					frm.set_value('manufactured_from','');
-					frm.set_df_property('manufactured_from','hidden',true);
 				}
 			}
 		});
@@ -548,12 +616,13 @@ frappe.ui.form.on('Item', {
 		frm.set_value('artikelcode_kunde_als_barcode_raw', frm.doc.artikelcode_kunde_als_barcode);
 	},
 	item_code(frm) {
-	    if (frm.doc.item_name == frm.doc.item_code) {
-	        frm.set_value('item_name','')
-	    }
-	    if (frm.doc.description == frm.doc.item_code) {
-	        frm.set_value('description','')
-	    }	    
+		if (frm.doc.item_name == frm.doc.item_code) {
+			frm.set_value('item_name','')
+		}
+		if (frm.doc.description == frm.doc.item_code) {
+			frm.set_value('description','')
+		}
+		item_specific_fields(frm);
 	},
 	mountain_name(frm) {
 		if(frm.doc.item_code && frm.doc.mountain_name && !frm.doc.item_name) {
@@ -565,10 +634,10 @@ frappe.ui.form.on('Item', {
 		}
 	},
 	after_save(frm) {
-        if (frm.doc.description == frm.doc.item_name) {
-            frm.set_value('description','');
-        }
-    },
+		if (frm.doc.description == frm.doc.item_name) {
+			frm.set_value('description','');
+		}
+	},
 });
 
 frappe.ui.form.on('Item Default', {
@@ -580,6 +649,83 @@ frappe.ui.form.on('Item Default', {
 		}
    }
 });
+
+// Gate-2-spezifischer Wrapper; prüft noch Artikeldaten, die es braucht, um das Formular ausfüllen zu können
+function gate2_request(frm, clear_review=false) {
+	if(!frm.doc.project || !frm.doc.kunde) {
+		frappe.msgprint(__("Bitte die Felder 'Entwicklungsprojekt' und 'Kunde' ausfüllen."), __("Artikeldaten unvollständig"));
+		return;
+	}
+	if(check_not_dirty(frm)) {
+		frappe.call({
+			method: 'senstech.scripts.item_tools.get_pilot_series_order',
+			args: {
+				item_code: frm.doc.name,
+				customer: frm.doc.kunde
+			},
+			callback: (r) => {
+				if(r.message && r.message.startsWith("SO-")){
+					if(clear_review) {
+						gateN_clear_review(frm, 2);
+					}
+					frm.set_value("gate2_fetch_pilot_series_order", r.message);
+					gateN_dialog(frm, 2);
+				} else {
+					frappe.msgprint(__("Bitte eine Kunden-AB anlegen, die diesen Artikel und den Nullserie-Artikel enthält. Eine bestätigte Bestellung ist Voraussetzung für Gate 2."), __("Fehlende AB"))
+				}
+			},
+			error: (r) => {
+				frappe.msgprint(__("Unbekannter Fehler beim Abfragen der Nullserie-AB"));
+			}
+		});
+	}
+}
+
+// Gate-3-spezifischer Wrapper
+function gate3_request(frm, clear_review=false) {
+	if(check_not_dirty(frm)) {
+		frappe.call({
+			method: 'senstech.scripts.batch_tools.get_pilot_series_qty',
+			args: {
+				item_code: frm.doc.name,
+			},
+			callback: (r) => {
+				if(r.message){
+					if(clear_review) {
+						gateN_clear_review(frm, 3);
+					}
+					frm.set_value("gate3_fetch_pilot_series_qty", r.message);
+					gateN_dialog(frm, 3);
+				} else {
+					frappe.msgprint(__("Bitte die Sensoren der Nullserie an Lager legen. Eine fertig ausgelieferte Nullserie ist Voraussetzung für Gate 3."), __("Fehlende Lagerbuchung"))
+				}
+			},
+			error: (r) => {
+				frappe.msgprint(__("Unbekannter Fehler beim Abfragen der Nullserie-Gesamtstückzahl"));
+			}
+		});
+
+		frappe.call({
+			method: 'senstech.scripts.item_tools.get_pilot_series_order',
+			args: {
+				item_code: frm.doc.item,
+				customer: frm.doc.kunde
+			},
+			callback: (r) => {
+				if(r.message && r.message.startsWith("SO-")){
+					if(clear_review) {
+						gateN_clear_review(frm, 3);
+					}
+					frm.set_value("gate2_fetch_pilot_series_order", r.message);
+					gateN_dialog(frm, 3);
+				} else {
+					frappe.msgprint(__("Bitte eine Kunden-AB anlegen, die diesen Artikel und den Nullserie-Artikel enthält. Eine bestätigte Bestellung ist Voraussetzung für Gate 2."), __("Fehlende AB"))
+				}
+			}
+		});
+	}
+}
+
 
 function get_batch_info(frm) {
     frappe.call({
@@ -686,7 +832,8 @@ function get_type_index_numbers(frm, callback, customer_id, project_no) {
     });
 }
 
-function print_format_filter(frm) {
+
+function print_format_filters(frm) {
 	let filter_func = function() {
         return {
             filters: { doc_type: 'Senstech Messdaten' }
@@ -696,17 +843,50 @@ function print_format_filter(frm) {
 	frm.set_query('flag_label_print_format', filter_func);		
 }
 
-function manufactured_from_filter(frm, customer_id, project_no_str) {
-	frm.set_df_property('manufactured_from','hidden',false);
-	let short_cust_no = customer_id.substr(5,3);
-	frm.set_query('manufactured_from', () => {
-        return {
-            filters: {
-				item_code: ['LIKE', '%-'+short_cust_no+'-'+project_no_str+'%'],
-				item_group: ['IN', ['Sensorsubstrate poliert', 'Sensorsubstrate isoliert', 'Halbfabrikate']]
-			}
-        };
-    });
+
+function item_specific_fields(frm) {
+	
+	// Artikel ohne Kundenbezug
+	if(!frm.doc.is_sales_item || !frm.doc.item_code || ['AC-','PT-','IN-','GP-'].includes(frm.doc.item_code.substr(0,3))) {
+		let clear_fields = ['kunde', 'kundenname', 'project', 'artikelcode_kunde', 'produktrevision_kunde', 'qualitaetsspezifikation'];
+		// Auch kein interner Produktionsbezug: weitere Felder leeren
+		if(frm.doc.is_purchase_item) {
+			clear_fields.push('manufactured_from');
+			clear_fields.push('project');
+		}
+		// Felder leeren; die betreffenden Abschnitte werden ohnehin durch Anzeigebedingungen ausgeblendet
+		clear_fields.forEach(f => {
+			frm.set_value(f, '');
+		})
+	}
+	
+	// Artikel mit Produktionsbezug
+	if(!frm.doc.is_purchase_item && frm.doc.item_code && !['AC-','PT-','IN-','GP-'].includes(frm.doc.item_code.substr(0,3))) {
+		let project_code = frm.doc.item_code.substr(3,6);
+		frm.set_query('manufactured_from', () => {
+			return {
+				filters: {
+					item_code: ['LIKE', '%-'+project_code+'%'],
+					item_group: ['IN', ['Sensorsubstrate poliert', 'Sensorsubstrate isoliert', 'Halbfabrikate']]
+				}
+			};
+		});
+		// Projekt nicht gesetzt oder nicht der Erwartung entsprechend
+		let project_id = 'EP-'+project_code;
+		if(frm.doc.project != project_id) {
+			frappe.db.exists('Project', project_id).then(project_exists => {
+				if(project_exists) {
+					frm.set_value('Project', project_id);
+					frappe.show_alert({message: __('Entwicklungsprojekt automatisch zugewiesen, bitte Artikel speichern'), indicator: 'green'}, 10);
+				}
+				else {
+					frappe.show_alert({message: __("Entwicklungsprojekt '{0}' existiert noch nicht, bitte anlegen!", [project_id]), indicator: 'orange'}, 10);
+				}
+			});
+		}	
+		// Kunde wird durch Artikelgruppen-Assistenten automatisch gesetzt und umfangreich validiert, daher hier nicht setzen
+	}
+	
 }
 
 function nachbestellen(frm) {
@@ -778,12 +958,20 @@ function set_item_code_for_asset_category(frm) {
 	}
 }
 
-// Kundenangabe im Artikelcode validieren
-function validate_item_code_customer(frm, item_code_customer) {
-	if(!frm.doc.kunde) {
-		validation_error(frm, 'kunde', __("Bei Artikeln dieser Artikelgruppe muss ein Kunde zugewiesen sein"));
-	} else if(item_code_customer != frm.doc.kunde.substr(5,3) || frm.doc.kunde.substr(3,2) != '00') {
-		validation_error(frm, 'item_code', __("Die Kundennummer im Artikelcode muss dem zugewiesenen Kunden entsprechen"));
+// Kunden- und Projektangabe im Artikelcode validieren
+function validate_customer_and_project(frm) {
+	let ic_customer = 'CU-00'+frm.doc.item_code.substr(3,3);
+	let ic_project = 'EP-'+frm.doc.item_code.substr(3,6);
+	if(frm.doc.project != ic_project) {
+		validation_error(frm, 'project', __("Bei Artikeln dieser Artikelgruppe muss ein Entwicklungsprojekt zugewiesen sein"));
+	}
+	else if(!ic_customer.startsWith('CU-0001')) {
+		// Bei Artikel-Kundencode < 100 das Feld "Kunde" nicht validieren, damit Eigenprodukte optional einen Kunden und eine Kunden-ArtNr haben können (= IST SAP-Nr.)
+		if(!frm.doc.kunde) {
+			validation_error(frm, 'kunde', __("Bei Artikeln dieser Artikelgruppe muss ein Kunde zugewiesen sein"));
+		} else if(frm.doc.kunde != ic_customer) {
+			validation_error(frm, 'item_code', __("Die Kundennummer im Artikelcode muss dem zugewiesenen Kunden entsprechen"));
+		}
 	}
 }
 
