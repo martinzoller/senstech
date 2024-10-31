@@ -328,7 +328,7 @@
    "description": null,
    "docstatus": 0,
    "dt": "Sales Order",
-   "fetch_from": "customer.eori_number",
+   "fetch_from": "",
    "fetch_if_empty": 0,
    "fieldname": "eori_number",
    "fieldtype": "Data",
