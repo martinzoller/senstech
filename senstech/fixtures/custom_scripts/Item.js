@@ -880,11 +880,18 @@ function item_specific_fields(frm) {
 		if(frm.doc.project != project_id) {
 			frappe.db.exists('Project', project_id).then(project_exists => {
 				if(project_exists) {
-					frm.set_value('Project', project_id);
+					frm.set_value('project', project_id);
 					frappe.show_alert({message: __('Entwicklungsprojekt automatisch zugewiesen, bitte Artikel speichern'), indicator: 'green'}, 10);
 				}
 				else {
-					frappe.show_alert({message: __("Entwicklungsprojekt '{0}' existiert noch nicht, bitte anlegen!", [project_id]), indicator: 'orange'}, 10);
+					let ic_customer = 'CU-00'+frm.doc.item_code.substr(3,3);
+					let ic_project_type = ic_customer.startsWith('CU-0001') ? 'Intern' : 'Extern';
+					let js_link = "{ let p = frappe.model.get_new_doc('Project'); p.copy_of_project_type = '"+ic_project_type+"'; p.project_name = '"+project_id+"';";
+					if(ic_project_type == 'Extern') {
+						js_link += "p.customer = '"+ic_customer+"';";
+					}
+					js_link += "frappe.set_route('Form', 'Project', p.name); }"
+					frappe.show_alert({message: __("Entwicklungsprojekt '{0}' existiert noch nicht, bitte anlegen!", [project_id])+'<br><br><a onclick="'+js_link+'">'+__("&gt; Projekt anlegen")+'</a>', indicator: 'orange'}, 10);
 				}
 			});
 		}	
@@ -892,6 +899,7 @@ function item_specific_fields(frm) {
 	}
 	
 }
+
 
 function nachbestellen(frm) {
 	if (frm.doc.supplier_items.length < 1) {
