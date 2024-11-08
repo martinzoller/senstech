@@ -83,6 +83,7 @@ frappe.ui.form.on('Quotation', {
 		}
 		
 		// Abändern von Dokumenten: Antrags- und Reviewdaten löschen, Checkliste belassen
+		// [NB: Betrifft nur Abändern gebuchter Dokumente, beim Duplizieren werden dank der Option "no_copy" alle Gate-N-Felder geleert]
 		if(frm.doc.__islocal && frm.doc.gate1_requested_date) {
 			gateN_clear_request(frm, 1, false);
 		}

@@ -214,7 +214,7 @@ def get_pilot_series_qty(item_code):
     item_defaults = get_item_defaults(item_code, my_company)    
     result = frappe.db.sql("""
         SELECT
-          SUM(CASE WHEN sle.actual_qty > 0 THEN sle.actual_qty ELSE 0 END) AS entered_stock_qty,
+          SUM(CASE WHEN sle.actual_qty > 0 THEN sle.actual_qty ELSE 0 END) AS entered_stock_qty
         FROM
           `tabBatch` batch
           LEFT JOIN `tabStock Ledger Entry` sle ON sle.batch_no = batch.name AND sle.docstatus < 2 AND sle.warehouse='{warehouse}'

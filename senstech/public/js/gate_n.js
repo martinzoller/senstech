@@ -306,15 +306,15 @@ function gateN_dialog(frm, N) {
 					frm.set_value(field_name, vals[field_name]);
 				});
 				
-				let log_line = '';
+				let gateN_log = frm.doc['gate'+N+'_clearance_log'] || '';
 				if(is_review) {
 					set_gate_clearance_status(frm);
-					log_line = "\n" + frappe.datetime.get_today() + ": Review abgeschlossen durch "+frm.doc['gate'+N+'_reviewed_by_name']+" mit Ergebnis '" + frm.doc['gate'+N+'_review_result'] + "'";
+					gateN_log += "\n" + frappe.datetime.get_today() + ": Review abgeschlossen durch "+frm.doc['gate'+N+'_reviewed_by_name']+" mit Ergebnis '" + frm.doc['gate'+N+'_review_result'] + "'";
 				} else {
-					log_line = "\n" + frappe.datetime.get_today() + ": Freigabeantrag gestellt durch "+frm.doc['gate'+N+'_requested_by_name'];
+					gateN_log += "\n" + frappe.datetime.get_today() + ": Freigabeantrag gestellt durch "+frm.doc['gate'+N+'_requested_by_name'];
 					
 				}
-				frm.set_value('gate'+N+'_clearance_log', frm.doc['gate'+N+'_clearance_log']+log_line);
+				frm.set_value('gate'+N+'_clearance_log', gateN_log);
 
 				// Speichern
 				frm.save().then(r => {

@@ -53,9 +53,13 @@ frappe.require('/assets/senstech/js/gate_n.js');
 
 frappe.ui.form.on('Item', {
 	before_load(frm) {
-		if (frm.doc.description == frm.doc.item_name) {
+	    if (frm.doc.description == frm.doc.item_name) {
 			frm.set_value('description','');
 		}
+	    if((frm.doc.gate2_requested_date && !frm.doc.gate2_reviewed_date) || 
+	       (frm.doc.gate3_requested_date && !frm.doc.gate3_reviewed_date)) {
+	        frm.set_read_only(); // Bei hängigem Antrag alle Felder schreibschützen (muss offenbar in before_load() passieren, in refresh() geht es nicht)
+	    }
 	},
 	refresh(frm) {
 		frm.set_df_property('is_stock_item', 'read_only', true); // Schreibschutz muss manuell gesetzt werden, vermutlich weil is_stock_item standardmässig ein Pflichtfeld ist
@@ -100,13 +104,29 @@ frappe.ui.form.on('Item', {
 					nachbestellen(frm);
 				});
 			}
+			
+			// Gate3-Freigabe: Artikel teilweise gesperrt
+			if (frm.doc.gate3_reviewed_date) {
+				gate3_lock_item(frm);
+			}
+			// Umbenennen freigegebener Artikel sperren
+			frm.rename_doc = () => {
+				if(frm.doc.gate3_reviewed_date) {
+					frappe.show_alert({ message: __("Artikel mit Gate-3-Freigabe dürfen nicht umbenannt werden"), indicator: 'red'}, 10);
+				}
+				else {
+					frappe.model.rename_doc(frm.doctype, frm.docname, () => frm.refresh_header());
+				}
+			}
 		}
 		
 		
 		// Freigabe Gate 2/3 - nur bei Serieprodukten und Eigenprodukt-Vorlagen
 		if (!frm.doc.__islocal && (frm.doc.item_group.startsWith("Serieprodukte") || (frm.doc.item_group.startsWith('Eigenprodukte') && frm.doc.has_variants))) {
+			let gateN_menu = '🎖️-';
 			if(frm.doc.gate2_reviewed_date) {
 				if(frm.doc.gate2_review_result == "Gate 2 erreicht") {
+					gateN_menu = '🎖️2';
 					// Gate 2 durchschritten => Buttons für Gate 3 anzeigen
 					if(frm.doc.gate3_reviewed_date) {
 						if(frm.doc.gate3_review_result != "Gate 3 erreicht und Produktionsfreigabe erteilt") {
@@ -114,36 +134,39 @@ frappe.ui.form.on('Item', {
 							if(frappe.perm.has_perm("Item", 1, "write")) {
 								frm.add_custom_button(__("Gate-3-Review wiederholen"), function() {
 									gate3_request(frm, true);
-								});
+								}, gateN_menu);
 								// Zurückziehen nach erfolgtem Review erfordert Review-Berechtigung
 								frm.add_custom_button(__("Gate-3-Antrag zurückziehen"), function() {
 									check_not_dirty(frm) &&	gateN_withdraw_request(frm, 3);
-								});
+								}, gateN_menu);
 							}
 							else {
-								frm.add_custom_button(__("Neuerliche Freigabe erfordert höhere Berechtigung."), function() {}, __("Gate-3-Antrag abgelehnt"));
+								frm.add_custom_button(__("Gate-3-Freigabe abgelehnt; keine Berechtigung für neuen Antrag"), () => {}, gateN_menu);
 							}
 						}
-						// (ansonsten ist Gate 3 auch durchschritten und es sind keine Buttons anzuzeigen)
+						else {
+							gateN_menu = '🎖️3';
+							frm.add_custom_button(__("Artikel ist für Serie freigegeben"), () => {}, gateN_menu);
+						}
 					}
 					else if(frm.doc.gate3_requested_date) {
 						// Hängiger Antrag für Gate 3
 						if(frappe.perm.has_perm("Item", 1, "write") && frm.doc.gate3_requested_by_user != frappe.user.name) {
 							frm.add_custom_button(__("Gate-3-Review durchführen"), function() {
 								gate3_request(frm);
-							});
+							}, gateN_menu);
 						}
 						if(frappe.perm.has_perm("Item", 0, "write")) {
 							frm.add_custom_button(__("Gate-3-Antrag zurückziehen"), function() {
 								check_not_dirty(frm) && gateN_withdraw_request(frm, 3);
-							});
+							}, gateN_menu);
 						} else {
 							frm.add_custom_button(__("Bearbeitung erfordert höhere Berechtigung."), function() {}, __("Gate-3-Antrag hängig"));
 						}
 					} else if(frappe.perm.has_perm("Item", 0, "write")) {
 						frm.add_custom_button(__("Gate-3-Freigabe beantragen"), function() {
 							gate3_request(frm);
-						});
+						}, gateN_menu);
 					}
 				}
 				else {
@@ -151,14 +174,14 @@ frappe.ui.form.on('Item', {
 					if(frappe.perm.has_perm("Item", 1, "write")) {
 						frm.add_custom_button(__("Gate-2-Review wiederholen"), function() {
 							gate2_request(frm, true);
-						});
+						}, gateN_menu);
 						// Zurückziehen nach erfolgtem Review erfordert Review-Berechtigung
 						frm.add_custom_button(__("Gate-2-Antrag zurückziehen"), function() {
 							check_not_dirty(frm) &&	gateN_withdraw_request(frm, 2);
-						});
+						}, gateN_menu);
 					}
 					else {
-						frm.add_custom_button(__("Neuerliche Freigabe erfordert höhere Berechtigung."), function() {}, __("Gate-2-Antrag abgelehnt"));
+						frm.add_custom_button(__("Gate-2-Freigabe abgelehnt; keine Berechtigung für neuen Antrag"), function() {}, gateN_menu);
 					}
 				}
 			}	
@@ -167,19 +190,19 @@ frappe.ui.form.on('Item', {
 				if(frappe.perm.has_perm("Item", 1, "write") && frm.doc.gate2_requested_by_user != frappe.user.name) {
 					frm.add_custom_button(__("Gate-2-Review durchführen"), function() {
 						gate2_request(frm);
-					});
+					}, gateN_menu);
 				}
 				if(frappe.perm.has_perm("Item", 0, "write")) {
 					frm.add_custom_button(__("Gate-2-Antrag zurückziehen"), function() {
 						check_not_dirty(frm) && gateN_withdraw_request(frm, 2);
-					});
+					}, gateN_menu);
 				} else {
 					frm.add_custom_button(__("Bearbeitung erfordert höhere Berechtigung."), function() {}, __("Gate-2-Antrag hängig"));
 				}
 			} else if(frappe.perm.has_perm("Item", 0, "write")) {
 				frm.add_custom_button(__("Gate-2-Freigabe beantragen"), function() {
 					gate2_request(frm);
-				});
+				}, gateN_menu);
 			}
 			
 		}
@@ -694,7 +717,7 @@ function gate3_request(frm, clear_review=false) {
 					if(clear_review) {
 						gateN_clear_review(frm, 3);
 					}
-					frm.set_value("gate3_fetch_pilot_series_qty", r.message);
+					frm.set_value("gate3_fetch_pilot_series", r.message);
 					gateN_dialog(frm, 3);
 				} else {
 					frappe.msgprint(__("Bitte die Sensoren der Nullserie an Lager legen. Eine fertig ausgelieferte Nullserie ist Voraussetzung für Gate 3."), __("Fehlende Lagerbuchung"))
@@ -702,25 +725,6 @@ function gate3_request(frm, clear_review=false) {
 			},
 			error: (r) => {
 				frappe.msgprint(__("Unbekannter Fehler beim Abfragen der Nullserie-Gesamtstückzahl"));
-			}
-		});
-
-		frappe.call({
-			method: 'senstech.scripts.item_tools.get_pilot_series_order',
-			args: {
-				item_code: frm.doc.item,
-				customer: frm.doc.kunde
-			},
-			callback: (r) => {
-				if(r.message && r.message.startsWith("SO-")){
-					if(clear_review) {
-						gateN_clear_review(frm, 3);
-					}
-					frm.set_value("gate2_fetch_pilot_series_order", r.message);
-					gateN_dialog(frm, 3);
-				} else {
-					frappe.msgprint(__("Bitte eine Kunden-AB anlegen, die diesen Artikel und den Nullserie-Artikel enthält. Eine bestätigte Bestellung ist Voraussetzung für Gate 2."), __("Fehlende AB"))
-				}
 			}
 		});
 	}
@@ -1001,4 +1005,18 @@ function find_and_set_mountain(frm, cust_proj) {
 			});
 		}
 	});
+}
+
+// Feldweise Bearbeitungssperre bei Gate 3
+function gate3_lock_item(frm) {
+	let locked_fields = ['item_code', 'mountain_name', 'item_name', 'item_group', 'stock_uom', 'zeichnung', 'has_sub_batches', 'verpackungseinheit', 'has_variants', 'attributes', 'project', 'kunde'];
+	// Ausdrücklich nicht gesperrt: bemerkung_intern, disabled, image, description, end_of_life, weight_per_unit, weight_uom, purchase_uom, lead_time_days, default_batch_size, mfg_duration, reject_percentage, sales_uom, versandvorlaufzeit, artikelcode_kunde, produktrevision_kunde,
+	// qualitaetsspezifikation, single_label_print_format, flag_label_print_format, histogramme, text_histogramm, default
+	locked_fields.forEach(field => {
+		frm.set_df_property(field, 'read_only', true);
+	});
+	// manufactured_from nur sperren wenn Wert gesetzt
+	if(frm.doc.manufactured_from) {
+		frm.set_df_property('manufactured_from', 'read_only', true);
+	}
 }

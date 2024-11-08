@@ -19,7 +19,7 @@ frappe.ui.form.on('Batch', {
 					
 					let min_clearance = { 'Nullserie': 2, 'Serieprodukt': 3 };
 					if(r.message.gate_clearance_status < min_clearance[frm.doc.batch_type]) {
-						validation_error(frm, 'item', __("Der gewählte Artikel ist nicht für Chargen des Typs '{0}' freigegeben (Gate {1} benötigt)."), [frm.doc.batch_type, min_clearance[frm.doc.batch_type]]);
+						validation_error(frm, 'item', __("Der gewählte Artikel ist nicht für Chargen des Typs '{0}' freigegeben (Gate {1} benötigt).", [frm.doc.batch_type, min_clearance[frm.doc.batch_type]]));
 						return;
 					}
 					else if(frm.doc.batch_type == 'Nullserie'){
@@ -30,7 +30,7 @@ frappe.ui.form.on('Batch', {
 							}
 						}).then(pilot_batch_count => {
 							if(pilot_batch_count >= r.message.gate2_max_pilot_batches) {
-								validation_error(frm, 'item', __("Für diesen Artikel sind maximal {0} Nullserie-Chargen freigegeben, jedoch sind bereits {1} vorhanden."), [r.message.gate2_max_pilot_batches, pilot_batch_count]);
+								validation_error(frm, 'item', __("Für diesen Artikel sind maximal {0} Nullserie-Chargen freigegeben, jedoch sind bereits {1} vorhanden.", [r.message.gate2_max_pilot_batches, pilot_batch_count]));
 							}
 						});
 						waiting_for.push(count_done);
@@ -284,7 +284,7 @@ function an_lager_legen(frm) {
 	var d = new frappe.ui.Dialog({
 		'fields': [
 			{'fieldname': 'qty', 'fieldtype': 'Float', 'reqd': 1, 'label': __('Stückzahl'), 'default': 0.000},
-			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
+			{'fieldname': 'item', 'fieldtype': 'Data', 'default': frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
 			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')}
 		],
 		primary_action: function(){
