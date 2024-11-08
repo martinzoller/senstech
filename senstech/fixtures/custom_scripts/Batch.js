@@ -4,7 +4,10 @@ frappe.ui.form.on('Batch', {
 	validate(frm) {
 	    if (frm.doc.__islocal) {
 			let item = frm.doc.item;
-			let chargennummer = frm.doc.chargennummer.trim();
+			if(!item) {
+				return;
+			}
+			let chargennummer = (frm.doc.chargennummer || '').trim();
 			let batch_id = item + "-" + chargennummer;
 			let waiting_for = [];
 			frm.set_value('chargennummer', chargennummer);
@@ -139,7 +142,7 @@ frappe.ui.form.on('Batch', {
 		frm.layout.refresh_sections();
 
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
-		if(!frm.is_new()) {
+		if(!frm.is_new() && frm.doc.item && frm.doc.name) {
             
 			/*
 		    frm.add_custom_button(__("QR-Labels erzeugen"), function() {
@@ -702,25 +705,21 @@ function charge_freigeben_dialog(frm) {
         primary_action_label: 'Bestätigen &gt;',
         primary_action(values) {
             d.hide();
-            
-            // Freigabedaten setzen
-            frm.set_value('description', values.description);
-            frm.set_value('freigabedatum', values.freigabedatum);
-            frm.set_value('freigegeben_durch', values.freigegeben_durch);
                    
 		    // Vorschau zeigen
-			doc_preview_dialog(frm, frm => chargenfreigabe_abschliessen(frm), __("Schritt 2: COC und Histogramm freigeben"), __("Produktionscharge freigeben"), true);
+			doc_preview_dialog(frm, function(frm){
+				// Callback: Freigabedaten setzen und speichern
+				frm.set_value('description', values.description);
+				frm.set_value('freigabedatum', values.freigabedatum);
+				frm.set_value('freigegeben_durch', values.freigegeben_durch);
+				frm.save().then(r => {
+					frm.reload_doc();
+				});
+			}, __("Schritt 2: COC und Histogramm freigeben"), __("Produktionscharge freigeben"), true);
         }
     });
     
     d.show();
-}
-
-function chargenfreigabe_abschliessen(frm) {
-	// Speichern
-	frm.save().then(r => {
-		frm.reload_doc();
-	});
 }
 
 
