@@ -30,7 +30,7 @@
 
 				{% if doc.doctype == "Blanket Order" %}
 						<!-- Rahmenauftrag: Keine vollständigen Item-Einträge => aus Stamm ergänzen -->
-						{% if item.update({'amount': item.rate * item.qty, 'item_group': item_stamm.item_group, 'description': item_stamm.description, 'conversion_factor': 1, 'stock_uom': item_stamm.stock_uom}) %}{% endif %}
+						{% if item.update({'amount': item.rate * item.qty, 'item_group': item_stamm.item_group, 'description': item_stamm.description, 'conversion_factor': 1, 'stock_uom': item_stamm.stock_uom, 'uom': item_stamm.sales_uom or item_stamm.stock_uom}) %}{% endif %}
 				{% endif %}
 				{% if item.item_group != 'Versandkosten' %}
 						{% set totalkontrolle.value = totalkontrolle.value + item.amount %}
