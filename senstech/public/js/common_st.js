@@ -4,25 +4,50 @@
  
  function set_position_number(frm, cdt, cdn) {
 	let current_item = locals[cdt][cdn];
-	let all_items = frm.doc.items;
-	let row_count = all_items.length;
-	let pos_step; let prev_idx;
+	let row_count = frm.doc.items.length;
+	let pos_step;
 	if (row_count == current_item.idx) {
 		pos_step = 10;
 	} else {
 		pos_step = 1;
 	}
 	let new_pos = pos_step;
-	if (current_item.idx != 1) {
-		prev_idx = current_item.idx - 1;
-		all_items.forEach(function(entry) {
-			if (entry.idx == prev_idx) {
-				new_pos = parseInt(entry.position) + pos_step;
-			}
-		});
+	
+	if (current_item.idx > 1) {
+		// Assign position based on previous row
+		let prev_item = frm.fields_dict.items.grid.get_data()[current_item.idx - 2];
+		new_pos = parseInt(prev_item.position) + pos_step;
+		if(frm.doc.items.some(f => f.position == new_pos)) {
+			// Position exists: Assign a non-consecutive position number (largest existing position plus 1)
+			new_pos = Math.max(...frm.doc.items.map(f => f.position)) + 1;
+		}
 	}
+	
 	frappe.model.set_value(cdt, cdn, 'position', new_pos);
 }
+
+
+// In a local document, make sure that every row has a valid position number, e.g. when rows have been fetched from a Blanket Order
+function fix_position_numbers(frm) {
+	let grid_data = frm.fields_dict.items.grid.get_data();
+	let prev_pos = 0;
+	for(var i = 0; i < grid_data.length; i++) {
+		let new_pos = prev_pos + 10;
+		if(!grid_data[i].position) {
+			if(i < grid_data.length - 1 && grid_data[i+1].position && grid_data[i+1].position <= new_pos) {
+				let new_pos = prev_pos + 1;
+				if(grid_data[i+1].position <= new_pos) {
+					new_pos = Math.max(...grid_data.map(f => f.position)) + 1;
+				}
+			}
+			frappe.model.set_value(grid_data[i].doctype, grid_data[i].name, "position", new_pos);
+			prev_pos = new_pos;
+		} else {
+			prev_pos = grid_data[i].position;
+		}
+	}
+}
+
 
 function add_cancelled_watermark(frm) {
     frappe.call({

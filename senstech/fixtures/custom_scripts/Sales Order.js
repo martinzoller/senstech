@@ -97,12 +97,8 @@ frappe.ui.form.on('Sales Order', {
             if(frm.doc.taxes_and_charges && (!frm.doc.taxes || frm.doc.taxes.length == 0)) {
                 frm.script_manager.trigger('taxes_and_charges');
             }
-            // ggf. Position der 1. Zeile korrekt setzen (Bugfix, offenbar wird diese Zeile neu automatisch erzeugt?)
-            if(frm.doc.items) {
-                if(frm.doc.items[0].position == 0) {
-                    frappe.model.set_value(frm.doc.items[0].doctype,frm.doc.items[0].name,'position',10);
-                }
-            }
+            // ggf. Positionsnummern ergänzen  
+		   fix_position_numbers(frm);
         }
     },
 	onload(frm) {
