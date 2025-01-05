@@ -25,7 +25,7 @@ coc_data  COC-specific data (item, batch, qty)
 
 
 <!-- Detailtabelle -->
-<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+<table style="width: 99%" class="detailtable">
 	<tr>
 		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
 		<td style="width: 24%;">{{ doc.po_no or '-' }}</td>
@@ -53,7 +53,7 @@ coc_data  COC-specific data (item, batch, qty)
 <div><br></div>
 
 <!-- Artikel Tabelle -->
-<table style="width: 99%; font-size: 8.5pt !important;" id="itemtable">
+<table style="width: 99%" id="itemtable">
 	<tbody>
 		<tr>
 			<!--{#<th>{{ _("Pos.") }}</th>#}-->
@@ -79,10 +79,10 @@ coc_data  COC-specific data (item, batch, qty)
 
 
 <!-- Bestaetigungstext -->
-<div style="width: 99%; font-size: 8.5pt !important;">
+<div style="width: 99%" class="details">
 	<br>{{ charge_stamm.qualitaetsspezifikation }}<br>
 </div>
-<table style="width: 99%; font-size: 8.5pt !important;">
+<table style="width: 99%" class="detailtable">
 	<tr>
 		<td style="text-align: left;"><br><br></td>
 		<td style="text-align: left;">{{ _("Datum") }}<br></td>

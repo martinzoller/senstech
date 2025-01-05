@@ -22,13 +22,13 @@
 		{% if doc.tax_id %}
 			<tr>
 				<td style="width:58%;"></td>
-				<td style="font-size: 8.5pt !important;">{{ _("Steuernummer:") }} {{ doc.tax_id }}</td>
+				<td class="details">{{ _("Steuernummer:") }} {{ doc.tax_id }}</td>
 			</tr>
 		{% endif %}
 		{% if doc.eori_number %}
 			<tr>
 				<td style="width:58%;"></td>
-				<td style="font-size: 8.5pt !important;">{{ _("EORI-Nummer:") }} {{ doc.eori_number }}</td>
+				<td class="details">{{ _("EORI-Nummer:") }} {{ doc.eori_number }}</td>
 			</tr>		
 		{% endif %}
 		</tbody>
@@ -46,7 +46,7 @@
 <!-- /Titel und oberer Fliesstext -->
 
 <!-- Detailtabelle -->
-<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+<table style="width: 99%;" class="detailtable">
 	<tr>{% if doc.is_return %}
 		<td style="width: 24%;">{{ _("Zu Rechnung Nr.") }}</td>
 		<td style="width: 24%;">{{ doc.return_against }}</td>	

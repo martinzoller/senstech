@@ -29,7 +29,7 @@ dn_item			The delivery note item containing the relevant list of sensor IDs
 
 
 <!-- Detailtabelle -->
-<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+<table style="width: 99%" class="detailtable">
 	<tr>
 		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
 		<td style="width: 24%;">{{ doc.po_no or '-' }}</td>
@@ -66,7 +66,6 @@ dn_item			The delivery note item containing the relevant list of sensor IDs
 <!-- CSS für Messprotokoll -->
 <style type="text/css">
 #measurement_report {
-	font-size: 7.5pt !important;
 	width: 99%;
   border-collapse: collapse !important;
 }
@@ -79,7 +78,7 @@ dn_item			The delivery note item containing the relevant list of sensor IDs
 <!-- /CSS für Messprotokoll -->
 
 <!-- Messprotokoll -->
-<table id="measurement_report"><tbody><tr>
+<table id="measurement_report" class="detailtable"><tbody><tr>
 	{% set measurands = get_measurands_for_delivery_note_item(dn_item.name) %}
 	<th>{{ _("Sensor Nr.") }}</th>
 	{% for m in measurands %}
