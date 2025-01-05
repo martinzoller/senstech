@@ -127,7 +127,7 @@ frappe.ui.form.on('Item', {
 			if(frm.doc.gate2_reviewed_date) {
 				if(frm.doc.gate2_review_result == "Gate 2 erreicht") {
 					gateN_menu = '🎖️2';
-					// Gate 2 durchschritten => Buttons für Gate 3 anzeigen
+					// Gate 2 durchschritten => Buttons für Gate 3 und zusätzliche Nullserien anzeigen
 					if(frm.doc.gate3_reviewed_date) {
 						if(frm.doc.gate3_review_result != "Gate 3 erreicht und Produktionsfreigabe erteilt") {
 							// Gate-3-Freigabe abgelehnt
@@ -151,7 +151,7 @@ frappe.ui.form.on('Item', {
 					}
 					else if(frm.doc.gate3_requested_date) {
 						// Hängiger Antrag für Gate 3
-						if(frappe.perm.has_perm("Item", 1, "write") && frm.doc.gate3_requested_by_user != frappe.user.name) {
+						if(frappe.perm.has_perm("Item", 1, "write") && frm.doc.gate3_requested_by_name != frappe.session.user_fullname) {
 							frm.add_custom_button(__("Gate-3-Review durchführen"), function() {
 								gate3_request(frm);
 							}, gateN_menu);
@@ -164,9 +164,30 @@ frappe.ui.form.on('Item', {
 							frm.add_custom_button(__("Bearbeitung erfordert höhere Berechtigung."), function() {}, __("Gate-3-Antrag hängig"));
 						}
 					} else if(frappe.perm.has_perm("Item", 0, "write")) {
-						frm.add_custom_button(__("Gate-3-Freigabe beantragen"), function() {
-							gate3_request(frm);
-						}, gateN_menu);
+						// Gate 2 erteilt, Option für zusätzliche Nullserie oder Gate-3-Antrag
+						if(frm.doc.extra_pilot_requested_date) {
+							// Zusätzliche Nullserie bereits beantragt
+							if(frappe.perm.has_perm("Item", 1, "write") && frm.doc.extra_pilot_requested_by_name != frappe.session.user_fullname) {
+								frm.add_custom_button(__("Antrag auf zusätzliche Nullserie bearbeiten"), function() {
+									extra_pilot_series(frm, true);
+								}, gateN_menu);
+							} else {
+								frm.add_custom_button(__("Antrag auf zusätzliche Nullserie zurückziehen"), function() {
+									frm.set_value('extra_pilot_requested_by_name', '');
+									frm.set_value('extra_pilot_requested_date', '');
+									frm.save().then(r => {
+										frm.reload_doc();
+									});
+								}, gateN_menu);
+							}
+						} else {
+							frm.add_custom_button(__("Zusätzliche Nullserie beantragen"), function() {
+								extra_pilot_series(frm, false);
+							}, gateN_menu);
+							frm.add_custom_button(__("Gate-3-Freigabe beantragen"), function() {
+								gate3_request(frm);
+							}, gateN_menu);
+						}
 					}
 				}
 				else {
@@ -1015,6 +1036,7 @@ function find_and_set_mountain(frm, cust_proj) {
 	});
 }
 
+
 // Feldweise Bearbeitungssperre bei Gate 3
 function gate3_lock_item(frm) {
 	let locked_fields = ['item_code', 'mountain_name', 'item_name', 'item_group', 'stock_uom', 'zeichnung', 'has_sub_batches', 'verpackungseinheit', 'has_variants', 'attributes', 'project', 'kunde'];
@@ -1027,4 +1049,103 @@ function gate3_lock_item(frm) {
 	if(frm.doc.manufactured_from) {
 		frm.set_df_property('manufactured_from', 'read_only', true);
 	}
+}
+
+
+// Zusätzliche Nullserie beantragen
+function extra_pilot_series(frm, is_review) {
+	
+	frappe.db.count("Batch", {
+		filters: {
+			batch_type: 'Nullserie',
+			item: frm.docname,
+		}
+	}).then(pilot_batch_count => {
+		let dialog_title = is_review ? 'Antrag auf zusätzliche Nullserie bearbeiten' : 'Zusätzliche Nullserie beantragen';
+		let proceed_label = is_review ? 'Speichern' : 'Antrag stellen';
+		let cancel_label = 'Abbrechen';
+		let extra_pilot_dialog = new frappe.ui.Dialog({
+			'title': __(dialog_title),
+			'fields': [
+				{
+					label: __('Max. Anzahl Nullserie-Chargen (neu)'),
+					fieldname: 'max_pilot_batches',
+					fieldtype: 'Int',
+					default: frm.doc.gate2_max_pilot_batches + 1,
+					read_only: true
+				},
+				{
+					label: __('Davon bereits bestehend'),
+					fieldname: 'pilot_batch_count',
+					fieldtype: 'Data',
+					default: pilot_batch_count,
+					read_only: true
+				},
+				{
+					label: __('Zusätzliche Nullserie beantragt am'),
+					fieldname: 'extra_pilot_requested_date',
+					fieldtype: 'Date',
+					default: is_review ? frm.doc.extra_pilot_requested_date : 'Today',
+					read_only: true
+				},
+				{
+					label: __('Zusätzliche Nullserie beantragt von'),
+					fieldname: 'extra_pilot_requested_by_name',
+					fieldtype: 'Data',
+					default: is_review ? frm.doc.extra_pilot_requested_by_name : frappe.session.user_fullname,
+					read_only: true
+				},
+				{
+					label: __('Antrag auf zusätzliche Nullserie bearbeitet von'),
+					fieldname: 'extra_pilot_reviewed_by_name',
+					fieldtype: 'Data',
+					default: frappe.session.user_fullname,
+					read_only: true,
+					hidden: !is_review
+				},
+				{
+					label: __('Entscheid'),
+					fieldname: 'extra_pilot_granted',
+					fieldtype: 'Select',
+					options: ['','Antrag annehmen','Antrag ablehnen'],
+					hidden: !is_review,
+				}
+			],
+			'primary_action': function(){
+				let val = extra_pilot_dialog.get_values();
+				if(is_review && !val.extra_pilot_granted){
+					frappe.msgprint(__("Bitte einen Entscheid zum Antrag treffen."), __("Angaben unvollständig"));
+					return;
+				}
+				extra_pilot_dialog.hide();
+				let action_string;
+				
+				if(is_review) {
+					if(val.extra_pilot_granted == 'Antrag annehmen'){
+						action_string = `Zusätzliche (${val.max_pilot_batches}.) Nullserie bewilligt durch`;
+						frm.set_value('gate2_max_pilot_batches', val.max_pilot_batches);
+					}
+					else {
+						action_string = 'Zusätzliche Nullserie abgelehnt durch';
+					}
+					frm.set_value('extra_pilot_requested_by_name', '');
+					frm.set_value('extra_pilot_requested_date', '');
+				} else {
+					action_string = 'Zusätzliche Nullserie beantragt durch';
+					frm.set_value('extra_pilot_requested_by_name', val.extra_pilot_requested_by_name);
+					frm.set_value('extra_pilot_requested_date', val.extra_pilot_requested_date);
+				}
+				
+				let gateN_log = frm.doc.gate2_clearance_log || '';
+				gateN_log += "\n" + frappe.datetime.get_today() + ": " + action_string  + " " + frappe.session.user_fullname;
+				frm.set_value('gate2_clearance_log', gateN_log);
+				frm.save().then(r => {
+					frm.reload_doc();
+				});
+			},
+			'primary_action_label': proceed_label,
+			'secondary_action_label': cancel_label
+		});
+		extra_pilot_dialog.show();
+	});
 }

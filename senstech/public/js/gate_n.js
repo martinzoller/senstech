@@ -155,16 +155,21 @@ function gateN_dialog(frm, N) {
 		}
 		// Link-Feld
 		else if(df.fieldtype == 'Link') {
-			// Feldspezifische Query-Funktionen setzen (nicht via Doctype-Def. möglich)
-			if(df.fieldname == 'gate2_link_prototypes') {
-				let proj = frm.doc.project || 'EP-999-00'; // Keine Chargen anzeigen, wenn kein Projekt zugewiesen
-				field_spec.get_query = function() {
-					return {
-						filters: {
-							'chargennummer': ['LIKE', proj.replaceAll('-','')+'%']
-						}
+			// Bei read-only den Typ auf "Data" setzen, da sonst der Wert nicht sichtbar ist
+			if(is_review){
+				field_spec.fieldtype = "Data";
+			} else {
+				// Feldspezifische Query-Funktionen setzen (nicht via Doctype-Def. möglich)
+				if(df.fieldname == 'gate2_link_prototypes') {
+					let proj = frm.doc.project || 'EP-999-00'; // Keine Chargen anzeigen, wenn kein Projekt zugewiesen
+					field_spec.get_query = function() {
+						return {
+							filters: {
+								'chargennummer': ['LIKE', proj.replaceAll('-','')+'%']
+							}
+						};
 					};
-				};
+				}
 			}
 		}
 		// Sonderfall, da Int-Feld, aber im Dialog als Select-Feld darzustellen
