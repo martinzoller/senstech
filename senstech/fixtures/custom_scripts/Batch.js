@@ -14,7 +14,7 @@ frappe.ui.form.on('Batch', {
 			frm.set_value('batch_id', batch_id);
 			
 			if(['Serieprodukt','Nullserie'].includes(frm.doc.batch_type)) {
-				let getval_done = frappe.db.get_value('Item',item,['has_sub_batches','gate2_max_pilot_batches', 'gate_clearance_status']).then(r => {
+				let getval_done = frappe.db.get_value('Item',item,['has_sub_batches','gate2_max_pilot_batches', 'gate_clearance_status', 'creation']).then(r => {
 					if(!r.message) {
 						validation_error(frm, 'item', __("Fehler beim Laden des Basisartikels"));
 						return;
@@ -22,8 +22,14 @@ frappe.ui.form.on('Batch', {
 					
 					let min_clearance = { 'Nullserie': 2, 'Serieprodukt': 3 };
 					if(r.message.gate_clearance_status < min_clearance[frm.doc.batch_type]) {
-						validation_error(frm, 'item', __("Der gewählte Artikel ist nicht für Chargen des Typs '{0}' freigegeben (Gate {1} benötigt).", [frm.doc.batch_type, min_clearance[frm.doc.batch_type]]));
-						return;
+						if(r.message.creation < '2025-01-01') {
+							// Legacy-Artikel: Nur Warnung anzeigen
+							frappe.show_alert({message: __("Der gewählte Artikel ist noch nicht für Chargen des Typs '{0}' freigegeben (Gate {1} benötigt). Da es sich um einen Bestandsartikel handelt, kann die Charge trotzdem angelegt werden.", [frm.doc.batch_type, min_clearance[frm.doc.batch_type]]), indicator: 'orange'}, 10);
+						}
+						else {
+							validation_error(frm, 'item', __("Der gewählte Artikel ist nicht für Chargen des Typs '{0}' freigegeben (Gate {1} benötigt).", [frm.doc.batch_type, min_clearance[frm.doc.batch_type]]));
+							return;	
+						}
 					}
 					else if(frm.doc.batch_type == 'Nullserie'){
 						let count_done = frappe.db.count("Batch", {

@@ -124,10 +124,11 @@ frappe.ui.form.on('Item', {
 		// Freigabe Gate 2/3 - nur bei Serieprodukten und Eigenprodukt-Vorlagen
 		if (!frm.doc.__islocal && (frm.doc.item_group.startsWith("Serieprodukte") || (frm.doc.item_group.startsWith('Eigenprodukte') && frm.doc.has_variants))) {
 			let gateN_menu = '🎖️-';
-			if(frm.doc.gate2_reviewed_date) {
-				if(frm.doc.gate2_review_result == "Gate 2 erreicht") {
-					gateN_menu = '🎖️2';
+			if(frm.doc.gate2_reviewed_date || frm.doc.creation < '2025-01-01') {
+				if(frm.doc.gate2_review_result == "Gate 2 erreicht" || frm.doc.creation < '2025-01-01') {
+					gateN_menu = (frm.doc.gate2_review_result == "Gate 2 erreicht") ? '🎖️2' : '🎖️Legacy';
 					// Gate 2 durchschritten => Buttons für Gate 3 und zusätzliche Nullserien anzeigen
+					// (Bei Legacy-Artikeln auch direkt Gate 3 anzeigen)
 					if(frm.doc.gate3_reviewed_date) {
 						if(frm.doc.gate3_review_result != "Gate 3 erreicht und Produktionsfreigabe erteilt") {
 							// Gate-3-Freigabe abgelehnt
@@ -728,26 +729,33 @@ function gate2_request(frm, clear_review=false) {
 // Gate-3-spezifischer Wrapper
 function gate3_request(frm, clear_review=false) {
 	if(check_not_dirty(frm)) {
-		frappe.call({
-			method: 'senstech.scripts.batch_tools.get_pilot_series_qty',
-			args: {
-				item_code: frm.doc.name,
-			},
-			callback: (r) => {
-				if(r.message){
-					if(clear_review) {
-						gateN_clear_review(frm, 3);
+		if(clear_review) {
+			gateN_clear_review(frm, 3);
+		}
+		if(frm.doc.creation < '2025-01-01') {
+			// Legacy-Artikel: Nullserie-Stückzahl nicht erfassen
+			frm.set_value("gate3_fetch_pilot_series", "Nicht erfasst (Legacy-Artikel)");
+			gateN_dialog(frm, 3);
+		}
+		else {
+			frappe.call({
+				method: 'senstech.scripts.batch_tools.get_pilot_series_qty',
+				args: {
+					item_code: frm.doc.name,
+				},
+				callback: (r) => {
+					if(r.message){
+						frm.set_value("gate3_fetch_pilot_series", r.message);
+						gateN_dialog(frm, 3);
+					} else {
+						frappe.msgprint(__("Bitte die Sensoren der Nullserie an Lager legen. Eine fertig ausgelieferte Nullserie ist Voraussetzung für Gate 3."), __("Fehlende Lagerbuchung"))
 					}
-					frm.set_value("gate3_fetch_pilot_series", r.message);
-					gateN_dialog(frm, 3);
-				} else {
-					frappe.msgprint(__("Bitte die Sensoren der Nullserie an Lager legen. Eine fertig ausgelieferte Nullserie ist Voraussetzung für Gate 3."), __("Fehlende Lagerbuchung"))
+				},
+				error: (r) => {
+					frappe.msgprint(__("Unbekannter Fehler beim Abfragen der Nullserie-Gesamtstückzahl"));
 				}
-			},
-			error: (r) => {
-				frappe.msgprint(__("Unbekannter Fehler beim Abfragen der Nullserie-Gesamtstückzahl"));
-			}
-		});
+			});
+		}
 	}
 }
 
