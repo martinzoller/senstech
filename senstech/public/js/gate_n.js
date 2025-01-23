@@ -32,6 +32,9 @@ function gateN_clear_review(frm, N) {
 // Gate-Freigaben: Freigabeantrag zurückziehen
 function gateN_withdraw_request(frm, N){
 	frappe.confirm(__("Der Antrag muss danach erneut ausgefüllt werden. Wirklich löschen?"), () => {
+		let gateN_log = frm.doc['gate'+N+'_clearance_log'] || '';
+		gateN_log += "\n" + frappe.datetime.get_today() + ": Freigabeantrag zurückgezogen durch "+frm.doc['gate'+N+'_requested_by_name'];
+		frm.set_value('gate'+N+'_clearance_log', gateN_log);
 		gateN_clear_request(frm, N , true);
 	});
 }
