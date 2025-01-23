@@ -96,25 +96,44 @@ def add_freeze_pdf_to_dt(dt, dn, printformat, language=''):
 
 # Called by doc_events hook when purchasing or sales docs are submitted
 def attach_pdf_hook(doc, event=None):
-    fallback_language = frappe.db.get_single_value("System Settings", "language") or "de"
-    args = {
-        "doctype": doc.doctype,
-        "name": doc.name,
-        "title": getattr(doc, "title", doc.name),
-        "lang": getattr(doc, "language", fallback_language),
-    }
-    erpnextswiss.erpnextswiss.attach_pdf.execute(**args)
-    # QN: Create Gate1 checklist as separate document
+    # Most documents: Create a PDF print on submit
+    if doc.doctype != 'Item':
+        fallback_language = frappe.db.get_single_value("System Settings", "language") or "de"
+        args = {
+            "doctype": doc.doctype,
+            "name": doc.name,
+            "title": getattr(doc, "title", doc.name),
+            "lang": getattr(doc, "language", fallback_language),
+        }
+        erpnextswiss.erpnextswiss.attach_pdf.execute(**args)
+    # Quotation: Create Gate1 checklist as separate document on submit
     if doc.doctype == 'Quotation' and event == 'on_submit' and doc.gate1_reviewed_date:
-        erpnextswiss.erpnextswiss.attach_pdf.execute(
-            doctype = doc.doctype,
-            name = doc.name,
-            title = "Gate 1 Checklist",
-            lang = "de",
-            print_format = "Gate 1 Checklist ST",
-            file_name = doc.name+"-Gate1.pdf"
-        )
-    
+        create_gateN_pdf(1)
+    # Item: Create Gate2/3 checklist as separate document on save
+    if doc.doctype == 'Item' and event == 'on_update':
+        if doc.gate_clearance_status >= 2:
+            if not doc_has_attachment(doc, doc.name+"-Gate2.pdf"):
+                create_gateN_pdf(doc, 2)
+        if doc.gate_clearance_status >= 3:
+            if not doc_has_attachment(doc, doc.name+"-Gate3.pdf"):
+                create_gateN_pdf(doc, 3)
+
+def create_gateN_pdf(doc, N):
+    erpnextswiss.erpnextswiss.attach_pdf.execute(
+        doctype = doc.doctype,
+        name = doc.name,
+        title = "Gate "+str(N)+" Checklist",
+        lang = "de",
+        print_format = "Gate "+str(N)+" Checklist ST",
+        file_name = doc.name+"-Gate"+str(N)+".pdf"
+    )
+
+def doc_has_attachment(doc, attachment_name):
+    return frappe.db.exists("File",{
+        "file_name": attachment_name,
+        "attached_to_doctype": doc.doctype,
+        "attached_to_name": doc.name,
+    })
 
 # Wasserzeichen "Abgebrochen" bei Dok-Abbruch (Verkaufsdokumente)
 @frappe.whitelist()

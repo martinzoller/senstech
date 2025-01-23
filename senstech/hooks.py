@@ -137,6 +137,7 @@ doc_events =  {
     },
     "Item": {
         "validate": "senstech.scripts.item_tools.validate_item",
+        "on_update": "senstech.scripts.tools.attach_pdf_hook"
     },
     "Supplier": {
         "on_update": "senstech.scripts.supplier_tools.check_supplier_duns_address"
