@@ -236,6 +236,8 @@ def transfer_item_drawings(dt, dn, items):
 # Hochgeladene Datei an Dokument hängen
 @frappe.whitelist()
 def attach_file_to_document(file_url, doctype, docname, field=''):
+    if not file_url:
+        return False
     exists = frappe.db.exists("File",{
         "file_url": file_url,
         "attached_to_doctype": doctype,
@@ -243,6 +245,7 @@ def attach_file_to_document(file_url, doctype, docname, field=''):
         "attached_to_field": field
     });
     if exists:
+        # Attachment hängt bereits am angegebenen Dokument
         return True
     else:
         file_query = frappe.get_all(
@@ -252,7 +255,8 @@ def attach_file_to_document(file_url, doctype, docname, field=''):
             limit_page_length=1,
             filters={"file_url": file_url, "attached_to_doctype": ""}
         )
-        if len(file_query)==1:
+        if len(file_query) > 0:
+            # "Freifliegendes" Attachment gefunden, dieses ans Dokument hängen
             myfile = frappe.get_doc("File", file_query[0].name)
             myfile.attached_to_doctype = doctype
             myfile.attached_to_name = docname
@@ -261,7 +265,35 @@ def attach_file_to_document(file_url, doctype, docname, field=''):
             frappe.db.commit()
             return True
         else:
-            return False
+            file_query = frappe.get_all(
+                "File",
+                ["name","file_name","folder","file_size","is_private"],
+                order_by="creation desc",
+                limit_page_length=1,
+                filters={"file_url": file_url}
+            )
+            if len(file_query) > 0:
+                # Attachment an anderem Dokument gefunden, neues Attachment mit dieser Datei anlegen
+                f = frappe.get_doc({
+                    "doctype": "File",
+                    "file_url": file_url,
+                    "file_name": file_query[0].file_name,
+                    "attached_to_doctype": doctype,
+                    "attached_to_name": docname,
+                    "folder": file_query[0].folder,
+                    "file_size": file_query[0].file_size,
+                    "is_private": file_query[0].is_private
+                })
+                f.flags.ignore_permissions = True
+                try:
+                    f.insert()
+                    frappe.db.commit()
+                    return True
+                except:
+                    return False
+            else:
+                # Datei existiert nicht
+                return False
 
 # PDF-Dokument (aus Variable) über Socket Connection direkt an Zebra-Etikettendrucker senden
 def direct_print_pdf(pdf_data, printer_name):

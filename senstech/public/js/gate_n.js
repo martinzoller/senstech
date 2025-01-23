@@ -117,7 +117,16 @@ function gateN_dialog(frm, N) {
 	
 	// Dialogspezifikation erzeugen (weitgehend aus Felddefinitionen abgeleitet)
 	let dialog_fields = gateN_field_list(frm, N);
-	let dialog_field_specs = [];
+	let dialog_field_specs = [
+		{
+			/* Artikelgruppe: Benötigt für 'depends_on' Anzeigeregeln anderer Felder */
+			fieldname: 'item_group',
+			default: frm.doc.item_group,
+			fieldtype: 'Data',
+			hidden: true,
+			read_only: true,
+		}
+	];
 	let dialog_spec_ready = [];
 	for(var i=0; i<dialog_fields.length; i++) {
 		let df = dialog_fields[i].df;
@@ -136,6 +145,10 @@ function gateN_dialog(frm, N) {
 		// Select-Feld: Leere Option weglassen mittels trim()
 		if(df.fieldtype == "Select") {
 			field_spec.options = df.options.trim().split("\n");
+			// Sonderfall Gate3 AV/Stückliste: Option "gegenüber Nullserie unverändert" wird nur bei Indexerhöhung dargestellt
+			if(df.fieldname == 'gate3_check_prod_documents' && frm.doc.prev_revision_clearance_status != 3) {
+				field_spec.options = ['Ja','Nein'];
+			}
 		}
 		// Upload-Feld
 		else if(df.fieldtype == "Attach") {
@@ -146,8 +159,11 @@ function gateN_dialog(frm, N) {
 		else if(df.fieldname.includes('_fetch_')) {
 			// Felder werden bereits durch aufrufende Funktion in Item.js gesetzt
 			// => schreibschützen und zugehöriges Check-Feld ggf. noch setzen
-			field_spec.read_only = true;
-			field_spec.fieldtype = 'Data'; // Link-Feld mit Schreibschutz stellt keine Werte dar, daher Data-Feld verwenden
+			if(df.fieldname != 'gate2_fetch_pilot_series_order' || field_spec.default) {
+				// Ausnahme Nullserie-AB, soll man manuell wählen können wenn keine gefunden.
+				field_spec.read_only = true;
+				field_spec.fieldtype = 'Data'; // Link-Feld mit Schreibschutz stellt keine Werte dar, daher Data-Feld verwenden
+			}
 			if(field_spec.default){
 				let check_field = dialog_field_specs.find(f => f.fieldname == df.fieldname.replace('_fetch_','_check_'));
 				check_field.default = 'Ja';
@@ -230,14 +246,14 @@ function gateN_dialog(frm, N) {
 					let link_field = df.fieldname.replace('_check_', '_link_');
 					if(frm.fields_dict[upload_field]) {
 						// Assoziiertes Upload-Feld leer, nur zulässig wenn Option 'Nicht benötigt' gewählt, oder bei Belegdokument zu Vorbehalt
-						if(!vals[upload_field] && val != 'Nicht benötigt' && !df.options.includes("Ja, mit Vorbehalt")) {
+						if(!vals[upload_field] && val != 'Nicht benötigt' && val != 'Ja; Unterlagen gegenüber Nullserie unverändert' && !df.options.includes("Ja, mit Vorbehalt")) {
 							is_checklist_complete = false;
 							break;
 						}
 					}
 					if(frm.fields_dict[upload_field+'2']) {
 						// ggf. zweites Upload-Feld
-						if(!vals[upload_field+'2'] && val != 'Nicht benötigt') {
+						if(!vals[upload_field+'2'] && val != 'Nicht benötigt' && val != 'Ja; Unterlagen gegenüber Nullserie unverändert') {
 							is_checklist_complete = false;
 							break;
 						}
@@ -249,7 +265,7 @@ function gateN_dialog(frm, N) {
 							break;
 						}
 						
-						if(df.fieldname == 'gate2_check_pilot_series_order') {
+						/*if(df.fieldname == 'gate2_check_pilot_series_order') {
 							let p = frappe.db.get_doc("Sales Order", vals[link_field]).then(sales_order => {
 								if(!sales_order.items.some(f => f.item_code == 'GP-00003')) {
 									frappe.msgprint(__("Die gewählte Kunden-AB enthält keinen Nullserieartikel GP-00003."),__("Ungültige Auswahl"));
@@ -257,7 +273,7 @@ function gateN_dialog(frm, N) {
 								}
 							});
 							waiting_for.push(p);
-						}
+						}*/
 					}
 					if(val == 'Ja, mit Vorbehalt') {
 						// Vorbehalt benötigt mindestens einen Kommentar als Doku
@@ -267,7 +283,7 @@ function gateN_dialog(frm, N) {
 							break;
 						}
 					}
-					else if(!['Ja','Nicht benötigt'].includes(val)){
+					else if(!['Ja','Nicht benötigt','Ja; Unterlagen gegenüber Nullserie unverändert'].includes(val)){
 						// Nein oder ungültige Antwort
 						is_checklist_complete = false;
 						break;
