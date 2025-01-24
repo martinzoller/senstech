@@ -101,6 +101,16 @@ function get_next_project_id(frm) {
 		return;
 	}
 	
+	// ID nicht wechseln wenn bereits "passende" ID gesetzt
+	if(frm.doc.project_name) {
+		if(frm.doc.project_type == 'Extern' && frm.doc.project_name.startsWith('EP-')+frm.doc.customer.substr(5, 3)) {
+			return;
+		}
+		if(frm.doc.project_type == 'Intern' && frm.doc.project_name.startsWith('EP-01')) {
+			return;
+		}
+	}
+	
 	frappe.call({
     	'method': 'senstech.scripts.project_tools.get_next_project_id',
 		'args': {

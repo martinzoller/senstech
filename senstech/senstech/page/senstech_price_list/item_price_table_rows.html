@@ -3,29 +3,29 @@
 			<div class="col-sm-4" style="margin-top: 8px;">
 				<b>{{ __("Item Name") }}</b>
 			</div>
-			<div class="col-sm-4" style="margin-top: 8px;">
+			<div class="col-sm-3" style="margin-top: 8px;">
 				<b>{{ __("Item Code") }}</b>
 			</div>			
 			<div class="col-sm-3 {% if some_price_breaks %} text-center {% endif %}">
 				<b>{{ __("List Price") }} [{{ currency }}]</b>
 			</div>
-			<div class="col-sm-1 text-right">
+			<div class="col-sm-2 text-right">
 			</div>
 		</div>
 		{% if some_price_breaks %}
 		<div class="row">
-			<div class="col-sm-8">
+			<div class="col-sm-7">
 			</div>
 				<div class="col-sm-1">
-					{{ __("ab {0} Stk", [1]) }}
+					{{ __("ab {0}", [1]) }}
 				</div>
 				<div class="col-sm-1">
-					{{ __("ab {0} Stk", [10]) }}
+					{{ __("ab {0}", [10]) }}
 				</div>
 				<div class="col-sm-1">
-					{{ __("ab {0} Stk", [20]) }}
+					{{ __("ab {0}", [20]) }}
 				</div>
-			<div class="col-sm-1 text-right">
+			<div class="col-sm-2 text-right">
 			</div>
 		</div>
 		{% endif %}
@@ -38,7 +38,7 @@
 					{{ d.item_name }}
 				</a>
 			</div>
-			<div class="col-sm-4" style="margin-top: 8px;">
+			<div class="col-sm-3" style="margin-top: 8px;">
 				{{ d.item_code }}
 			</div>
 			<div class="col-sm-1">
@@ -55,8 +55,9 @@
 					<input type="text" class="input-with-feedback form-control input-sm price-list-field" data-item-code="{{ d.item_code }}" data-min-qty="20" placeholder="20+" value="{{ (d.price_20>0 ? Number(Math.round(parseFloat(d.price_20 + "e2")) + "e-2").toFixed(2) : d.price_20) }}" autocomplete="off">
 				{% endif %}
 			</div>
-			<div class="col-sm-1 text-right">
-				<!-- for optional future button... -->
+			<div class="col-sm-2">
+				/ <div class="uom-field" id="{{ d.item_code }}_uom">
+				</div>
 			</div>
 		</div>
 	</div>

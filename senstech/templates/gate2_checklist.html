@@ -1,0 +1,247 @@
+<!-- Gate 2 Review Checklist -->
+
+<!-- Load Data -->
+{% set doc_data = {'titel': "Review-Checkliste Gate 2 (Freigabe für Nullserie)"} %}
+{{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Load Data -->
+
+<!-- Header und Footer -->
+{{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Header und Footer -->
+
+<!-- Titel -->
+<b><br><br>{{ _(doc_data.titel) }}</b>
+<div><br></div>
+<!-- /Titel -->
+
+
+<!-- Detailtabelle -->
+<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+	<tr>
+		<td style="width: 22%;">{{ _("Artikelcode") }}</td>
+		<td style="width: 28%;">{{ doc.item_code }}</td>
+		<td style="width: 3%;"></td>
+		<td style="width: 26%;">{{ _("Kunde") }}</td>
+		<td style="width: 20%;">{{ doc.kundenname }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Artikelbezeichnung") }}</td>
+		<td>{{ doc.item_name }}</td>
+		<td></td>
+		<td>{{ _("Kundennummer") }}</td>
+		<td>{{ doc.kunde }}</td>	
+	</tr>
+	<tr>
+		<td>{{ _("Dokument aktualisiert am") }}</td>
+		<td>{{ doc.get_formatted('modified') }}</td>
+		<td></td>
+		<td>{{ _("Entwicklungsprojekt") }}</td>
+		<td>{{ doc.project }}</td>
+	</tr>
+</table>
+<!-- /Detailtabelle -->
+
+<div><br></div>
+
+<!-- Abschnitt "Freigabe" -->
+<div><br></div>
+
+<table style="width: 99%; font-size: 8.5pt !important;">
+	<tr style="height: 21pt">
+		<td style="text-align: left;"><b style="font-size: 10pt">{{ _("Freigabe") }}</b></td>
+		<td style="text-align: left;"><b>{{ _("Name") }}</b><br></td>		
+		<td style="text-align: left;"><b>{{ _("Datum") }}</b><br></td>
+		<td style="text-align: center;"><b>{{ _("Unterschrift") }}</b><br></td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Gate-2-Freigabe beantragt durch:") }}</td>
+		<td style="text-align: left;">{{ doc.gate2_requested_by_name }}</td>
+		<td style="text-align: left;">{{ doc.get_formatted('gate2_requested_date') }}</td>
+		<td style="text-align: center;">
+			{% set requested_by_signature = get_signature_for_user_id(doc.gate2_requested_by_user) %}
+			{% if not requested_by_signature %}
+					<div class="errorpopup">Fehler: Unterschrift von Gate-2-Antragsteller "{{ doc.gate2_requested_by_name }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ requested_by_signature }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Gate-2-Review durchgeführt durch:")}}</td>
+		<td style="text-align: left;">{{ doc.gate2_reviewed_by_name }}</td>
+		<td style="text-align: left;">{{ doc.get_formatted('gate2_reviewed_date') }}</td>
+		<td style="text-align: center;">
+			{% set reviewed_by_signature = get_signature_for_user_id(doc.gate2_reviewed_by_user) %}
+			{% if not reviewed_by_signature %}
+					<div class="errorpopup">Fehler: Unterschrift von Gate-2-Reviewer "{{ doc.gate2_reviewed_by_name }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ reviewed_by_signature }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+</table>
+<!-- /Abschnitt "Freigabe" -->
+
+<!-- Abschnitt "Entscheid" -->
+<div>
+		<b><br>{{ _("Entscheid") }}</b>
+</div>
+<div style="margin-top: 5px">
+		{% for res in (frappe.get_meta("Item").get_field("gate2_review_result").options|trim).split("\n") %}
+			{% if doc.gate2_review_result == res %}☒{% else %}☐{% endif %} &nbsp; {{ res }}<br>
+		{% endfor %}
+</div>
+<!-- /Abschnitt "Entscheid" -->
+
+<!-- Abschnitt "Checkliste" -->
+<div>
+		<b><br>{{ _("Checkliste") }}</b>
+</div>
+<table class="table table-bordered checklist"><tbody>
+	<tr>
+		<th>{{ _("Zu prüfen") }}</th>
+		<th>{{ _("Ergebnis") }}</th>
+		<th>{{ _("Referenz") }}</th>
+	</tr>
+	<tr>
+		<td>{{ _("Sensor-Spezifikation oder detailliertes Datenblatt erstellt und freigegeben?") }}</td>
+		<td>{{ doc.gate2_check_spec }}</td>
+		{%if doc.gate2_upload_spec %}
+			{% set file_spec = frappe.get_doc("File",{"file_url": doc.gate2_upload_spec}) %}
+			<td>{{ file_spec.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Risikoanalyse (FMEA) erstellt und freigegeben?") }}</td>
+		<td>{{ doc.gate2_check_fmea }}</td>
+		{%if doc.gate2_upload_fmea %}
+			{% set file_fmea = frappe.get_doc("File",{"file_url": doc.gate2_upload_fmea}) %}
+			<td>{{ file_fmea.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Prototypen gefertigt und erfolgreich getestet?") }}</td>
+		<td>{{ doc.gate2_check_prototypes }}</td>
+		{%if doc.gate2_link_prototypes %}
+			<td>{{ _("Zuletzt produzierte Prototypencharge:") }}<br>{{ doc.gate2_link_prototypes }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Auftragserteilung/Bestellung Nullserie erfolgt?") }}</td>
+		<td>{{ doc.gate2_check_pilot_series_order }}</td>
+		{%if doc.gate2_fetch_pilot_series_order %}
+			<td>Kunden-AB {{ doc.gate2_fetch_pilot_series_order }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Max. Anzahl Nullserie-Chargen bis zur Seriefreigabe") }}</td>
+		<td>{{ doc.gate2_max_pilot_batches }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Design-Unterlagen (Sensorzeichnung, Litho u.ä.) freigegeben?") }}</td>
+		<td>{{ doc.gate2_check_design_files }}</td>
+		{%if doc.gate2_upload_design_files %}
+			{% set file_design_files = frappe.get_doc("File",{"file_url": doc.gate2_upload_design_files}) %}
+			<td>{{ file_design_files.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Artikeldaten im ERP-System vollständig? (Qualitätsspez., etc.)") }}</td>
+		<td>{{ doc.gate2_check_item_details }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("PB mit Ablauf Herstellprozess erstellt und freigegeben?") }}</td>
+		<td>{{ doc.gate2_check_pb }}</td>
+		{%if doc.gate2_upload_pb %}
+			{% set file_pb = frappe.get_doc("File",{"file_url": doc.gate2_upload_pb}) %}
+			<td>{{ file_pb.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Stückliste erstellt und freigegeben?") }}</td>
+		<td>{{ doc.gate2_check_bom }}</td>
+		{%if doc.gate2_upload_bom %}
+			{% set file_bom = frappe.get_doc("File",{"file_url": doc.gate2_upload_bom}) %}
+			<td>{{ file_bom.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("AV oder AV-Entwurf mit allen bekannten Prozessparametern erstellt?") }}</td>
+		<td>{{ doc.gate2_check_work_instruction }}</td>
+		{%if doc.gate2_upload_work_instruction %}
+			{% set file_work_instruction = frappe.get_doc("File",{"file_url": doc.gate2_upload_work_instruction}) %}
+			<td>{{ file_work_instruction.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Verpackung definiert und in Stückliste/AV festgehalten?") }}</td>
+		<td>{{ doc.gate2_check_packaging }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Betriebs- und Prüfmittel definiert?") }}</td>
+		<td>{{ doc.gate2_check_test_equipment }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Kostenkalkulation nachgeführt?") }}</td>
+		<td>{{ doc.gate2_check_new_cost_calc }}</td>
+		{%if doc.gate2_upload_new_cost_calc %}
+			{% set file_new_cost_calc = frappe.get_doc("File",{"file_url": doc.gate2_upload_new_cost_calc}) %}
+			<td>{{ file_new_cost_calc.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Prüfvorschriften für Wareneingang erstellt und freigegeben?") }}</td>
+		<td>{{ doc.gate2_check_wek_instructions }}</td>
+		<td>-</td>
+	</tr>
+</tbody></table>
+<!-- /Abschnitt "Checkliste" -->
+
+<!-- Abschnitt "Kommentare" -->
+<div>
+		<b><br>{{ _("Kommentare und zusätzliche Referenzen") }}</b>
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Freigabeantrag:") }}
+{% if not text_field_empty(doc.gate2_requester_comments) %}
+  <br>{{ doc.gate2_requester_comments }}
+{% else %}
+  {{ _("keine") }}
+{% endif %}	
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Review:") }}
+{% if not text_field_empty(doc.gate2_reviewer_comments) %}
+  <br>{{ doc.gate2_reviewer_comments }}
+{% else %}
+  {{ _("keine") }}
+{% endif %}	
+</div>
+<!-- /Abschnitt "Kommentare" -->
+
+<!-- Abschnitt "Historie" -->
+<div>
+		<b><br>{{ _("Historie der Gate-2-Freigabe") }}</b>
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0">
+{{ doc.gate2_clearance_log|replace('\n','<br>') }}
+</div>
+<!-- /Abschnitt "Historie" -->

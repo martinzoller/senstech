@@ -22,6 +22,7 @@ frappe.ui.form.on('Delivery Note', {
         if (!frm.doc.taxes_and_charges) {
             setTimeout(function(){
                 fetch_taxes_and_charges_from_customer(frm);
+				project_query(frm);
             }, 1000);
         }
     },

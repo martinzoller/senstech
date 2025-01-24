@@ -7,7 +7,6 @@
 #
 import frappe
 from frappe import _
-from erpnext.stock.doctype.item.item import get_uom_conv_factor
 from frappe.utils.data import today, add_days
 from senstech.scripts.project_tools import get_next_project_id
 
@@ -172,5 +171,42 @@ def validate_item(doc, method):
     # Make sure the stock UOM can be converted to pcs
     default_stock_uom = frappe.db.get_single_value("Stock Settings", "stock_uom")
     if doc.stock_uom and doc.stock_uom != default_stock_uom:
-        if get_uom_conv_factor(doc.stock_uom, default_stock_uom) == '':
+        if get_direct_uom_conv_factor(doc.stock_uom, default_stock_uom) == '':
             frappe.throw(_("Für die gewählte Lagereinheit ist kein Konvertierungsfaktor zur Standard-Lagereinheit definiert")+" ({from_uom} => {to_uom})".format(from_uom=doc.stock_uom, to_uom=default_stock_uom))
+
+# Simplified version of erpnext.stock.doctype.item.item.get_uom_conv_factor that only considers directly defined factors
+def get_direct_uom_conv_factor(uom, stock_uom):
+    uoms = [uom, stock_uom]
+    value = ""
+    uom_details = frappe.db.sql("""select to_uom, from_uom, value from `tabUOM Conversion Factor`\
+        where to_uom in ({0})
+        """.format(', '.join([frappe.db.escape(i, percent=False) for i in uoms])), as_dict=True)
+
+    for d in uom_details:
+        if d.from_uom == stock_uom and d.to_uom == uom:
+            value = 1/flt(d.value)
+        elif d.from_uom == uom and d.to_uom == stock_uom:
+            value = d.value
+
+    return value
+
+
+# Find a Sales Order that includes the Pilot Series Item (GP-00003) and the given new item
+@frappe.whitelist()
+def get_pilot_series_order(item_code, customer):
+    sales_orders = frappe.db.sql("""
+      SELECT so.name FROM
+        `tabSales Order` so
+        INNER JOIN `tabSales Order Item` soi1 ON soi1.`parent` = so.`name`
+        INNER JOIN `tabSales Order Item` soi2 ON soi2.`parent` = so.`name`
+      WHERE
+        so.`customer` = %s AND
+        so.`docstatus` = 1 AND
+        soi1.`item_code` = 'GP-00003' AND
+        soi2.`item_code` = %s
+      ORDER BY so.`creation` LIMIT 1
+    """, (customer, item_code), as_dict=True)
+    if len(sales_orders) > 0:
+        return sales_orders[0].name
+    else:
+        return ''

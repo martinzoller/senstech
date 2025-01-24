@@ -6,6 +6,7 @@ frappe.ui.form.on('Sales Order', {
     customer(frm) {
         setTimeout(function(){
             fetch_templates_from_customer(frm);
+			project_query(frm);
         }, 1000);
     },
 	currency(frm) {
@@ -87,21 +88,17 @@ frappe.ui.form.on('Sales Order', {
 					}, 1000);
 				}
 			}
-            if (!frm.doc.taxes_and_charges || !frm.doc.payment_terms_template){
+            if (!frm.doc.taxes_and_charges || !frm.doc.payment_terms_template || !frm.doc.tax_id || !frm.doc.eori_number){
                 setTimeout(function(){
                     fetch_templates_from_customer(frm);
                 }, 1000);
             }
 			// Workaround: Steuern bei AB-Anlegen aus Rahmenauftrag korrekt laden
-            if(frm.doc.taxes_and_charges && frm.doc.taxes.length == 0) {
+            if(frm.doc.taxes_and_charges && (!frm.doc.taxes || frm.doc.taxes.length == 0)) {
                 frm.script_manager.trigger('taxes_and_charges');
             }
-            // ggf. Position der 1. Zeile korrekt setzen (Bugfix, offenbar wird diese Zeile neu automatisch erzeugt?)
-            if(frm.doc.items) {
-                if(frm.doc.items[0].position == 0) {
-                    frappe.model.set_value(frm.doc.items[0].doctype,frm.doc.items[0].name,'position',10);
-                }
-            }
+            // ggf. Positionsnummern ergänzen  
+		   fix_position_numbers(frm);
         }
     },
 	onload(frm) {
@@ -164,12 +161,18 @@ function fetch_templates_from_customer(frm) {
 
     frappe.db.get_doc("Customer", frm.doc.customer).then(customer => {
         if(customer) {
-    		if (!frm.doc.taxes_and_charges && customer.taxes_and_charges) {
-    				frm.set_value('taxes_and_charges', customer.taxes_and_charges);
+    		if(!frm.doc.taxes_and_charges && customer.taxes_and_charges) {
+				frm.set_value('taxes_and_charges', customer.taxes_and_charges);
     		}
-    		if(!frm.doc.payment_terms_template && customer.payment_terms){
-    				frm.set_value('payment_terms_template', customer.payment_terms);
+    		if(!frm.doc.payment_terms_template && customer.payment_terms) {
+				frm.set_value('payment_terms_template', customer.payment_terms);
     		}
+			if(!frm.doc.eori_number && customer.eori_number) {
+				frm.set_value('eori_number', customer.eori_number);
+			}
+			if(!frm.doc.tax_id && customer.tax_id) {
+				frm.set_value('tax_id', customer.tax_id);
+			}
         }
     });
 }

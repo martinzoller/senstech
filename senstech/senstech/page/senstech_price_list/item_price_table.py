@@ -1,3 +1,5 @@
+# Adaptation of erpnext.stock.dashboard.item_dashboard
+
 from __future__ import unicode_literals
 
 import frappe
@@ -59,22 +61,25 @@ def get_data(price_list=None, item_code=None, item_group=None, start=0, sort_by=
     if(sort_by.startswith('price_')):
         # Since the price can be a string in case of errors ("non-unique!"), make sure it gets sorted as a number
         sort_by = 'CAST({sort_by} AS DOUBLE)'.format(sort_by=sort_by)
+    
+    uom_field = 'sales_uom' if is_sales_item else 'purchase_uom'
     price_data = frappe.db.sql("""
     SELECT
-      item_code,
-      item_name,
-      (SELECT IF(COUNT(*)>1, 'non-unique!', price_list_rate) FROM `tabItem Price` WHERE item_code = `tabItem`.item_code AND min_qty =  1 AND price_list = '{price_list}') price_1,
-      (SELECT IF(COUNT(*)>1, 'non-unique!', price_list_rate) FROM `tabItem Price` WHERE item_code = `tabItem`.item_code AND min_qty = 10 AND price_list = '{price_list}') price_10,
-      (SELECT IF(COUNT(*)>1, 'non-unique!', price_list_rate) FROM `tabItem Price` WHERE item_code = `tabItem`.item_code AND min_qty = 20 AND price_list = '{price_list}') price_20,
-      (item_group LIKE 'Eigenprodukte%') has_price_breaks
+      `item_code`,
+      `item_name`,
+      `{uom_field}` AS uom,
+      (SELECT IF(COUNT(*)>1, 'non-unique!', `price_list_rate`) FROM `tabItem Price` WHERE `item_code` = `tabItem`.item_code AND `min_qty` =  1 AND `price_list` = '{price_list}') price_1,
+      (SELECT IF(COUNT(*)>1, 'non-unique!', `price_list_rate`) FROM `tabItem Price` WHERE `item_code` = `tabItem`.item_code AND `min_qty` = 10 AND `price_list` = '{price_list}') price_10,
+      (SELECT IF(COUNT(*)>1, 'non-unique!', `price_list_rate`) FROM `tabItem Price` WHERE `item_code` = `tabItem`.item_code AND `min_qty` = 20 AND `price_list` = '{price_list}') price_20,
+      (`item_group` LIKE 'Eigenprodukte%') has_price_breaks
     FROM
       `tabItem`
     WHERE
       {where_clause}
-      AND disabled=0 AND has_variants=0
+      AND `disabled` = 0 AND `has_variants` = 0
     ORDER BY {sort_by} {sort_order}
     LIMIT {start},101
-    """.format(price_list=price_list, where_clause=where_clause, sort_by=sort_by, sort_order=sort_order, start=start), as_dict=True)
+    """.format(uom_field=uom_field, price_list=price_list, where_clause=where_clause, sort_by=sort_by, sort_order=sort_order, start=start), as_dict=True)
 
     return {
         'data': price_data,
@@ -88,15 +93,22 @@ def get_data(price_list=None, item_code=None, item_group=None, start=0, sort_by=
 
 @frappe.whitelist()
 def set_item_price(price_list, item_code, min_qty, rate):
-    if frappe.has_permission("Item Price", "write"):
+    if frappe.has_permission("Item", "write") and frappe.has_permission("Item Price", "write"):
         if int(min_qty) in [1, 10, 20]:
+            # Get purchase/sales UOM from Item, write it if not set
+            is_sales_item = frappe.db.get_value("Item", item_code, "is_sales_item")
+            uom_field = 'sales_uom' if is_sales_item else 'purchase_uom'
+            uom = frappe.db.get_value("Item", item_code, uom_field)
+            if not uom:
+                uom = frappe.defaults.get_global_default("stock_uom")
+                frappe.db.set_value("Item", item_code, uom_field, uom)
             # Delete and reinsert price to eliminate any duplicates (which do seem to occur!)
             frappe.db.sql("""
                 DELETE FROM `tabItem Price`
-                WHERE item_code='{item_code}'
-                  AND price_list='{price_list}'
-                  AND min_qty='{min_qty}'
-            """.format(item_code=item_code, price_list=price_list, min_qty=min_qty))
+                WHERE `item_code` = %(item_code)s
+                  AND `price_list` = %(price_list)s
+                  AND `min_qty` = %(min_qty)s
+            """, { 'item_code': item_code, 'price_list': price_list, 'min_qty': min_qty })
             # If price is zero/empty, leave it out of the list
             if float(rate)>0:
                 pl_currency = frappe.db.get_value("Price List", price_list, "currency")
@@ -106,12 +118,31 @@ def set_item_price(price_list, item_code, min_qty, rate):
                     "item_code": item_code,
                     "min_qty": int(min_qty),
                     "currency": pl_currency,
-                    "price_list_rate": float(rate)
+                    "price_list_rate": float(rate),
+                    "uom": uom,
                 })
                 item_price.insert()
             frappe.db.commit()
-            return "success"
+            return uom
         else:
             frappe.throw(_("Invalid price or price break"))
     else:
-        frappe.throw(_("User has no permission to write Item Price"))
+        frappe.throw(_("User has no permission to write Item & Item Price"))
+
+
+@frappe.whitelist()
+def set_price_uom(item_code, uom):
+    if frappe.has_permission("Item", "write") and frappe.has_permission("Item Price", "write"):
+        if not uom:
+            uom = frappe.defaults.get_global_default("stock_uom")
+        if frappe.db.exists("UOM", uom):
+            is_sales_item = frappe.db.get_value("Item", item_code, "is_sales_item")
+            uom_field = 'sales_uom' if is_sales_item else 'purchase_uom'
+            frappe.db.set_value("Item", item_code, uom_field, uom)
+            frappe.db.sql("""UPDATE `tabItem Price` SET `uom` = %(uom)s WHERE `item_code` = %(item_code)s""", {'uom': uom, 'item_code': item_code})
+            frappe.db.commit()
+            return uom
+        else:
+            frappe.throw(_("Invalid UOM"))
+    else:
+        frappe.throw(_("User has no permission to write Item & Item Price"))

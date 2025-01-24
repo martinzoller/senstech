@@ -1,20 +1,51 @@
-var histo_batch = '';
+let histo_batch = '';
 
 frappe.ui.form.on('Batch', {
 	validate(frm) {
 	    if (frm.doc.__islocal) {
-			var item = frm.doc.item;
-			var chargennummer = frm.doc.chargennummer.trim();
-			var batch_id = item + "-" + chargennummer;
+			let item = frm.doc.item;
+			if(!item) {
+				return;
+			}
+			let chargennummer = (frm.doc.chargennummer || '').trim();
+			let batch_id = item + "-" + chargennummer;
+			let waiting_for = [];
 			frm.set_value('chargennummer', chargennummer);
 			frm.set_value('batch_id', batch_id);
 			
-			if(frm.doc.batch_type == 'Serieprodukt') {
-				frappe.db.get_value('Item',item,'has_sub_batches').then(r => {
+			if(['Serieprodukt','Nullserie'].includes(frm.doc.batch_type)) {
+				let getval_done = frappe.db.get_value('Item',item,['has_sub_batches','gate2_max_pilot_batches', 'gate_clearance_status', 'creation']).then(r => {
 					if(!r.message) {
 						validation_error(frm, 'item', __("Fehler beim Laden des Basisartikels"));
 						return;
 					}
+					
+					let min_clearance = { 'Nullserie': 2, 'Serieprodukt': 3 };
+					if(r.message.gate_clearance_status < min_clearance[frm.doc.batch_type]) {
+						if(r.message.creation < '2025-01-01') {
+							// Legacy-Artikel: Nur Warnung anzeigen
+							frappe.show_alert({message: __("Der gewählte Artikel ist noch nicht für Chargen des Typs '{0}' freigegeben (Gate {1} benötigt). Da es sich um einen Bestandsartikel handelt, kann die Charge trotzdem angelegt werden.", [frm.doc.batch_type, min_clearance[frm.doc.batch_type]]), indicator: 'orange'}, 10);
+						}
+						else {
+							validation_error(frm, 'item', __("Der gewählte Artikel ist nicht für Chargen des Typs '{0}' freigegeben (Gate {1} benötigt).", [frm.doc.batch_type, min_clearance[frm.doc.batch_type]]));
+							return;	
+						}
+					}
+					else if(frm.doc.batch_type == 'Nullserie'){
+						let count_done = frappe.db.count("Batch", {
+							filters: {
+								batch_type: 'Nullserie',
+								item: item,
+							}
+						}).then(pilot_batch_count => {
+							if(pilot_batch_count >= r.message.gate2_max_pilot_batches) {
+								validation_error(frm, 'item', __("Für diesen Artikel sind maximal {0} Nullserie-Chargen freigegeben, jedoch sind bereits {1} vorhanden.", [r.message.gate2_max_pilot_batches, pilot_batch_count]));
+							}
+						});
+						waiting_for.push(count_done);
+						
+					}
+					
 					var hat_teilchargen = r.message.has_sub_batches;	            
 					const schema_basis = /^[0-9]{2}\/[0-9]{2}$/;
 					const schema_teilcharge = /^[0-9]{2}\/[0-9]{2}[A-Z]+$/;
@@ -30,11 +61,17 @@ frappe.ui.form.on('Batch', {
 					
 					var bezeichnung = chargennummer + " - " + frm.doc.item_name;
 					frm.set_value('bezeichnung', bezeichnung);
+					
+					if(frm.doc.batch_type =='Nullserie') {
+						
+					}
 				});
+				waiting_for.push(getval_done);
+				
 				
 			} else if(frm.doc.batch_type == 'Entwicklung') {
 				var project = frm.doc.project;
-				frappe.db.get_value('Project',project,'mountain_name').then(r => {
+				let projectname_done = frappe.db.get_value('Project',project,'mountain_name').then(r => {
 					if(!r.message) {
 						validation_error(frm, 'project', __("Fehler beim Laden des Projektnamens"));
 						return;
@@ -51,10 +88,11 @@ frappe.ui.form.on('Batch', {
 					var bezeichnung = chargennummer + " - Prototypen «" + r.message.mountain_name + "»";
 					frm.set_value('bezeichnung', bezeichnung);
 				});
+				waiting_for.push(projectname_done);
 				
 			} else if(frm.doc.batch_type == 'Lohnfertigung/Kleinauftrag') {
 				var sales_order = frm.doc.sales_order;
-				frappe.db.get_value('Sales Order',sales_order,'customer_name').then(r => {
+				let custname_done = frappe.db.get_value('Sales Order',sales_order,'customer_name').then(r => {
 					if(!r.message) {
 						validation_error(frm, 'sales_order', __("Fehler beim Laden des Kundennamens"));
 						return;
@@ -71,8 +109,12 @@ frappe.ui.form.on('Batch', {
 					var bezeichnung = chargennummer + " - Lohnfertigung/Kleinauftrag für " + r.message.customer_name;
 					frm.set_value('bezeichnung', bezeichnung);
 				});
+				waiting_for.push(custname_done);
 			}
 		}
+		
+		// TODO: wie bringt man die aufrufende Fkt. dazu, auf Promise.all(waiting_for).then(() => {}) zu warten,
+		// bevor sie frappe.validated ausliest? - Testen ob überhaupt ein Problem... sonst ggf serverseitig validieren!
 	},
 	refresh(frm) {
 		/* Charge freigegeben oder Freigabe beantragt: Fast alles schreibgeschützt */
@@ -106,7 +148,7 @@ frappe.ui.form.on('Batch', {
 		frm.layout.refresh_sections();
 
 		/* Prod.charge gespeichert: Div. Operationen mit Buttons möglich, Histogramme sichtbar */
-		if(!frm.is_new()) {
+		if(!frm.is_new() && frm.doc.item && frm.doc.name) {
             
 			/*
 		    frm.add_custom_button(__("QR-Labels erzeugen"), function() {
@@ -251,7 +293,7 @@ function an_lager_legen(frm) {
 	var d = new frappe.ui.Dialog({
 		'fields': [
 			{'fieldname': 'qty', 'fieldtype': 'Float', 'reqd': 1, 'label': __('Stückzahl'), 'default': 0.000},
-			{'fieldname': 'item', 'fieldtype': 'Link', 'options': 'Item', 'default': frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
+			{'fieldname': 'item', 'fieldtype': 'Data', 'default': frm.doc.item, 'read_only': 1, 'label': __('Artikel')},
 			{'fieldname': 'batch', 'fieldtype': 'Data', 'default': frm.doc.chargennummer, 'read_only': 1, 'label': __('Chargennummer')}
 		],
 		primary_action: function(){
@@ -669,25 +711,21 @@ function charge_freigeben_dialog(frm) {
         primary_action_label: 'Bestätigen &gt;',
         primary_action(values) {
             d.hide();
-            
-            // Freigabedaten setzen
-            frm.set_value('description', values.description);
-            frm.set_value('freigabedatum', values.freigabedatum);
-            frm.set_value('freigegeben_durch', values.freigegeben_durch);
                    
 		    // Vorschau zeigen
-			doc_preview_dialog(frm, frm => chargenfreigabe_abschliessen(frm), __("Schritt 2: COC und Histogramm freigeben"), __("Produktionscharge freigeben"), true);
+			doc_preview_dialog(frm, function(frm){
+				// Callback: Freigabedaten setzen und speichern
+				frm.set_value('description', values.description);
+				frm.set_value('freigabedatum', values.freigabedatum);
+				frm.set_value('freigegeben_durch', values.freigegeben_durch);
+				frm.save().then(r => {
+					frm.reload_doc();
+				});
+			}, __("Schritt 2: COC und Histogramm freigeben"), __("Produktionscharge freigeben"), true);
         }
     });
     
     d.show();
-}
-
-function chargenfreigabe_abschliessen(frm) {
-	// Speichern
-	frm.save().then(r => {
-		frm.reload_doc();
-	});
 }
 
 
