@@ -705,7 +705,7 @@ frappe.ui.form.on('Item', {
 		item_specific_fields(frm);
 	},
 	mountain_name(frm) {
-		if(frm.doc.item_code && frm.doc.mountain_name && !frm.doc.item_name) {
+		if(frm.doc.item_code && frm.doc.item_code[2] == '-' && frm.doc.mountain_name && !frm.doc.item_name) {
 			if(frm.doc.item_group.startsWith('Serieprodukte')) {
 				let type_index = parseInt(frm.doc.item_code.substr(17,2));
 				let type_str = (type_index > 1 ? ' '+type_index : '');
@@ -927,7 +927,7 @@ function print_format_filters(frm) {
 function item_specific_fields(frm) {
 	
 	// Artikel mit Produktions- und möglichem Kundenbezug
-	if(!frm.doc.is_purchase_item && frm.doc.item_code && !['AC-','PT-','IN-','GP-'].includes(frm.doc.item_code.substr(0,3))) {
+	if(!frm.doc.is_purchase_item && frm.doc.item_code && frm.doc.item_code[2] == '-' && !['AC-','PT-','IN-','GP-'].includes(frm.doc.item_code.substr(0,3))) {
 		let project_code = frm.doc.item_code.substr(3,6);
 		frm.set_query('manufactured_from', () => {
 			return {
