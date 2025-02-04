@@ -1,0 +1,207 @@
+<!-- Gate 3 Review Checklist -->
+
+<!-- Load Data -->
+{% set doc_data = {'titel': "Review-Checkliste Gate 3 (Seriefreigabe)"} %}
+{{ frappe.render_template('templates/includes/load_data.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Load Data -->
+
+<!-- Header und Footer -->
+{{ frappe.render_template('templates/includes/header_footer.html', {'doc': doc, 'doc_data': doc_data}) }}
+<!-- /Header und Footer -->
+
+<!-- Titel -->
+<b><br><br>{{ _(doc_data.titel) }}</b>
+<div><br></div>
+<!-- /Titel -->
+
+
+<!-- Detailtabelle -->
+<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+	<tr>
+		<td style="width: 22%;">{{ _("Artikelcode") }}</td>
+		<td style="width: 28%;">{{ doc.item_code }}</td>
+		<td style="width: 3%;"></td>
+		<td style="width: 26%;">{{ _("Kunde") }}</td>
+		<td style="width: 20%;">{{ doc.kundenname }}</td>
+	</tr>
+	<tr>
+		<td>{{ _("Artikelbezeichnung") }}</td>
+		<td>{{ doc.item_name }}</td>
+		<td></td>
+		<td>{{ _("Kundennummer") }}</td>
+		<td>{{ doc.kunde }}</td>	
+	</tr>
+	<tr>
+		<td>{{ _("Dokument aktualisiert am") }}</td>
+		<td>{{ doc.get_formatted('modified') }}</td>
+		<td></td>
+		<td>{{ _("Entwicklungsprojekt") }}</td>
+		<td>{{ doc.project }}</td>
+	</tr>
+</table>
+<!-- /Detailtabelle -->
+
+<div><br></div>
+
+<!-- Abschnitt "Freigabe" -->
+<div><br></div>
+
+<table style="width: 99%; font-size: 8.5pt !important;">
+	<tr style="height: 21pt">
+		<td style="text-align: left;"><b style="font-size: 10pt">{{ _("Freigabe") }}</b></td>
+		<td style="text-align: left;"><b>{{ _("Name") }}</b><br></td>		
+		<td style="text-align: left;"><b>{{ _("Datum") }}</b><br></td>
+		<td style="text-align: center;"><b>{{ _("Unterschrift") }}</b><br></td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Gate-3-Freigabe beantragt durch:") }}</td>
+		<td style="text-align: left;">{{ doc.gate3_requested_by_name }}</td>
+		<td style="text-align: left;">{{ doc.get_formatted('gate3_requested_date') }}</td>
+		<td style="text-align: center;">
+			{% set requested_by_signature = get_signature_for_user_id(doc.gate3_requested_by_user) %}
+			{% if not requested_by_signature %}
+					<div class="errorpopup">Fehler: Unterschrift von Gate-3-Antragsteller "{{ doc.gate3_requested_by_name }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ requested_by_signature }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+	<tr>
+		<td style="text-align: left;">{{ _("Gate-3-Review durchgeführt durch:")}}</td>
+		<td style="text-align: left;">{{ doc.gate3_reviewed_by_name }}</td>
+		<td style="text-align: left;">{{ doc.get_formatted('gate3_reviewed_date') }}</td>
+		<td style="text-align: center;">
+			{% set reviewed_by_signature = get_signature_for_user_id(doc.gate3_reviewed_by_user) %}
+			{% if not reviewed_by_signature %}
+					<div class="errorpopup">Fehler: Unterschrift von Gate-3-Reviewer "{{ doc.gate3_reviewed_by_name }}" nicht gefunden</div>
+			{% endif %}
+			<img src="{{ reviewed_by_signature }}" style="width: 100px !important; margin-top: -15px;">
+		</td>
+	</tr>
+</table>
+<!-- /Abschnitt "Freigabe" -->
+
+<!-- Abschnitt "Entscheid" -->
+<div>
+		<b><br>{{ _("Entscheid") }}</b>
+</div>
+<div style="margin-top: 5px">
+		{% for res in (frappe.get_meta("Item").get_field("gate3_review_result").options|trim).split("\n") %}
+			{% if doc.gate3_review_result == res %}☒{% else %}☐{% endif %} &nbsp; {{ res }}<br>
+		{% endfor %}
+</div>
+<!-- /Abschnitt "Entscheid" -->
+
+<!-- Abschnitt "Checkliste" -->
+<div>
+		<b><br>{{ _("Checkliste") }}</b>
+</div>
+<table class="table table-bordered checklist"><tbody>
+	<tr>
+		<th>{{ _("Zu prüfen") }}</th>
+		<th>{{ _("Ergebnis") }}</th>
+		<th>{{ _("Referenz") }}</th>
+	</tr>
+	<tr>
+		<td>{{ _("Übergabe Produktionsunterlagen an Produktion erfolgt?") }}</td>
+		<td>{{ doc.gate3_check_prod_documents }}</td>
+		{%if doc.gate3_upload_prod_documents %}
+			{% set file_prod_documents = frappe.get_doc("File",{"file_url": doc.gate3_upload_prod_documents}) %}
+			<td>{{ file_prod_documents.file_name }}{%if doc.gate3_upload_prod_documents2 %}, 
+			                                         {% set file_prod_documents2 = frappe.get_doc("File",{"file_url": doc.gate3_upload_prod_documents2}) %}
+																							 {{ file_prod_documents2.file_name }}
+																						 {% endif %}
+			</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Betriebs- und Prüfmittel hergestellt / beschafft?") }}</td>
+		<td>{{ doc.gate3_check_test_equipment }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Betriebsmittel wo notwendig qualifiziert?") }}</td>
+		<td>{{ doc.gate3_check_equipment_qualification }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Nullserie gefertigt und erfolgreich getestet?") }}</td>
+		<td>{{ doc.gate3_check_pilot_series }}</td>
+		{%if doc.gate3_fetch_pilot_series %}
+			<td>An Lager gelegte Stückzahl: {{ doc.gate3_fetch_pilot_series }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Prozesse wo nötig validiert?") }}</td>
+		<td>{{ doc.gate3_check_process_validation }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Kostenkalkulation nachgeführt?") }}</td>
+		<td>{{ doc.gate3_check_cost_calc }}</td>
+		{%if doc.gate3_upload_cost_calc %}
+			{% set file_cost_calc = frappe.get_doc("File",{"file_url": doc.gate3_upload_cost_calc}) %}
+			<td>{{ file_cost_calc.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Risikomanagement-Bericht erstellt?") }}</td>
+		<td>{{ doc.gate3_check_risk_management_report }}</td>
+		{%if doc.gate3_upload_risk_management_report %}
+			{% set file_risk_management_report = frappe.get_doc("File",{"file_url": doc.gate3_upload_risk_management_report}) %}
+			<td>{{ file_risk_management_report.file_name }}</td>
+		{% else %}
+			<td>-</td>
+		{% endif %}
+	</tr>
+	<tr>
+		<td>{{ _("Sämtliche Dokumente nachgeführt?") }}</td>
+		<td>{{ doc.gate3_check_all_docs }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Alle Spezifikationen und Zeichnungen vom Kunden freigegeben?") }}</td>
+		<td>{{ doc.gate3_check_customer_approval }}</td>
+		<td>-</td>
+	</tr>
+	<tr>
+		<td>{{ _("Versionen aller Spezifikationen, Q-Pläne und Zeichnungen mit Angaben im Bestelltext abgeglichen?") }}</td>
+		<td>{{ doc.gate3_check_customer_order_reference }}</td>
+		<td>-</td>
+	</tr>
+</tbody></table>
+<!-- /Abschnitt "Checkliste" -->
+
+<!-- Abschnitt "Kommentare" -->
+<div>
+		<b><br>{{ _("Kommentare und zusätzliche Referenzen") }}</b>
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Freigabeantrag:") }}
+{% if not text_field_empty(doc.gate3_requester_comments) %}
+  <br>{{ doc.gate3_requester_comments }}
+{% else %}
+  {{ _("keine") }}
+{% endif %}	
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Review:") }}
+{% if not text_field_empty(doc.gate3_reviewer_comments) %}
+  <br>{{ doc.gate3_reviewer_comments }}
+{% else %}
+  {{ _("keine") }}
+{% endif %}	
+</div>
+<!-- /Abschnitt "Kommentare" -->
+
+<!-- Abschnitt "Historie" -->
+<div>
+		<b><br>{{ _("Historie der Gate-3-Freigabe") }}</b>
+</div>
+<div style="font-size: 8.5pt; margin: 10px 0">
+{{ doc.gate3_clearance_log|replace('\n','<br>') }}
+</div>
+<!-- /Abschnitt "Historie" -->
