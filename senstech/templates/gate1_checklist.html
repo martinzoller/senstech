@@ -16,7 +16,7 @@
 
 
 <!-- Detailtabelle -->
-<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+<table style="width: 99%" class="detailtable">
 	<tr>
 		<td style="width: 16%;">{{ _("Zu Offerte") }}</td>
 		<td style="width: 28%;">{{ doc.name }} {{ _("vom") }} {{ doc.get_formatted('transaction_date') }}</td>
@@ -46,9 +46,9 @@
 <!-- Abschnitt "Freigabe" -->
 <div><br></div>
 
-<table style="width: 99%; font-size: 8.5pt !important;">
+<table style="width: 99%" class="detailtable">
 	<tr style="height: 21pt">
-		<td style="text-align: left;"><b style="font-size: 10pt">{{ _("Freigabe") }}</b></td>
+		<td style="text-align: left;"><b class="larger">{{ _("Freigabe") }}</b></td>
 		<td style="text-align: left;"><b>{{ _("Name") }}</b><br></td>		
 		<td style="text-align: left;"><b>{{ _("Datum") }}</b><br></td>
 		<td style="text-align: center;"><b>{{ _("Unterschrift") }}</b><br></td>
@@ -164,23 +164,23 @@
 		<b><br>{{ _("Kommentare und zusätzliche Referenzen") }}</b>
 </div>
 {% if doc.gate1_check_environment == "Ja, mit Vorbehalt" %}
-<div style="font-size: 8.5pt; margin: 10px 0"> {{ _('Kommentar zur Umweltverträglichkeit:') }}
+<div class="details" style="margin: 10px 0"> {{ _('Kommentar zur Umweltverträglichkeit:') }}
   <br>{{ doc.gate1_comment_environment }}
 </div>
 {% endif %}
 {% if doc.gate1_check_procurement == "Ja, mit Vorbehalt" %}
-<div style="font-size: 8.5pt; margin: 10px 0"> {{ _('Kommentar zur Materialbeschaffung:') }}
+<div class="details" style="margin: 10px 0"> {{ _('Kommentar zur Materialbeschaffung:') }}
   <br>{{ doc.gate1_comment_procurement }}
 </div>
 {% endif %}	
-<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Freigabeantrag:") }}
+<div class="details" style="margin: 10px 0"> {{ _("Kommentare/Referenzen zum Freigabeantrag:") }}
 {% if not text_field_empty(doc.gate1_requester_comments) %}
   <br>{{ doc.gate1_requester_comments }}
 {% else %}
   {{ _("keine") }}
 {% endif %}	
 </div>
-<div style="font-size: 8.5pt; margin: 10px 0"> {{ _("Kommentare/Referenzen zum Review:") }}
+<div class="details" style="margin: 10px 0"> {{ _("Kommentare/Referenzen zum Review:") }}
 {% if not text_field_empty(doc.gate1_reviewer_comments) %}
   <br>{{ doc.gate1_reviewer_comments }}
 {% else %}

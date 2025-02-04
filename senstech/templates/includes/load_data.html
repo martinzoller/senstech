@@ -162,53 +162,56 @@
 <!-- CSS -->
 <style type="text/css">
 @font-face {
-   font-family: MyriadPro;
-   src: url('/files/MyriadPro-Regular.otf');
+   font-family: 'Open Sans';
+   src: url('/files/OpenSans-Regular.ttf');
 }
 @font-face {
-   font-family: MyriadPro;
+   font-family: 'Open Sans';
 	 font-weight: bold;
-   src: url('/files/MyriadPro-Semibold.otf');
+   src: url('/files/OpenSans-Semibold.ttf');
 }
 @font-face {
-   font-family: MyriadPro;
+   font-family: 'Open Sans';
 	 font-style: italic;
-   src: url('/files/MyriadPro-It.otf');
+   src: url('/files/OpenSans-Italic.ttf');
 }
 @font-face {
-   font-family: MyriadPro;
-	 font-weight: bold;
-	 font-style: italic;
-   src: url('/files/MyriadPro-SemiboldIt.otf');
-}
-
-@font-face {
-   font-family: MyriadProCond;
-   src: url('/files/MyriadPro-Cond.otf');
-}
-@font-face {
-   font-family: MyriadProCond;
-	 font-weight: bold;
-   src: url('/files/MyriadPro-SemiboldCond.otf');
-}
-@font-face {
-   font-family: MyriadProCond;
-	 font-style: italic;
-   src: url('/files/MyriadPro-CondIt.otf');
-}
-@font-face {
-   font-family: MyriadProCond;
+   font-family: 'Open Sans';
 	 font-weight: bold;
 	 font-style: italic;
-   src: url('/files/MyriadPro-SemiboldCondIt.otf');
+   src: url('/files/OpenSans-SemiboldItalic.ttf');
+}
+@font-face {
+   font-family: 'Open Sans SemiCondensed';
+   src: url('/files/OpenSans_SemiCondensed-Regular.ttf');
+}
+@font-face {
+   font-family: 'Open Sans SemiCondensed';
+	 font-weight: bold;
+   src: url('/files/OpenSans_SemiCondensed-Bold.ttf');
+}
+@font-face {
+   font-family: 'Open Sans SemiCondensed';
+	 font-style: italic;
+   src: url('/files/OpenSans_SemiCondensed-Italic.ttf');
+}
+@font-face {
+   font-family: 'Open Sans SemiCondensed';
+	 font-weight: bold;
+	 font-style: italic;
+   src: url('/files/OpenSans_SemiCondensed-BoldItalic.ttf');
 }
 
 .print-format {
-    font-family: MyriadPro;
-    font-size: 10pt;
+    font-family: 'Open Sans';
+    font-size: 9.5pt;
     line-height: 1.5;
     position: relative;
     margin-left: 12.5mm;
+}
+
+.larger {
+	font-size: 9.5pt;
 }
 
 .item-title {
@@ -219,7 +222,15 @@
 		font-size: 7.5pt;
 		font-weight: bold;
 }
-
+.details {
+		font-size: 7.5pt;
+}
+.detailtable {
+		font-size: 7.5pt;
+}
+#itemtable {
+		font-size: 7.5pt;
+}
 #itemtable ul {
 		margin-bottom: 1mm;
 }
@@ -324,7 +335,8 @@ table.checklist td, table.checklist th {
 
 #footer-table td {
 	font-size: 8.5pt;
-	color: #0060ac;
+	font-family: 'Open Sans SemiCondensed';
+	color: #808080;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -332,7 +344,7 @@ table.checklist td, table.checklist th {
 }
 
 #footer-table span {
-	color: #0060ac !important;
+	color: #808080 !important;
 	font-size: 8.5pt !important;
 }
 </style>

@@ -33,7 +33,7 @@ batch			  The production batch whose histogram should be shown
 
 
 <!-- Detailtabelle -->
-<table style="width: 99%; font-size: 8.5pt !important;" id="detailtable">
+<table style="width: 99%" class="detailtable">
 	<tr>
 		<td style="width: 24%;">{{ _("Ihre Referenz") }}</td>
 		<td style="width: 24%;">{{ doc.po_no or '-' }}</td>
@@ -85,7 +85,7 @@ batch			  The production batch whose histogram should be shown
 {% if stock_data.entry_qty > batch.histogramm_anz_gemessene or (stock_data.entry_qty == 0 and doc.doctype != 'Batch') or batch.histogramm_anz_gemessene == 0 %}
 		<div class="errorpopup">Fehler im Histogramm: Stückzahlen nicht plausibel</div>
 {% endif %}
-<div style="font-size: 8.5pt !important;">
+<div class="details">
 <p>{{ _("Anzahl gemessene Sensoren:") }} {{ batch.histogramm_anz_gemessene |int }}</p>
 <p>{{ _("Anzahl gute Sensoren:") }} 
 	{% if stock_data.entry_qty == 0 %}
@@ -100,13 +100,13 @@ batch			  The production batch whose histogram should be shown
 
 <!-- Qualitätstext -->
 <div style="height:2mm"></div>
-<div style="font-size: 8.5pt !important;">{{ batch.histogramm_text or item.text_histogramm }}</div>
+<div class="details">{{ batch.histogramm_text or item.text_histogramm }}</div>
 <div><br></div>
 <!-- /Qualitätstext -->
 
 
 <!-- Datum und Unterschriften -->
-<table style="width: 99%; font-size: 8.5pt !important;">
+<table style="width: 99%" class="detailtable">
 	<tr>
 		<td style="text-align: left;"><br><br></td>
 		<td style="text-align: left;">{{ _("Datum") }}<br></td>
